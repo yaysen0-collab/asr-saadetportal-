@@ -3,7 +3,7 @@
    
    <!-- Ana Sayfa -->
    <url>
-      <loc>https://yaysen0-collab.github.io/tarihizatlar/#home</loc>
+      <loc>https://yaysen0-collab.github.io/tarihizatlar/</loc>
       <lastmod>2026-05-01</lastmod>
       <changefreq>weekly</changefreq>
       <priority>1.0</priority>
@@ -11,7 +11,7 @@
 
    <!-- Arşiv Sayfası -->
    <url>
-      <loc>https://yaysen0-collab.github.io/tarihizatlar/#arsiv</loc>
+      <loc>https://yaysen0-collab.github.io/tarihizatlar/arsiv</loc>
       <lastmod>2026-05-01</lastmod>
       <changefreq>daily</changefreq>
       <priority>0.9</priority>
@@ -19,7 +19,7 @@
 
    <!-- Çizelge Sayfası -->
    <url>
-      <loc>https://yaysen0-collab.github.io/tarihizatlar/#cizelge</loc>
+      <loc>https://yaysen0-collab.github.io/tarihizatlar/cizelge</loc>
       <lastmod>2026-05-01</lastmod>
       <changefreq>weekly</changefreq>
       <priority>0.8</priority>
@@ -27,7 +27,7 @@
 
    <!-- Soyağacı Sayfası -->
    <url>
-      <loc>https://yaysen0-collab.github.io/tarihizatlar/#soy</loc>
+      <loc>https://yaysen0-collab.github.io/tarihizatlar/soy</loc>
       <lastmod>2026-05-01</lastmod>
       <changefreq>weekly</changefreq>
       <priority>0.8</priority>
@@ -35,19 +35,19 @@
 
    <!-- Makaleler -->
    <url>
-      <loc>https://yaysen0-collab.github.io/tarihizatlar/#makale1</loc>
+      <loc>https://yaysen0-collab.github.io/tarihizatlar/makale1</loc>
       <lastmod>2026-05-01</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.7</priority>
    </url>
    <url>
-      <loc>https://yaysen0-collab.github.io/tarihizatlar/#makale2</loc>
+      <loc>https://yaysen0-collab.github.io/tarihizatlar/makale2</loc>
       <lastmod>2026-05-01</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.7</priority>
    </url>
    <url>
-      <loc>https://yaysen0-collab.github.io/tarihizatlar/#makale3</loc>
+      <loc>https://yaysen0-collab.github.io/tarihizatlar/makale3</loc>
       <lastmod>2026-05-01</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.7</priority>
@@ -55,7 +55,7 @@
 
    <!-- Proje Amacı Sayfası -->
    <url>
-      <loc>https://yaysen0-collab.github.io/tarihizatlar/#proje-amaci</loc>
+      <loc>https://yaysen0-collab.github.io/tarihizatlar/proje-amaci</loc>
       <lastmod>2026-05-01</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.6</priority>
@@ -63,7 +63,7 @@
 
    <!-- Sıkça Sorulan Sorular -->
    <url>
-      <loc>https://yaysen0-collab.github.io/tarihizatlar/#sss</loc>
+      <loc>https://yaysen0-collab.github.io/tarihizatlar/sss</loc>
       <lastmod>2026-05-01</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.5</priority>
@@ -71,7 +71,7 @@
 
    <!-- İletişim -->
    <url>
-      <loc>https://yaysen0-collab.github.io/tarihizatlar/#iletisim</loc>
+      <loc>https://yaysen0-collab.github.io/tarihizatlar/iletisim</loc>
       <lastmod>2026-05-01</lastmod>
       <changefreq>yearly</changefreq>
       <priority>0.4</priority>
@@ -79,7 +79,7 @@
 
    <!-- Kaynakça -->
    <url>
-      <loc>https://yaysen0-collab.github.io/tarihizatlar/#kaynakca</loc>
+      <loc>https://yaysen0-collab.github.io/tarihizatlar/kaynakca</loc>
       <lastmod>2026-05-01</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.5</priority>
