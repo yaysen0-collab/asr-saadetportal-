@@ -495,6 +495,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 
                 <div style="display: flex; gap: 10px;"><input id="ol_hicri" placeholder="Hicri (Örn: H. 2)"><input id="ol_miladi" placeholder="Miladi (Örn: M. 624)"></div>
                 <textarea id="ol_bilgi" placeholder="Olayın metni..." rows="5"></textarea>
+                <input id="ol_kaynak" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
                 <button class="btn-action" onclick="olayKaydet()">KAYDET</button>
                 <button class="btn-action" id="olay-cancel-btn" onclick="temizleOlay()" style="background:#f0ebe1; color:#333; display:none;">İPTAL</button>
             </div>
@@ -537,6 +538,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 <div style="display: flex; gap: 10px;"><input id="in_d_hicri" placeholder="Doğum Hicri"><input id="in_d_miladi" placeholder="Doğum Miladi"></div>
                 <div style="display: flex; gap: 10px;"><input id="in_v_hicri" placeholder="Vefat Hicri"><input id="in_v_miladi" placeholder="Vefat Miladi"></div>
                 <textarea id="in_bilgi" placeholder="Bilgi" rows="4"></textarea>
+                <input id="in_kaynak" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
                 <button class="btn-action" onclick="kaydet()">KAYDET</button>
                 <button class="btn-action" id="cancel-btn" onclick="temizle()" style="background:#f0ebe1; color:#333; display:none;">İPTAL</button>
             </div>
@@ -858,6 +860,9 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         let tamTarih = (oH || oM) ? `${oH} ${oM}` : "Tarih Belirtilmemiş";
         document.getElementById('okuma-tarih').innerText = tamTarih;
         let formatliBilgi = o.bilgi ? escapeHtml(o.bilgi).replace(/\n/g, '<br><br>') : "İçerik bulunamadı.";
+        if (o.kaynak && o.kaynak !== "?") {
+            formatliBilgi += `<div style="margin-top:25px; font-size:0.85rem; color:#aaa; font-style:italic; text-align:center;">Kaynak: ${escapeHtml(o.kaynak)}</div>`;
+        }
         document.getElementById('okuma-icerik').innerHTML = formatliBilgi;
         sayfaDegistir('olay-okuma');
     }
@@ -940,6 +945,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             let bilgiHTML = (z.bilgi && z.bilgi.trim() !== "" && z.bilgi.trim() !== "?") ? 
                 `<div class="buyuk-kutu">
                     ${escapeHtml(z.bilgi).replace(/\n/g, '<br><br>')}
+                    ${(z.kaynak && z.kaynak !== "?") ? `<div style="margin-top:15px; font-size:0.8rem; color:#aaa; font-style:italic;">Kaynak: ${escapeHtml(z.kaynak)}</div>` : ""}
                 </div>` : "";
 
             // YENİ: SADELEŞTİRİLMİŞ KÜÇÜK KUTULAR - escapeHtml eklendi
@@ -1089,7 +1095,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             baba: kelimeBaslariniBuyut(document.getElementById('in_baba').value) || "?", es: kelimeBaslariniBuyut(document.getElementById('in_es').value) || "?", 
             baglar: document.getElementById('in_baglar_liste').value || "?", d_hicri: document.getElementById('in_d_hicri').value || "?", 
             d_miladi: document.getElementById('in_d_miladi').value || "?", v_hicri: document.getElementById('in_v_hicri').value || "?", 
-            v_miladi: document.getElementById('in_v_miladi').value || "?", bilgi: document.getElementById('in_bilgi').value || "" 
+            v_miladi: document.getElementById('in_v_miladi').value || "?", bilgi: document.getElementById('in_bilgi').value || "", 
+            kaynak: document.getElementById('in_kaynak').value || "?"
         };
         if(id) await db.collection("zatlar").doc(id).update(obj); else await db.collection("zatlar").add(obj);
         temizle();
@@ -1100,7 +1107,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         const ad = kelimeBaslariniBuyut(document.getElementById('ol_ad').value.trim());
         if (!ad) { alert("Lütfen olay ismi girin!"); return; }
         const id = document.getElementById('edit-olay-id').value;
-        const obj = { ad: ad, devir: document.getElementById('ol_devir').value, hicri: document.getElementById('ol_hicri').value || "?", miladi: document.getElementById('ol_miladi').value || "?", bilgi: document.getElementById('ol_bilgi').value || "", eklenmeTarihi: Date.now() };
+        const obj = { ad: ad, devir: document.getElementById('ol_devir').value, hicri: document.getElementById('ol_hicri').value || "?", miladi: document.getElementById('ol_miladi').value || "?", bilgi: document.getElementById('ol_bilgi').value || "", kaynak: document.getElementById('ol_kaynak').value || "?", eklenmeTarihi: Date.now() };
         
         if(id) {
             const mevcutOlay = olaylar.find(v => v.id === id);
@@ -1125,7 +1132,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     function duzenle(id) {
         const z = veriler.find(v => v.id === id);
         document.getElementById('edit-id').value = id; document.getElementById('in_devir').value = z.devir || "Asr-ı Saadet";
-        document.getElementById('in_ad').value = z.isim; document.getElementById('in_anne').value = z.anne; document.getElementById('in_baba').value = z.baba; document.getElementById('in_es').value = z.es; document.getElementById('in_baglar_liste').value = z.baglar; document.getElementById('in_d_hicri').value = z.d_hicri; document.getElementById('in_d_miladi').value = z.d_miladi; document.getElementById('in_v_hicri').value = z.v_hicri; document.getElementById('in_v_miladi').value = z.v_miladi; document.getElementById('in_bilgi').value = z.bilgi;
+        document.getElementById('in_ad').value = z.isim; document.getElementById('in_anne').value = z.anne; document.getElementById('in_baba').value = z.baba; document.getElementById('in_es').value = z.es; document.getElementById('in_baglar_liste').value = z.baglar; document.getElementById('in_d_hicri').value = z.d_hicri; document.getElementById('in_d_miladi').value = z.d_miladi; document.getElementById('in_v_hicri').value = z.v_hicri; document.getElementById('in_v_miladi').value = z.v_miladi; document.getElementById('in_bilgi').value = z.bilgi; document.getElementById('in_kaynak').value = z.kaynak || "";
         document.getElementById('cancel-btn').style.display = "inline-block"; document.getElementById('zat-uyari').style.display = "none";
         document.getElementById('oto_ra').checked = !(!z.isim.toLocaleLowerCase('tr').includes("(ra)") && !z.isim.toLocaleLowerCase('tr').includes("(r.a.)"));
         window.scrollTo(0,0);
@@ -1134,7 +1141,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     function duzenleOlay(id) {
         const o = olaylar.find(v => v.id === id);
         document.getElementById('edit-olay-id').value = id; document.getElementById('ol_devir').value = o.devir || "Asr-ı Saadet";
-        document.getElementById('ol_ad').value = o.ad; document.getElementById('ol_hicri').value = o.hicri; document.getElementById('ol_miladi').value = o.miladi; document.getElementById('ol_bilgi').value = o.bilgi;
+        document.getElementById('ol_ad').value = o.ad; document.getElementById('ol_hicri').value = o.hicri; document.getElementById('ol_miladi').value = o.miladi; document.getElementById('ol_bilgi').value = o.bilgi; document.getElementById('ol_kaynak').value = o.kaynak || "";
         document.getElementById('olay-cancel-btn').style.display = "inline-block"; document.getElementById('olay-uyari').style.display = "none";
         window.scrollTo(0,0);
     }
