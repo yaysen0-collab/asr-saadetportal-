@@ -13,7 +13,6 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     <title>Asr-ı Saadet Portalı | Sahabeler, Siyer ve İslam Tarihi</title>
    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <style>
@@ -596,6 +595,20 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
 <div id="arama-oto-kutu" class="oto-liste" style="z-index: 10000;"></div>
 
 <script>
+    // === GÜVENLİK: HTML KAÇIŞ (ESCAPE) FONKSİYONU ===
+    // Bu fonksiyon, veritabanından gelen metinleri ekrana basmadan önce
+    // "temizler". Böylece biri isim/bilgi alanına <script> gibi zararlı
+    // bir kod yazarsa, bu kod ÇALIŞMAZ, sadece düz metin olarak görünür.
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return "";
+        return String(str)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
     const firebaseConfig = {
         apiKey: "AIzaSyCrrD1XRInE3Er47ZRl28rUo_Pk7FZAyss",
         authDomain: "tarihizatlar.firebaseapp.com",
@@ -735,9 +748,9 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         }
 
         let html = '';
-        if(ilgiliKisiler.length > 0) html += `<div class="sistem-grup"><div class="sistem-baslik">Kesişen Şahsiyetler</div><div>${ilgiliKisiler.map(k => `<span class="smart-link" onclick="arsiveGitVeBul('${k.isim.replace(/'/g, "\\'")}')">${k.isim}</span>`).join(', ')}</div></div>`;
-        if(ilgiliOlaylar.length > 0) html += `<div class="sistem-grup"><div class="sistem-baslik">İlgili Olaylar</div><div>${ilgiliOlaylar.map(o => `<span class="smart-link" onclick="olayOku('${o.id}')">${o.ad}</span>`).join(', ')}</div></div>`;
-        if(donemdaslar.length > 0) html += `<div class="sistem-grup"><div class="sistem-baslik">Aynı Dönemde Yaşayanlar</div><div>${donemdaslar.map(k => `<span class="smart-link" onclick="arsiveGitVeBul('${k.isim.replace(/'/g, "\\'")}')">${k.isim}</span>`).join(', ')}</div></div>`;
+        if(ilgiliKisiler.length > 0) html += `<div class="sistem-grup"><div class="sistem-baslik">Kesişen Şahsiyetler</div><div>${ilgiliKisiler.map(k => `<span class="smart-link" onclick="arsiveGitVeBul('${k.isim.replace(/'/g, "\\'")}')">${escapeHtml(k.isim)}</span>`).join(', ')}</div></div>`;
+        if(ilgiliOlaylar.length > 0) html += `<div class="sistem-grup"><div class="sistem-baslik">İlgili Olaylar</div><div>${ilgiliOlaylar.map(o => `<span class="smart-link" onclick="olayOku('${o.id}')">${escapeHtml(o.ad)}</span>`).join(', ')}</div></div>`;
+        if(donemdaslar.length > 0) html += `<div class="sistem-grup"><div class="sistem-baslik">Aynı Dönemde Yaşayanlar</div><div>${donemdaslar.map(k => `<span class="smart-link" onclick="arsiveGitVeBul('${k.isim.replace(/'/g, "\\'")}')">${escapeHtml(k.isim)}</span>`).join(', ')}</div></div>`;
 
         if(html === '') html = '<div style="color:#999; font-style:italic; font-size:0.95rem; text-align:center;">Şu an için sistemde kesişim verisi bulunamadı.</div>';
 
@@ -760,7 +773,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 if(aktifDevir !== 'tumu' && d !== aktifDevir) return;
                 if(count > 8) return;
                 if((v.isim || "").toLocaleLowerCase('tr').includes(val)) {
-                    html += `<div onclick="document.getElementById('ara').value = '${v.isim.replace(/'/g, "\\'")}'; document.getElementById('arama-oto-kutu').style.display='none'; aramaYap();">${v.isim}</div>`;
+                    html += `<div onclick="document.getElementById('ara').value = '${v.isim.replace(/'/g, "\\'")}'; document.getElementById('arama-oto-kutu').style.display='none'; aramaYap();">${escapeHtml(v.isim)}</div>`;
                     count++;
                 }
             });
@@ -771,7 +784,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 if(aktifDevir !== 'tumu' && d !== aktifDevir) return;
                 if(count > 15) return;
                 if((o.ad || "").toLocaleLowerCase('tr').includes(val)) {
-                    html += `<div onclick="document.getElementById('ara').value = '${o.ad.replace(/'/g, "\\'")}'; document.getElementById('arama-oto-kutu').style.display='none'; aramaYap();">${o.ad}</div>`;
+                    html += `<div onclick="document.getElementById('ara').value = '${o.ad.replace(/'/g, "\\'")}'; document.getElementById('arama-oto-kutu').style.display='none'; aramaYap();">${escapeHtml(o.ad)}</div>`;
                     count++;
                 }
             });
@@ -792,7 +805,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         veriler.forEach(v => {
             if(count > 40) return;
             if(v.isim.toLocaleLowerCase('tr').includes(val)) {
-                html += `<div onclick="document.getElementById('${inp.id}').value = '${v.isim.replace(/'/g, "\\'")}'; document.getElementById('oto-kutu').style.display='none';">${v.isim}</div>`;
+                html += `<div onclick="document.getElementById('${inp.id}').value = '${v.isim.replace(/'/g, "\\'")}'; document.getElementById('oto-kutu').style.display='none';">${escapeHtml(v.isim)}</div>`;
                 count++;
             }
         });
@@ -846,7 +859,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         let oM = (o.miladi && o.miladi !== "?") ? " M. " + o.miladi : "";
         let tamTarih = (oH || oM) ? `${oH} ${oM}` : "Tarih Belirtilmemiş";
         document.getElementById('okuma-tarih').innerText = tamTarih;
-        let formatliBilgi = o.bilgi ? o.bilgi.replace(/\n/g, '<br><br>') : "İçerik bulunamadı.";
+        let formatliBilgi = o.bilgi ? escapeHtml(o.bilgi).replace(/\n/g, '<br><br>') : "İçerik bulunamadı.";
         document.getElementById('okuma-icerik').innerHTML = formatliBilgi;
         sayfaDegistir('olay-okuma');
     }
@@ -879,7 +892,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         if (metin.length < 2 || document.getElementById('edit-id').value !== "") { uyariKutusu.style.display = 'none'; return; }
         const benzerler = veriler.filter(v => (v.isim || "").toLocaleLowerCase('tr').includes(metin));
         if (benzerler.length > 0) {
-            uyariKutusu.innerHTML = `Sistemde benzer isimler var: ${benzerler.map(b => b.isim).slice(0, 3).join(', ')}`;
+            uyariKutusu.innerHTML = `Sistemde benzer isimler var: ${benzerler.map(b => escapeHtml(b.isim)).slice(0, 3).join(', ')}`;
             uyariKutusu.style.display = 'block';
         } else uyariKutusu.style.display = 'none';
     }
@@ -890,7 +903,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         if (metin.length < 2 || document.getElementById('edit-olay-id').value !== "") { uyariKutusu.style.display = 'none'; return; }
         const benzerler = olaylar.filter(o => (o.ad || "").toLocaleLowerCase('tr').includes(metin));
         if (benzerler.length > 0) {
-            uyariKutusu.innerHTML = `Sistemde benzer olaylar var: ${benzerler.map(b => b.ad).slice(0, 3).join(', ')}`;
+            uyariKutusu.innerHTML = `Sistemde benzer olaylar var: ${benzerler.map(b => escapeHtml(b.ad)).slice(0, 3).join(', ')}`;
             uyariKutusu.style.display = 'block';
         } else uyariKutusu.style.display = 'none';
     }
@@ -919,33 +932,33 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             const aramaMetni = ((z.isim || "") + " " + (z.bilgi || "")).toLocaleLowerCase('tr');
             let dM = parseInt(z.d_miladi), vM = parseInt(z.v_miladi);
             let devirStr = z.devir || "Asr-ı Saadet";
-            let devirRozet = `<span class="devir-tag">${devirStr}</span>`;
+            let devirRozet = `<span class="devir-tag">${escapeHtml(devirStr)}</span>`;
             let yasStr = (!isNaN(dM) && !isNaN(vM)) ? `<span class="yas-badge">${vM - dM} Yaşında</span>` : "";
             
             let dH = (z.d_hicri && z.d_hicri !== "?") ? "H. " + z.d_hicri : ""; let dMil = (z.d_miladi && z.d_miladi !== "?") ? " (M. " + z.d_miladi + ")" : "";
             let vH = (z.v_hicri && z.v_hicri !== "?") ? "H. " + z.v_hicri : ""; let vMil = (z.v_miladi && z.v_miladi !== "?") ? " (M. " + z.v_miladi + ")" : "";
             
-            // YENİ: SADELEŞTİRİLMİŞ BÜYÜK KUTU (ANA METİN)
+            // YENİ: SADELEŞTİRİLMİŞ BÜYÜK KUTU (ANA METİN) - escapeHtml eklendi
             let bilgiHTML = (z.bilgi && z.bilgi.trim() !== "" && z.bilgi.trim() !== "?") ? 
                 `<div class="buyuk-kutu">
-                    ${z.bilgi.replace(/\n/g, '<br><br>')}
+                    ${escapeHtml(z.bilgi).replace(/\n/g, '<br><br>')}
                 </div>` : "";
 
-            // YENİ: SADELEŞTİRİLMİŞ KÜÇÜK KUTULAR
+            // YENİ: SADELEŞTİRİLMİŞ KÜÇÜK KUTULAR - escapeHtml eklendi
             let kucukKutular = `<div class="relation-grid">`;
             
             if (dH || dMil || vH || vMil) {
                 kucukKutular += `<div class="rel-box rel-box-wide">
                      <strong style="color:#a8a092; margin:0; font-size:0.8rem;">YAŞAM BİLGİSİ:</strong>
-                     ${(dH||dMil) ? `<span style="color:#555;">Doğum: ${dH}${dMil}</span>` : ""}
-                     ${(vH||vMil) ? `<span style="color:#555;">Vefat: ${vH}${vMil}</span>` : ""}
+                     ${(dH||dMil) ? `<span style="color:#555;">Doğum: ${escapeHtml(dH+dMil)}</span>` : ""}
+                     ${(vH||vMil) ? `<span style="color:#555;">Vefat: ${escapeHtml(vH+vMil)}</span>` : ""}
                 </div>`;
             }
             
-            if (z.baba && z.baba !== "?") kucukKutular += `<div class="rel-box"><strong>Baba</strong><span class="smart-link" onclick="arsiveGitVeBul('${z.baba.replace(/'/g, "\\'")}')">${z.baba}</span></div>`;
-            if (z.anne && z.anne !== "?") kucukKutular += `<div class="rel-box"><strong>Anne</strong><span class="smart-link" onclick="arsiveGitVeBul('${z.anne.replace(/'/g, "\\'")}')">${z.anne}</span></div>`;
-            if (z.es && z.es !== "?") kucukKutular += `<div class="rel-box" style="grid-column: span 2;"><strong>Eş(ler)</strong>` + z.es.split(',').map(e => `<span class="smart-link" onclick="arsiveGitVeBul('${e.trim().replace(/'/g, "\\'")}')">${e.trim()}</span>`).join(', ') + `</div>`;
-            if (z.baglar && z.baglar !== "?") kucukKutular += `<div class="rel-box" style="grid-column: span 2;"><strong>Aile ve Soy Bağları</strong>` + z.baglar.split(',').map(b => `<span class="smart-link" onclick="arsiveGitVeBul('${b.split('(')[0].trim().replace(/'/g, "\\'")}')">${b.trim()}</span>`).join(' • ') + `</div>`;
+            if (z.baba && z.baba !== "?") kucukKutular += `<div class="rel-box"><strong>Baba</strong><span class="smart-link" onclick="arsiveGitVeBul('${z.baba.replace(/'/g, "\\'")}')">${escapeHtml(z.baba)}</span></div>`;
+            if (z.anne && z.anne !== "?") kucukKutular += `<div class="rel-box"><strong>Anne</strong><span class="smart-link" onclick="arsiveGitVeBul('${z.anne.replace(/'/g, "\\'")}')">${escapeHtml(z.anne)}</span></div>`;
+            if (z.es && z.es !== "?") kucukKutular += `<div class="rel-box" style="grid-column: span 2;"><strong>Eş(ler)</strong>` + z.es.split(',').map(e => `<span class="smart-link" onclick="arsiveGitVeBul('${e.trim().replace(/'/g, "\\'")}')">${escapeHtml(e.trim())}</span>`).join(', ') + `</div>`;
+            if (z.baglar && z.baglar !== "?") kucukKutular += `<div class="rel-box" style="grid-column: span 2;"><strong>Aile ve Soy Bağları</strong>` + z.baglar.split(',').map(b => `<span class="smart-link" onclick="arsiveGitVeBul('${b.split('(')[0].trim().replace(/'/g, "\\'")}')">${escapeHtml(b.trim())}</span>`).join(' • ') + `</div>`;
             
             kucukKutular += `</div>`;
             
@@ -961,8 +974,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             <details class="arsiv-kart search-item arsiv-detay" data-search="${aramaMetni}" data-type="zat" data-devir="${devirStr}">
                 <summary>
                     <div class="kart-baslik-isim">
-                        <div class="kart-ikon">${ilkHarf}</div>
-                        <div><h3 class="kart-isim-metin">${z.isim}</h3><div>${devirRozet} ${yasStr}</div></div>
+                        <div class="kart-ikon">${escapeHtml(ilkHarf)}</div>
+                        <div><h3 class="kart-isim-metin">${escapeHtml(z.isim)}</h3><div>${devirRozet} ${yasStr}</div></div>
                     </div>
                 </summary>
                 <div class="arsiv-icerik-yeni">
@@ -985,7 +998,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             let kisaBilgi = (o.bilgi && o.bilgi.length > 200) ? o.bilgi.substring(0, 200) + "..." : (o.bilgi || "Detaylı bilgi için tıklayın.");
             
             let devirStr = o.devir || "Asr-ı Saadet";
-            let devirRozet = `<span class="devir-tag">${devirStr}</span>`;
+            let devirRozet = `<span class="devir-tag">${escapeHtml(devirStr)}</span>`;
             
             let kartHtml = `
             <div class="article-card search-item" data-search="${aramaMetniOlay}" data-type="olay" data-devir="${devirStr}" onclick="olayOku('${o.id}')">
@@ -994,8 +1007,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                     ${devirRozet}
                 </div>
                 <div>
-                    <h3>${o.ad}</h3>
-                    <p>${kisaBilgi}</p>
+                    <h3>${escapeHtml(o.ad)}</h3>
+                    <p>${escapeHtml(kisaBilgi)}</p>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f0ebe1; padding-top: 15px; margin-top: 15px;">
                     <span style="font-size: 0.85rem; color: #888;">${oH}${oM}</span>
@@ -1016,8 +1029,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         const azZatlar = {};
         veriler.forEach(z => { let harf = (z.isim || "İ").charAt(0).toLocaleUpperCase('tr'); if (!azZatlar[harf]) azZatlar[harf] = []; azZatlar[harf].push(z); });
         Object.keys(azZatlar).sort((a,b) => a.localeCompare(b, 'tr')).forEach(h => {
-            admHtml += `<details class="soy-klasor"><summary class="soy-baslik">${h} Harfi (${azZatlar[h].length} Kayıt)</summary><div class="soy-icerik">`;
-            azZatlar[h].forEach(z => { admHtml += `<div style="padding:10px; border: 1px solid #f0ebe1; border-radius: 6px; margin-bottom:5px; background: white;"><strong>${z.isim}</strong><div style="margin-top:5px;"><button onclick="duzenle('${z.id}')" style="background:transparent; border:none; color:#5c6ac4; cursor:pointer; padding:0 10px 0 0;">Düzenle</button><button onclick="sil('${z.id}', 'zatlar')" style="background:transparent; border:none; color:#d32f2f; cursor:pointer;">Sil</button></div></div>`; });
+            admHtml += `<details class="soy-klasor"><summary class="soy-baslik">${escapeHtml(h)} Harfi (${azZatlar[h].length} Kayıt)</summary><div class="soy-icerik">`;
+            azZatlar[h].forEach(z => { admHtml += `<div style="padding:10px; border: 1px solid #f0ebe1; border-radius: 6px; margin-bottom:5px; background: white;"><strong>${escapeHtml(z.isim)}</strong><div style="margin-top:5px;"><button onclick="duzenle('${z.id}')" style="background:transparent; border:none; color:#5c6ac4; cursor:pointer; padding:0 10px 0 0;">Düzenle</button><button onclick="sil('${z.id}', 'zatlar')" style="background:transparent; border:none; color:#d32f2f; cursor:pointer;">Sil</button></div></div>`; });
             admHtml += `</div></details>`;
         });
 
@@ -1025,8 +1038,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         const azOlaylar = {};
         olaylar.forEach(o => { let harf = (o.ad || "İ").charAt(0).toLocaleUpperCase('tr'); if (!azOlaylar[harf]) azOlaylar[harf] = []; azOlaylar[harf].push(o); });
         Object.keys(azOlaylar).sort((a,b) => a.localeCompare(b, 'tr')).forEach(h => {
-            admHtml += `<details class="soy-klasor"><summary class="soy-baslik">${h} Harfi (${azOlaylar[h].length} Kayıt)</summary><div class="soy-icerik">`;
-            azOlaylar[h].forEach(o => { admHtml += `<div style="padding:10px; border: 1px solid #f0ebe1; border-radius: 6px; margin-bottom:5px; background: white;"><strong>${o.ad}</strong><div style="margin-top:5px;"><button onclick="duzenleOlay('${o.id}')" style="background:transparent; border:none; color:#5c6ac4; cursor:pointer; padding:0 10px 0 0;">Düzenle</button><button onclick="sil('${o.id}', 'olaylar')" style="background:transparent; border:none; color:#d32f2f; cursor:pointer;">Sil</button></div></div>`; });
+            admHtml += `<details class="soy-klasor"><summary class="soy-baslik">${escapeHtml(h)} Harfi (${azOlaylar[h].length} Kayıt)</summary><div class="soy-icerik">`;
+            azOlaylar[h].forEach(o => { admHtml += `<div style="padding:10px; border: 1px solid #f0ebe1; border-radius: 6px; margin-bottom:5px; background: white;"><strong>${escapeHtml(o.ad)}</strong><div style="margin-top:5px;"><button onclick="duzenleOlay('${o.id}')" style="background:transparent; border:none; color:#5c6ac4; cursor:pointer; padding:0 10px 0 0;">Düzenle</button><button onclick="sil('${o.id}', 'olaylar')" style="background:transparent; border:none; color:#d32f2f; cursor:pointer;">Sil</button></div></div>`; });
             admHtml += `</div></details>`;
         });
         adminL.innerHTML = admHtml;
@@ -1037,12 +1050,12 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         bil.sort((a,b) => a.s - b.s);
         cizelge.innerHTML = bil.map(i => {
             let tRenk = i.t === 'Olay' ? '#d32f2f' : '#5c6ac4';
-            return `<div style="padding:15px; border-bottom: 1px solid #e0dcd3; background: white; margin-bottom: 5px; border-radius: 6px;"><b>M. ${i.s}</b>: <span class="smart-link" onclick="arsiveGitVeBul('${i.ad.replace(/'/g, "\\'")}')">${i.ad}</span> <small style="color:${tRenk}; font-weight:500; margin-left: 10px;">[${i.t}]</small></div>`;
+            return `<div style="padding:15px; border-bottom: 1px solid #e0dcd3; background: white; margin-bottom: 5px; border-radius: 6px;"><b>M. ${i.s}</b>: <span class="smart-link" onclick="arsiveGitVeBul('${i.ad.replace(/'/g, "\\'")}')">${escapeHtml(i.ad)}</span> <small style="color:${tRenk}; font-weight:500; margin-left: 10px;">[${i.t}]</small></div>`;
         }).join('');
 
         const homeMiniTimeline = document.getElementById('home-mini-timeline');
         if (homeMiniTimeline) {
-            homeMiniTimeline.innerHTML = bil.length === 0 ? `<p style="text-align: center; width: 100%; color: #999;">Henüz veri bulunmuyor.</p>` : bil.slice(0, 12).map(i => `<div class="mini-timeline-kart"><div><div class="mini-timeline-yil">M. ${i.s}</div><div class="mini-timeline-isim"><span class="smart-link" onclick="arsiveGitVeBul('${i.ad.replace(/'/g, "\\'")}')">${i.ad}</span></div></div><div style="color:#999; font-size:0.8rem; margin-top:15px;">${i.t === 'Olay' ? 'Olay' : 'Doğum'}</div></div>`).join('');
+            homeMiniTimeline.innerHTML = bil.length === 0 ? `<p style="text-align: center; width: 100%; color: #999;">Henüz veri bulunmuyor.</p>` : bil.slice(0, 12).map(i => `<div class="mini-timeline-kart"><div><div class="mini-timeline-yil">M. ${i.s}</div><div class="mini-timeline-isim"><span class="smart-link" onclick="arsiveGitVeBul('${i.ad.replace(/'/g, "\\'")}')">${escapeHtml(i.ad)}</span></div></div><div style="color:#999; font-size:0.8rem; margin-top:15px;">${i.t === 'Olay' ? 'Olay' : 'Doğum'}</div></div>`).join('');
         }
 
         const gruplar = {};
@@ -1056,8 +1069,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         });
         
         soy.innerHTML = Object.keys(gruplar).sort((a, b) => a.toLocaleLowerCase('tr').localeCompare(b.toLocaleLowerCase('tr'), 'tr')).map(baba => {
-            let babaBaslik = baba === "Soy Bilgisi Beklenenler" ? "Soy Bilgisi Beklenenler" : `Baba: <span class="smart-link" onclick="event.stopPropagation(); arsiveGitVeBul('${baba.replace(/'/g, "\\'")}')">${baba}</span>`;
-            const kisilerHtml = gruplar[baba].map(k => `<div class="soy-kart"><strong><span class="smart-link" onclick="arsiveGitVeBul('${k.isim.replace(/'/g, "\\'")}')">${k.isim}</span></strong><br>${k.anne && k.anne !== "?" ? `<small style="color:#666;">Anne: <span class="smart-link" onclick="arsiveGitVeBul('${k.anne.replace(/'/g, "\\'")}')">${k.anne}</span></small>` : ""}${k.es && k.es !== "?" ? `<br><small style="color:#666;">Eş: ` + k.es.split(',').map(e => `<span class="smart-link" onclick="arsiveGitVeBul('${e.trim().replace(/'/g, "\\'")}')">${e.trim()}</span>`).join(', ') + `</small>` : ""}${k.baglar && k.baglar !== "?" ? `<br><small style="color:#666;">Diğer Bağlar: ` + k.baglar.split(',').map(b => `<span class="smart-link" onclick="arsiveGitVeBul('${b.split('(')[0].trim().replace(/'/g, "\\'")}')">${b.trim()}</span>`).join(', ') + `</small>` : ""}</div>`).join('');
+            let babaBaslik = baba === "Soy Bilgisi Beklenenler" ? "Soy Bilgisi Beklenenler" : `Baba: <span class="smart-link" onclick="event.stopPropagation(); arsiveGitVeBul('${baba.replace(/'/g, "\\'")}')">${escapeHtml(baba)}</span>`;
+            const kisilerHtml = gruplar[baba].map(k => `<div class="soy-kart"><strong><span class="smart-link" onclick="arsiveGitVeBul('${k.isim.replace(/'/g, "\\'")}')">${escapeHtml(k.isim)}</span></strong><br>${k.anne && k.anne !== "?" ? `<small style="color:#666;">Anne: <span class="smart-link" onclick="arsiveGitVeBul('${k.anne.replace(/'/g, "\\'")}')">${escapeHtml(k.anne)}</span></small>` : ""}${k.es && k.es !== "?" ? `<br><small style="color:#666;">Eş: ` + k.es.split(',').map(e => `<span class="smart-link" onclick="arsiveGitVeBul('${e.trim().replace(/'/g, "\\'")}')">${escapeHtml(e.trim())}</span>`).join(', ') + `</small>` : ""}${k.baglar && k.baglar !== "?" ? `<br><small style="color:#666;">Diğer Bağlar: ` + k.baglar.split(',').map(b => `<span class="smart-link" onclick="arsiveGitVeBul('${b.split('(')[0].trim().replace(/'/g, "\\'")}')">${escapeHtml(b.trim())}</span>`).join(', ') + `</small>` : ""}</div>`).join('');
             return `<details class="soy-klasor"><summary class="soy-baslik">${babaBaslik}</summary><div class="soy-icerik">${kisilerHtml}</div></details>`;
         }).join('');
         aramaYap();
