@@ -546,7 +546,10 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 <button class="btn-action" id="cancel-btn" onclick="temizle()" style="background:#f0ebe1; color:#333; display:none;">İPTAL</button>
             </div>
             
-            <h3 style="font-weight:normal; border-bottom: 1px solid #e0dcd3; padding-bottom: 10px;">Mevcut Kayıtlar</h3>
+            <h3 style="font-weight:normal; border-bottom: 1px solid #e0dcd3; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                Mevcut Kayıtlar
+                <span id="admin-toplam-kayit" style="font-size: 0.85rem; color: #888; font-weight: normal;"></span>
+            </h3>
             <div id="adminList"></div>
         </div>
     </div>
@@ -1024,6 +1027,9 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         
         const homeOlaylarGrid = document.getElementById('home-olaylar-grid');
         if(homeOlaylarGrid) homeOlaylarGrid.innerHTML = hOlayHtml === "" ? `<p style="text-align: center; color: #999; width: 100%;">Henüz olay bulunmuyor.</p>` : hOlayHtml;
+
+        const toplamKayitEl = document.getElementById('admin-toplam-kayit');
+        if (toplamKayitEl) toplamKayitEl.innerText = `Toplam: ${veriler.length} Zat, ${olaylar.length} Olay`;
 
         let admHtml = `<h4 style="color:#5d4037; margin-top:0;">Zatlar</h4>`;
         const azZatlar = {};
