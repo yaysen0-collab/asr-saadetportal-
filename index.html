@@ -191,37 +191,6 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         .oto-liste { position: absolute; display: none; background: #fff; border: 1px solid #e0dcd3; max-height: 250px; overflow-y: auto; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; }
         .oto-liste div { padding: 12px 18px; cursor: pointer; border-bottom: 1px solid #f0ebe1; color: #444; transition: 0.2s; }
         .oto-liste div:hover { background: #faf9f6; }
-                /* GEÇİŞ / RASTGELE ŞAHSİYET EFEKTLERİ */
-        #sayfa-gecis-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #5d4037;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 99999;
-            transition: opacity 0.25s ease;
-        }
-        #sayfa-gecis-overlay.gecis-aktif { opacity: 0.18; }
-
-        @keyframes kartGiris {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .kart-anim { opacity: 0; animation: kartGiris 0.5s ease forwards; }
-
-        @keyframes rastgeleTik {
-            0% { transform: scale(1); }
-            50% { transform: scale(0.88); background: rgba(255,255,255,0.25); }
-            100% { transform: scale(1); }
-        }
-        .nav-btn.rastgele-tik { animation: rastgeleTik 0.4s ease; }
-
-        @keyframes vurguParlama {
-            0% { box-shadow: 0 0 0 4px rgba(93,64,55,0.35); background: #fdf6e9; }
-            100% { box-shadow: 0 0 0 0 rgba(93,64,55,0); background: white; }
-        }
-        .vurgu-parlama { animation: vurguParlama 2.2s ease-out; }
-        .oto-liste div:hover { background: #faf9f6; }
     </style>
 </head>
 <body>
@@ -239,7 +208,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         <button class="nav-btn" onclick="sayfaDegistir('arsiv')" data-i18n="nav_archive">Arşiv & Olaylar</button>
         <button class="nav-btn" onclick="sayfaDegistir('cizelge')" data-i18n="nav_timeline">Çizelge</button>
         <button class="nav-btn" onclick="sayfaDegistir('soy')" data-i18n="nav_tree">Soyağacı</button>
-        <button class="nav-btn" id="nav-random-btn" onclick="rastgeleSahsiyet()" style="border-color: rgba(255,255,255,0.4);" data-i18n="nav_random">Rastgele Şahsiyet</button>
+        <button class="nav-btn" onclick="rastgeleSahsiyet()" style="border-color: rgba(255,255,255,0.4);" data-i18n="nav_random">Rastgele Şahsiyet</button>
         <button class="nav-btn" id="nav-admin-btn" style="display:none; background:white; color:#5d4037;" onclick="sayfaDegistir('admin')" data-i18n="nav_panel">Panel</button>
     </div>
     <div class="header-search">
@@ -250,8 +219,6 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         <input type="text" id="global-search" data-i18n-placeholder="ph_global_search" placeholder="Portalda Ara..." oninput="globalArama()" autocomplete="off">
     </div>
 </header>
-
-<div id="sayfa-gecis-overlay"></div>
 
 <div class="container">
     <div id="home" class="page active">
@@ -275,17 +242,17 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         
         <h2 data-i18n="h_core_readings" style="text-align: center; color: #333; font-weight: 600; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Temel Okumalar</h2>
         <div class="article-grid">
-            <div class="article-card kart-anim" style="animation-delay:.05s" onclick="sayfaDegistir('makale1')">
+            <div class="article-card" onclick="sayfaDegistir('makale1')">
                 <div class="card-meta-top"><span class="category-tag" data-i18n="cat_itikad">İtikat</span></div>
                 <div><h3 data-i18n="art1_title">Ashab-ı Kiram'ın İzinde</h3><p data-i18n="art1_teaser">İslam’ın kuvvetli olduğu zamanlarda doğduk. Kuran-ı Kerim'i bize öğretenler oldu. Maalesef ki yeni nesil elimizden kayıp gidiyor...</p></div>
                 <div class="read-more" data-i18n="read_more">Devamını Oku ➔</div>
             </div>
-            <div class="article-card kart-anim" style="animation-delay:.15s" onclick="sayfaDegistir('makale2')">
+            <div class="article-card" onclick="sayfaDegistir('makale2')">
                 <div class="card-meta-top"><span class="category-tag" data-i18n="cat_ilim">İlim</span></div>
                 <div><h3 data-i18n="art2_title">Neden Bu İlimleri Öğreniyoruz?</h3><p data-i18n="art2_teaser">İslam dini, okuyup ilim sahibi olmaya çok önem vermiştir. Hatta Peygamber Efendimize indirilen ilk ayeti kerime “Oku” emri ile başlar...</p></div>
                 <div class="read-more" data-i18n="read_more">Devamını Oku ➔</div>
             </div>
-            <div class="article-card kart-anim" style="animation-delay:.25s" onclick="sayfaDegistir('makale3')">
+            <div class="article-card" onclick="sayfaDegistir('makale3')">
                 <div class="card-meta-top"><span class="category-tag" data-i18n="cat_siyer">Siyer</span></div>
                 <div><h3 data-i18n="art3_title">Rasulullah Sevgisi ve Kur'an Eğitimi</h3><p data-i18n="art3_teaser">Resulullah efendimiz bir hadisi şeriflerinde şöyle buyuruyor; "Evlatlarınızı üç haslet üzerine edeplendiriniz..."</p></div>
                 <div class="read-more" data-i18n="read_more">Devamını Oku ➔</div>
@@ -564,14 +531,6 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             <div data-lang="tr">
             <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #e0dcd3;">
                 <div style="color: #888; font-size: 0.85rem; margin-bottom: 5px;">Mayıs 2026</div>
-                <h3 style="margin-top: 0; color: #5d4037; font-weight: 600;">v2.6.0 - Zenginleştirilmiş Kart ve Geçiş Animasyonları</h3>
-                <ul style="margin: 0; padding-left: 20px; color: #555; line-height: 1.6;">
-                    <li>Arşiv kartları, ana sayfa kartları ve mini zaman çizelgesi kartları artık sayfa açıldığında hafifçe kayarak ve belirerek geliyor.</li>
-                    <li>Sayfa geçişlerine ve "Rastgele Şahsiyet" ile bulunan kayda yumuşak bir vurgu (parlama) animasyonu eklendi.</li>
-                </ul>
-            </div>
-            <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #e0dcd3;">
-                <div style="color: #888; font-size: 0.85rem; margin-bottom: 5px;">Mayıs 2026</div>
                 <h3 style="margin-top: 0; color: #5d4037; font-weight: 600;">v2.5.0 - Büyük Arşiv Tasarımı (3 Sütunlu Grid)</h3>
                 <ul style="margin: 0; padding-left: 20px; color: #555; line-height: 1.6;">
                     <li>Arşiv ekranı 3 sütunlu modern bir yapıya (Sol: Rehber, Orta: Ana İçerik, Sağ: Filtreler) kavuşturuldu.</li>
@@ -588,14 +547,6 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             </div>
             </div>
             <div data-lang="en" style="display:none;">
-            <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #e0dcd3;">
-                <div style="color: #888; font-size: 0.85rem; margin-bottom: 5px;">May 2026</div>
-                <h3 style="margin-top: 0; color: #5d4037; font-weight: 600;">v2.6.0 - Enriched Card & Transition Animations</h3>
-                <ul style="margin: 0; padding-left: 20px; color: #555; line-height: 1.6;">
-                    <li>Archive, home page and mini timeline cards now gently slide and fade in on load.</li>
-                    <li>Page transitions and the record found via "Random Figure" now get a soft highlight animation.</li>
-                </ul>
-            </div>
             <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #e0dcd3;">
                 <div style="color: #888; font-size: 0.85rem; margin-bottom: 5px;">May 2026</div>
                 <h3 style="margin-top: 0; color: #5d4037; font-weight: 600;">v2.5.0 - Large Archive Layout (3-column grid)</h3>
@@ -1018,31 +969,10 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         aramaYap();
     }
 
-    function vurguYap(el) {
-        if(!el) return;
-        el.classList.remove('vurgu-parlama');
-        void el.offsetWidth;
-        el.classList.add('vurgu-parlama');
-        setTimeout(() => { el.classList.remove('vurgu-parlama'); }, 2400);
-    }
-
     function rastgeleSahsiyet() {
         const doluZatlar = veriler.filter(z => z.bilgi && z.bilgi.trim() !== "" && z.bilgi.trim() !== "?");
         if (doluZatlar.length === 0) { alert(t('no_bio_random')); return; }
         const secilen = doluZatlar[Math.floor(Math.random() * doluZatlar.length)];
-
-        const randomBtn = document.getElementById('nav-random-btn');
-        if (randomBtn) {
-            randomBtn.classList.remove('rastgele-tik');
-            void randomBtn.offsetWidth;
-            randomBtn.classList.add('rastgele-tik');
-        }
-
-        const overlay = document.getElementById('sayfa-gecis-overlay');
-        if (overlay) {
-            overlay.classList.add('gecis-aktif');
-            setTimeout(() => overlay.classList.remove('gecis-aktif'), 500);
-        }
         
         aktifFiltre = 'tumu';
         aktifDevir = 'tumu';
@@ -1064,7 +994,6 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 if (el.style.display !== 'none' && el.querySelector('summary').innerText.includes(secilen.isim.split('(')[0].trim())) {
                     el.open = true; 
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
-                    vurguYap(el);
                     const btnId = 'btn-bag-' + secilen.id;
                     const kutu = document.getElementById('baglanti-kutu-' + secilen.id);
                     if (kutu && kutu.style.display !== 'flex') {
@@ -1287,7 +1216,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         veriler.sort((a, b) => (a.isim || "").toLocaleLowerCase('tr').localeCompare((b.isim || "").toLocaleLowerCase('tr'), 'tr'));
 
         let aHtml = ""; 
-        veriler.forEach((z, zIndex) => {
+        veriler.forEach(z => {
             const aramaMetni = ((z.isim || "") + " " + (z.bilgi || "")).toLocaleLowerCase('tr');
             let dM = parseInt(z.d_miladi), vM = parseInt(z.v_miladi);
             let devirStr = z.devir || "Asr-ı Saadet";
@@ -1327,10 +1256,9 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             </div>`;
 
             let ilkHarf = z.isim.charAt(0).toLocaleUpperCase('tr');
-            let gecikme = Math.min(zIndex * 0.045, 0.6).toFixed(3);
 
             aHtml += `
-            <details class="arsiv-kart search-item arsiv-detay kart-anim" style="animation-delay:${gecikme}s" data-search="${aramaMetni}" data-type="zat" data-devir="${devirStr}">
+            <details class="arsiv-kart search-item arsiv-detay" data-search="${aramaMetni}" data-type="zat" data-devir="${devirStr}">
                 <summary>
                     <div class="kart-baslik-isim">
                         <div class="kart-ikon">${escapeHtml(ilkHarf)}</div>
@@ -1358,27 +1286,9 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             
             let devirStr = o.devir || "Asr-ı Saadet";
             let devirRozet = `<span class="devir-tag">${escapeHtml(cevirDevir(devirStr))}</span>`;
-            let gecikme = Math.min((veriler.length + index) * 0.045, 0.6).toFixed(3);
-            let homeGecikme = Math.min(0.05 + index * 0.12, 0.4).toFixed(3);
             
             let kartHtml = `
-            <div class="article-card search-item kart-anim" style="animation-delay:${gecikme}s" data-search="${aramaMetniOlay}" data-type="olay" data-devir="${devirStr}" onclick="olayOku('${o.id}')">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span class="category-tag">${t('hist_event')}</span>
-                    ${devirRozet}
-                </div>
-                <div>
-                    <h3>${escapeHtml(o.ad)}</h3>
-                    <p>${escapeHtml(kisaBilgi)}</p>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f0ebe1; padding-top: 15px; margin-top: 15px;">
-                    <span style="font-size: 0.85rem; color: #888;">${oH}${oM}</span>
-                    <span class="read-more">${t('read_article')}</span>
-                </div>
-            </div>`;
-
-            let homeKartHtml = `
-            <div class="article-card kart-anim" style="animation-delay:${homeGecikme}s" onclick="olayOku('${o.id}')">
+            <div class="article-card search-item" data-search="${aramaMetniOlay}" data-type="olay" data-devir="${devirStr}" onclick="olayOku('${o.id}')">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <span class="category-tag">${t('hist_event')}</span>
                     ${devirRozet}
@@ -1394,7 +1304,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             </div>`;
 
             aOlayHtml += kartHtml; 
-            if (index < 3) hOlayHtml += homeKartHtml; 
+            if (index < 3) hOlayHtml += kartHtml; 
         });
 
         arsiv.innerHTML = aHtml + aOlayHtml; 
@@ -1436,7 +1346,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
 
         const homeMiniTimeline = document.getElementById('home-mini-timeline');
         if (homeMiniTimeline) {
-            homeMiniTimeline.innerHTML = bil.length === 0 ? `<p style="text-align: center; width: 100%; color: #999;">${t('no_data')}</p>` : bil.slice(0, 12).map((i, idx) => `<div class="mini-timeline-kart kart-anim" style="animation-delay:${Math.min(idx * 0.06, 0.5).toFixed(3)}s"><div><div class="mini-timeline-yil">M. ${i.s}</div><div class="mini-timeline-isim"><span class="smart-link" onclick="arsiveGitVeBul('${i.ad.replace(/'/g, "\\'")}')">${escapeHtml(i.ad)}</span></div></div><div style="color:#999; font-size:0.8rem; margin-top:15px;">${i.t === 'Olay' ? t('type_event') : t('mini_birth')}</div></div>`).join('');
+            homeMiniTimeline.innerHTML = bil.length === 0 ? `<p style="text-align: center; width: 100%; color: #999;">${t('no_data')}</p>` : bil.slice(0, 12).map(i => `<div class="mini-timeline-kart"><div><div class="mini-timeline-yil">M. ${i.s}</div><div class="mini-timeline-isim"><span class="smart-link" onclick="arsiveGitVeBul('${i.ad.replace(/'/g, "\\'")}')">${escapeHtml(i.ad)}</span></div></div><div style="color:#999; font-size:0.8rem; margin-top:15px;">${i.t === 'Olay' ? t('type_event') : t('mini_birth')}</div></div>`).join('');
         }
 
         const gruplar = {};
