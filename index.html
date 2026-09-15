@@ -122,9 +122,10 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
 
         /* SAYFA KONTROLLERİ */
         .container { max-width: 1350px; margin: 20px auto; padding: 20px; }
+        .container.container-genis { max-width: 1700px; }
         .page { display: none; animation: fadeIn 0.3s ease-in-out; }
         .active { display: block !important; }
-        .page:not(#arsiv) { max-width: 900px; margin: 0 auto; }
+        .page:not(#arsiv):not(#admin) { max-width: 900px; margin: 0 auto; }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -243,8 +244,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         /* Alt Sayfalar & Admin & Footer */
         .admin-dashboard { background: var(--bg-card); padding: 40px; border-radius: 16px; border: 1px solid var(--border-color); }
         .admin-section { background: var(--bg-card-soft); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--border-color-soft); border-top: 3px solid var(--border-color-soft); box-shadow: 0 2px 6px var(--shadow-card); }
-        .admin-forms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: start; }
-        @media (max-width: 820px) { .admin-forms-grid { grid-template-columns: 1fr; } }
+        .admin-forms-grid { display: grid; grid-template-columns: 1fr; gap: 25px; align-items: start; }
         .admin-section--olay { border-top-color: var(--accent-blue); }
         .admin-section--zat { border-top-color: var(--brand-bg); }
         .admin-section-baslik { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
@@ -268,6 +268,28 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         .oneri-item { padding: 9px 14px; cursor: pointer; font-size: 0.9rem; color: var(--text-primary); border-bottom: 1px solid var(--border-color-soft); }
         .oneri-item:last-child { border-bottom: none; }
         .oneri-item:hover { background: var(--bg-hover-soft); }
+
+        /* ADMİN 3 SÜTUN DÜZENİ */
+        .admin-3col { display: grid; grid-template-columns: 250px 1fr 280px; gap: 22px; align-items: start; }
+        @media (max-width: 1200px) { .admin-3col { grid-template-columns: 220px 1fr; } .admin-col-side { grid-column: 1 / -1; } }
+        @media (max-width: 820px) { .admin-3col { grid-template-columns: 1fr; } .admin-col-list, .admin-col-side { position: static !important; max-height: none !important; } }
+        .admin-col-list { background: var(--bg-card-soft); border: 1px solid var(--border-color-soft); border-radius: 12px; padding: 18px; position: sticky; top: 15px; max-height: calc(100vh - 30px); overflow-y: auto; }
+        .admin-col-side { position: sticky; top: 15px; max-height: calc(100vh - 30px); overflow-y: auto; }
+        .admin-col-baslik { display: flex; align-items: center; gap: 8px; margin: 0 0 12px 0; font-weight: 600; font-size: 0.95rem; color: var(--brand-text); }
+        .admin-side-panel { background: var(--bg-card-soft); border: 1px solid var(--border-color-soft); border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; }
+        .admin-hizli-liste { display: flex; flex-direction: column; gap: 8px; }
+        .admin-hizli-btn { background: var(--bg-card); border: 1px solid var(--border-input); border-radius: 7px; padding: 10px 12px; text-align: left; cursor: pointer; font-size: 0.85rem; color: var(--text-primary); font-family: 'Montserrat', sans-serif; transition: 0.2s; }
+        .admin-hizli-btn:hover { background: var(--bg-hover-soft); border-color: var(--accent-blue-border); }
+        .kayit-mini { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 6px; font-size: 0.82rem; margin-bottom: 4px; cursor: pointer; }
+        .kayit-mini:hover { background: var(--bg-hover-soft); }
+        .kayit-mini-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-blue-bg); color: var(--accent-blue); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.72rem; flex-shrink: 0; }
+        .kayit-mini-metin { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); }
+        .kayit-mini-tip { font-size: 0.68rem; color: var(--text-faint); flex-shrink: 0; }
+        .onizleme-kart { border: 1px solid var(--border-color-soft); border-radius: 10px; padding: 14px; background: var(--bg-card); }
+        .onizleme-kart .devir-tag { display: inline-block; margin-bottom: 8px; }
+        .onizleme-baslik { font-weight: 600; font-size: 1rem; color: var(--text-primary); margin: 0 0 8px 0; }
+        .onizleme-metin { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; max-height: 140px; overflow-y: auto; }
+        .onizleme-bos { font-size: 0.82rem; color: var(--text-faint); font-style: italic; }
         input, textarea, select, button { font-family: 'Montserrat', sans-serif; }
         input, textarea, select { width: 100%; padding: 12px; margin: 6px 0 15px 0; box-sizing: border-box; border: 1px solid var(--border-input); border-radius: 6px; font-size: 15px; background: var(--bg-card); color: var(--text-primary); }
         textarea { resize: vertical; line-height: 1.6; }
@@ -585,7 +607,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     <div id="soy" class="page"><h2 data-i18n="h_tree" style="text-align:center; font-weight:normal; margin-bottom: 30px;">Soyağacı Grupları</h2><div id="soyList" style="max-width: 800px; margin: auto;"></div></div>
 
     <div id="admin" class="page">
-        <div class="admin-dashboard" style="max-width: 1000px; margin: auto;">
+        <div class="admin-dashboard" style="max-width: 100%; margin: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;">
                 <h2 data-i18n="h_admin" style="margin: 0; font-weight: normal; display:flex; align-items:center; gap:10px;"><span style="font-size:1.3rem;">🛡️</span>Yönetici Kontrol Merkezi</h2>
                 <div>
@@ -594,6 +616,14 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 </div>
             </div>
             
+            <div class="admin-3col">
+            <aside class="admin-col-list">
+                <h4 class="admin-col-baslik"><span>📋</span> <span data-i18n="h_records">Mevcut Kayıtlar</span></h4>
+                <div id="admin-toplam-kayit" style="font-size: 0.8rem; color: var(--text-faint); margin: -8px 0 14px 2px;"></div>
+                <div id="adminList"></div>
+            </aside>
+
+            <main class="admin-col-form">
             <div class="admin-forms-grid">
             <div class="admin-section admin-section--olay">
                 <div class="admin-section-baslik">
@@ -601,10 +631,10 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                     <h3 id="olay-form-baslik" data-i18n="h_event_form" style="margin:0; font-weight:normal; color: var(--brand-text);">Olay Ekle / Düzenle</h3>
                 </div>
                 <input type="hidden" id="edit-olay-id">
-                <input id="ol_ad" data-i18n-placeholder="ph_event_title" placeholder="Olay Başlığı" oninput="benzerOlayKontrol()">
+                <input id="ol_ad" data-i18n-placeholder="ph_event_title" placeholder="Olay Başlığı" oninput="benzerOlayKontrol(); onizlemeGuncelle('olay')">
                 <div id="olay-uyari" class="canli-uyari"></div>
                 
-                <select id="ol_devir">
+                <select id="ol_devir" onchange="onizlemeGuncelle('olay')">
                     <option value="Asr-ı Saadet" data-i18n="opt_era_asri_event">Dönem: Asr-ı Saadet</option>
                     <option value="Hulefâ-yi Râşidîn" data-i18n="opt_era_rashidun_event">Dönem: Hulefâ-yi Râşidîn</option>
                     <option value="Emeviler" data-i18n="opt_era_umayyad_event">Dönem: Emeviler</option>
@@ -614,7 +644,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 </select>
                 
                 <div style="display: flex; gap: 10px;"><input id="ol_hicri" data-i18n-placeholder="ph_hijri" placeholder="Hicri (Örn: H. 2)"><input id="ol_miladi" data-i18n-placeholder="ph_ce" placeholder="Miladi (Örn: M. 624)"></div>
-                <textarea id="ol_bilgi" class="bilgi-alani" data-i18n-placeholder="ph_event_text" placeholder="Olayın metni..." rows="5" oninput="sayacGuncelle('ol_bilgi','ol_bilgi_sayac')"></textarea>
+                <textarea id="ol_bilgi" class="bilgi-alani" data-i18n-placeholder="ph_event_text" placeholder="Olayın metni..." rows="5" oninput="sayacGuncelle('ol_bilgi','ol_bilgi_sayac'); onizlemeGuncelle('olay')"></textarea>
                 <div id="ol_bilgi_sayac" class="bilgi-sayac">0 karakter</div>
                 <input id="ol_kaynak" data-i18n-placeholder="ph_source" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
                 <div class="form-satir-btn">
@@ -630,7 +660,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 </div>
                 <input type="hidden" id="edit-id">
                 
-                <select id="in_devir">
+                <select id="in_devir" onchange="onizlemeGuncelle('zat')">
                     <option value="Asr-ı Saadet" data-i18n="opt_era_asri_person">Yaşadığı Devir: Asr-ı Saadet</option>
                     <option value="Hulefâ-yi Râşidîn" data-i18n="opt_era_rashidun_person">Yaşadığı Devir: Hulefâ-yi Râşidîn</option>
                     <option value="Emeviler" data-i18n="opt_era_umayyad_person">Yaşadığı Devir: Emeviler</option>
@@ -640,7 +670,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 </select>
 
                 <div class="oneri-sarmal">
-                    <input id="in_ad" data-i18n-placeholder="ph_name_person" placeholder="İsim" oninput="benzerZatKontrol(); oneriGoster('in_ad')" onfocus="oneriGoster('in_ad')" onblur="oneriGizleGecikmeli('in_ad')" autocomplete="off">
+                    <input id="in_ad" data-i18n-placeholder="ph_name_person" placeholder="İsim" oninput="benzerZatKontrol(); oneriGoster('in_ad'); onizlemeGuncelle('zat')" onfocus="oneriGoster('in_ad')" onblur="oneriGizleGecikmeli('in_ad')" autocomplete="off">
                     <div id="in_ad_oneri" class="oneri-liste"></div>
                 </div>
                 <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px; margin-left: 5px;">
@@ -675,7 +705,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 
                 <div style="display: flex; gap: 10px;"><input id="in_d_hicri" data-i18n-placeholder="ph_birth_hijri" placeholder="Doğum Hicri"><input id="in_d_miladi" data-i18n-placeholder="ph_birth_ce" placeholder="Doğum Miladi"></div>
                 <div style="display: flex; gap: 10px;"><input id="in_v_hicri" data-i18n-placeholder="ph_death_hijri" placeholder="Vefat Hicri"><input id="in_v_miladi" data-i18n-placeholder="ph_death_ce" placeholder="Vefat Miladi"></div>
-                <textarea id="in_bilgi" class="bilgi-alani" data-i18n-placeholder="ph_bio" placeholder="Bilgi" rows="4" oninput="sayacGuncelle('in_bilgi','in_bilgi_sayac')"></textarea>
+                <textarea id="in_bilgi" class="bilgi-alani" data-i18n-placeholder="ph_bio" placeholder="Bilgi" rows="4" oninput="sayacGuncelle('in_bilgi','in_bilgi_sayac'); onizlemeGuncelle('zat')"></textarea>
                 <div id="in_bilgi_sayac" class="bilgi-sayac">0 karakter</div>
                 <input id="in_kaynak" data-i18n-placeholder="ph_source" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
                 <div class="form-satir-btn">
@@ -684,12 +714,35 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 </div>
             </div>
             </div>
-            
-            <h3 style="font-weight:normal; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <span data-i18n="h_records">Mevcut Kayıtlar</span>
-                <span id="admin-toplam-kayit" style="font-size: 0.85rem; color: var(--text-faint); font-weight: normal;"></span>
-            </h3>
-            <div id="adminList"></div>
+            </main>
+
+            <aside class="admin-col-side">
+                <div class="admin-side-panel">
+                    <h4 class="admin-col-baslik"><span>🕒</span> Son Düzenlenenler</h4>
+                    <div id="sonDuzenlenenler"></div>
+                </div>
+
+                <div class="admin-side-panel">
+                    <h4 class="admin-col-baslik"><span>👁️</span> Canlı Önizleme</h4>
+                    <div id="canliOnizleme"></div>
+                </div>
+
+                <div class="admin-side-panel">
+                    <h4 class="admin-col-baslik"><span>⚡</span> Hızlı İşlemler</h4>
+                    <div class="admin-hizli-liste">
+                        <button class="admin-hizli-btn" onclick="odaklan('ol_ad')">🗓️ Yeni Olay Formuna Git</button>
+                        <button class="admin-hizli-btn" onclick="odaklan('in_ad')">👤 Yeni Zat Formuna Git</button>
+                        <button class="admin-hizli-btn" onclick="sayfaDegistir('arsiv')">📚 Arşivi Görüntüle</button>
+                        <button class="admin-hizli-btn" onclick="sayfaDegistir('cizelge')">📅 Zaman Çizelgesini Gör</button>
+                    </div>
+                </div>
+
+                <div class="admin-side-panel admin-ipucu">
+                    <h4 class="admin-col-baslik"><span>💡</span> İpucu</h4>
+                    <p id="admin-ipucu-metin" style="margin:0; font-size:0.85rem; color: var(--text-secondary); line-height:1.5;"></p>
+                </div>
+            </aside>
+            </div>
         </div>
     </div>
 </div>
@@ -1164,9 +1217,14 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         if (id === 'admin') {
             document.getElementById('main-header').style.display = 'none';
             document.getElementById('main-footer').style.display = 'none';
+            document.querySelector('.container').classList.add('container-genis');
+            ipucuGoster();
+            onizlemeGuncelle('zat');
+            sonDuzenlenenlerGuncelle();
         } else {
             document.getElementById('main-header').style.display = 'flex'; 
             document.getElementById('main-footer').style.display = 'block';
+            document.querySelector('.container').classList.remove('container-genis');
         }
 
         if (id !== 'arsiv') {
@@ -1254,6 +1312,54 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     }
 
     function oneriGizleGecikmeli(inputId) { setTimeout(() => oneriGizle(inputId), 150); }
+
+    function odaklan(inputId) {
+        const girdi = document.getElementById(inputId);
+        if (!girdi) return;
+        girdi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => girdi.focus(), 300);
+    }
+
+    function onizlemeGuncelle(tip) {
+        const kutu = document.getElementById('canliOnizleme');
+        if (!kutu) return;
+        if (tip === 'olay') {
+            const baslik = (document.getElementById('ol_ad').value || "").trim();
+            const bilgi = (document.getElementById('ol_bilgi').value || "").trim();
+            const devir = document.getElementById('ol_devir').value;
+            if (!baslik && !bilgi) { kutu.innerHTML = `<p class="onizleme-bos">Yazmaya başladığında burada canlı önizlemesini göreceksin.</p>`; return; }
+            kutu.innerHTML = `<div class="onizleme-kart"><span class="devir-tag">${escapeHtml(devir)}</span><h5 class="onizleme-baslik">${escapeHtml(baslik || "(Başlıksız Olay)")}</h5><div class="onizleme-metin">${escapeHtml(bilgi || "(Henüz metin yok)")}</div></div>`;
+        } else {
+            const isim = (document.getElementById('in_ad').value || "").trim();
+            const bilgi = (document.getElementById('in_bilgi').value || "").trim();
+            const devir = document.getElementById('in_devir').value;
+            if (!isim && !bilgi) { kutu.innerHTML = `<p class="onizleme-bos">Yazmaya başladığında burada canlı önizlemesini göreceksin.</p>`; return; }
+            kutu.innerHTML = `<div class="onizleme-kart"><span class="devir-tag">${escapeHtml(devir)}</span><h5 class="onizleme-baslik">${escapeHtml(isim || "(İsimsiz Zat)")}</h5><div class="onizleme-metin">${escapeHtml(bilgi || "(Henüz metin yok)")}</div></div>`;
+        }
+    }
+
+    function sonDuzenlenenlerGuncelle() {
+        const kutu = document.getElementById('sonDuzenlenenler');
+        if (!kutu) return;
+        const hepsi = [
+            ...veriler.map(z => ({ id: z.id, ad: z.isim, tip: 'zat', zaman: z.guncellemeTarihi || 0 })),
+            ...olaylar.map(o => ({ id: o.id, ad: o.ad, tip: 'olay', zaman: o.guncellemeTarihi || 0 }))
+        ].filter(k => k.zaman > 0).sort((a, b) => b.zaman - a.zaman).slice(0, 6);
+        if (hepsi.length === 0) { kutu.innerHTML = `<p class="onizleme-bos">Henüz düzenleme yapılmadı.</p>`; return; }
+        kutu.innerHTML = hepsi.map(k => `<div class="kayit-mini" onclick="${k.tip === 'zat' ? `duzenle('${k.id}')` : `duzenleOlay('${k.id}')`}"><div class="kayit-mini-avatar">${escapeHtml((k.ad || "?").charAt(0).toLocaleUpperCase('tr'))}</div><div class="kayit-mini-metin">${escapeHtml(k.ad || "")}</div><div class="kayit-mini-tip">${k.tip === 'zat' ? 'Zat' : 'Olay'}</div></div>`).join('');
+    }
+
+    const ADMIN_IPUCLARI = [
+        "Bilgi kutusunun sağ alt köşesinden tutup aşağı doğru sürükleyerek kutuyu büyütebilirsin.",
+        "İsim, anne ve baba alanlarına yazarken sistem kayıtlı isimler arasından öneri sunar.",
+        "Aynı isimde bir kayıt zaten varsa, isim yazarken seni otomatik uyarır.",
+        "Sol taraftaki listeden bir kayda tıklayarak hızlıca düzenleyebilirsin.",
+        "Kaydetmeden önce sağdaki canlı önizlemeden nasıl görüneceğini kontrol edebilirsin."
+    ];
+    function ipucuGoster() {
+        const el = document.getElementById('admin-ipucu-metin');
+        if (el) el.innerText = ADMIN_IPUCLARI[Math.floor(Math.random() * ADMIN_IPUCLARI.length)];
+    }
 
     function benzerOlayKontrol() {
         const metin = document.getElementById('ol_ad').value.trim().toLocaleLowerCase('tr');
@@ -1454,6 +1560,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             return `<details class="soy-klasor"><summary class="soy-baslik">${babaBaslik}</summary><div class="soy-icerik">${kisilerHtml}</div></details>`;
         }).join('');
         aramaYap();
+        sonDuzenlenenlerGuncelle();
     }
 
     async function kaydet() {
@@ -1469,7 +1576,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             baglar: document.getElementById('in_baglar_liste').value || "?", d_hicri: document.getElementById('in_d_hicri').value || "?", 
             d_miladi: document.getElementById('in_d_miladi').value || "?", v_hicri: document.getElementById('in_v_hicri').value || "?", 
             v_miladi: document.getElementById('in_v_miladi').value || "?", bilgi: document.getElementById('in_bilgi').value || "", 
-            kaynak: document.getElementById('in_kaynak').value || "?"
+            kaynak: document.getElementById('in_kaynak').value || "?", guncellemeTarihi: Date.now()
         };
         if(id) await db.collection("zatlar").doc(id).update(obj); else await db.collection("zatlar").add(obj);
         temizle();
@@ -1480,7 +1587,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         const ad = kelimeBaslariniBuyut(document.getElementById('ol_ad').value.trim());
         if (!ad) { alert(t('need_event')); return; }
         const id = document.getElementById('edit-olay-id').value;
-        const obj = { ad: ad, devir: document.getElementById('ol_devir').value, hicri: document.getElementById('ol_hicri').value || "?", miladi: document.getElementById('ol_miladi').value || "?", bilgi: document.getElementById('ol_bilgi').value || "", kaynak: document.getElementById('ol_kaynak').value || "?", eklenmeTarihi: Date.now() };
+        const obj = { ad: ad, devir: document.getElementById('ol_devir').value, hicri: document.getElementById('ol_hicri').value || "?", miladi: document.getElementById('ol_miladi').value || "?", bilgi: document.getElementById('ol_bilgi').value || "", kaynak: document.getElementById('ol_kaynak').value || "?", eklenmeTarihi: Date.now(), guncellemeTarihi: Date.now() };
         
         if(id) {
             const mevcutOlay = olaylar.find(v => v.id === id);
@@ -1518,6 +1625,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         document.getElementById('cancel-btn').style.display = "inline-block"; document.getElementById('zat-uyari').style.display = "none";
         document.getElementById('oto_ra').checked = !(!z.isim.toLocaleLowerCase('tr').includes("(ra)") && !z.isim.toLocaleLowerCase('tr').includes("(r.a.)"));
         sayacGuncelle('in_bilgi','in_bilgi_sayac');
+        onizlemeGuncelle('zat');
         window.scrollTo(0,0);
     }
 
@@ -1527,11 +1635,12 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         document.getElementById('ol_ad').value = o.ad; document.getElementById('ol_hicri').value = o.hicri; document.getElementById('ol_miladi').value = o.miladi; document.getElementById('ol_bilgi').value = o.bilgi; document.getElementById('ol_kaynak').value = o.kaynak || "";
         document.getElementById('olay-cancel-btn').style.display = "inline-block"; document.getElementById('olay-uyari').style.display = "none";
         sayacGuncelle('ol_bilgi','ol_bilgi_sayac');
+        onizlemeGuncelle('olay');
         window.scrollTo(0,0);
     }
 
-    function temizle() { document.querySelectorAll('input[id^="in_"], textarea[id^="in_"]').forEach(i => i.value = ""); document.getElementById('in_devir').value = "Asr-ı Saadet"; document.getElementById('edit-id').value = ""; document.getElementById('cancel-btn').style.display = "none"; document.getElementById('zat-uyari').style.display = "none"; if(document.getElementById('oto_ra')) document.getElementById('oto_ra').checked = true; sayacGuncelle('in_bilgi','in_bilgi_sayac'); }
-    function temizleOlay() { document.querySelectorAll('input[id^="ol_"], textarea[id^="ol_"]').forEach(i => i.value = ""); document.getElementById('ol_devir').value = "Asr-ı Saadet"; document.getElementById('edit-olay-id').value = ""; document.getElementById('olay-cancel-btn').style.display = "none"; document.getElementById('olay-uyari').style.display = "none"; sayacGuncelle('ol_bilgi','ol_bilgi_sayac'); }
+    function temizle() { document.querySelectorAll('input[id^="in_"], textarea[id^="in_"]').forEach(i => i.value = ""); document.getElementById('in_devir').value = "Asr-ı Saadet"; document.getElementById('edit-id').value = ""; document.getElementById('cancel-btn').style.display = "none"; document.getElementById('zat-uyari').style.display = "none"; if(document.getElementById('oto_ra')) document.getElementById('oto_ra').checked = true; sayacGuncelle('in_bilgi','in_bilgi_sayac'); onizlemeGuncelle('zat'); }
+    function temizleOlay() { document.querySelectorAll('input[id^="ol_"], textarea[id^="ol_"]').forEach(i => i.value = ""); document.getElementById('ol_devir').value = "Asr-ı Saadet"; document.getElementById('edit-olay-id').value = ""; document.getElementById('olay-cancel-btn').style.display = "none"; document.getElementById('olay-uyari').style.display = "none"; sayacGuncelle('ol_bilgi','ol_bilgi_sayac'); onizlemeGuncelle('olay'); }
 
     function aramaYap() {
         const val = document.getElementById('ara').value;
