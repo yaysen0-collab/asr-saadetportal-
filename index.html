@@ -242,7 +242,26 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
 
         /* Alt Sayfalar & Admin & Footer */
         .admin-dashboard { background: var(--bg-card); padding: 40px; border-radius: 16px; border: 1px solid var(--border-color); }
-        .admin-section { background: var(--bg-card-soft); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--border-color-soft); box-shadow: 0 2px 6px var(--shadow-card); }
+        .admin-section { background: var(--bg-card-soft); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--border-color-soft); border-top: 3px solid var(--border-color-soft); box-shadow: 0 2px 6px var(--shadow-card); }
+        .admin-forms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: start; }
+        @media (max-width: 820px) { .admin-forms-grid { grid-template-columns: 1fr; } }
+        .admin-section--olay { border-top-color: var(--accent-blue); }
+        .admin-section--zat { border-top-color: var(--brand-bg); }
+        .admin-section-baslik { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+        .admin-section-ikon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; background: var(--accent-blue-bg); color: var(--accent-blue); }
+        .admin-section--zat .admin-section-ikon { background: var(--bg-hover-soft); color: var(--brand-text); }
+        .form-satir-btn { display: flex; gap: 10px; margin-top: 5px; }
+        .form-satir-btn .btn-action { width: auto; flex: 1; }
+        .kayit-satir { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border-color-soft); border-radius: 8px; margin-bottom: 8px; background: var(--bg-card); transition: 0.2s; }
+        .kayit-satir:hover { border-color: var(--border-input); box-shadow: 0 3px 10px var(--shadow-card); }
+        .kayit-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-blue-bg); color: var(--accent-blue); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; flex-shrink: 0; }
+        .kayit-isim { flex: 1; font-weight: 500; color: var(--text-primary); }
+        .kayit-aksiyonlar { display: flex; gap: 6px; flex-shrink: 0; }
+        .kayit-btn { background: transparent; border: 1px solid var(--border-color-soft); cursor: pointer; padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 500; transition: 0.2s; font-family: 'Montserrat', sans-serif; }
+        .kayit-btn-duzenle { color: var(--accent-blue); }
+        .kayit-btn-duzenle:hover { background: var(--accent-blue-bg); border-color: var(--accent-blue-border); }
+        .kayit-btn-sil { color: var(--danger); }
+        .kayit-btn-sil:hover { background: var(--danger-border); border-color: var(--danger); }
         input, textarea, select, button { font-family: 'Montserrat', sans-serif; }
         input, textarea, select { width: 100%; padding: 12px; margin: 6px 0 15px 0; box-sizing: border-box; border: 1px solid var(--border-input); border-radius: 6px; font-size: 15px; background: var(--bg-card); color: var(--text-primary); }
         textarea { resize: vertical; line-height: 1.6; }
@@ -561,16 +580,20 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
 
     <div id="admin" class="page">
         <div class="admin-dashboard" style="max-width: 1000px; margin: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px;">
-                <h2 data-i18n="h_admin" style="margin: 0; font-weight: normal;">Yönetici Kontrol Merkezi</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;">
+                <h2 data-i18n="h_admin" style="margin: 0; font-weight: normal; display:flex; align-items:center; gap:10px;"><span style="font-size:1.3rem;">🛡️</span>Yönetici Kontrol Merkezi</h2>
                 <div>
                     <button onclick="sayfaDegistir('home')" data-i18n="btn_view_site" style="background: var(--bg-card); border: 1px solid var(--border-input); padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Siteyi Gör</button>
                     <button onclick="cikisYap()" data-i18n="btn_logout" style="background: var(--bg-card-soft); color: var(--danger); border: 1px solid var(--danger-border); padding: 8px 15px; border-radius: 5px; cursor: pointer;">Çıkış Yap</button>
                 </div>
             </div>
             
-            <div class="admin-section">
-                <h3 id="olay-form-baslik" data-i18n="h_event_form" style="margin-top:0; font-weight:normal; color: var(--brand-text);">Olay Ekle / Düzenle</h3>
+            <div class="admin-forms-grid">
+            <div class="admin-section admin-section--olay">
+                <div class="admin-section-baslik">
+                    <span class="admin-section-ikon">🗓️</span>
+                    <h3 id="olay-form-baslik" data-i18n="h_event_form" style="margin:0; font-weight:normal; color: var(--brand-text);">Olay Ekle / Düzenle</h3>
+                </div>
                 <input type="hidden" id="edit-olay-id">
                 <input id="ol_ad" data-i18n-placeholder="ph_event_title" placeholder="Olay Başlığı" oninput="benzerOlayKontrol()">
                 <div id="olay-uyari" class="canli-uyari"></div>
@@ -588,12 +611,17 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 <textarea id="ol_bilgi" class="bilgi-alani" data-i18n-placeholder="ph_event_text" placeholder="Olayın metni..." rows="5" oninput="sayacGuncelle('ol_bilgi','ol_bilgi_sayac')"></textarea>
                 <div id="ol_bilgi_sayac" class="bilgi-sayac">0 karakter</div>
                 <input id="ol_kaynak" data-i18n-placeholder="ph_source" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
-                <button class="btn-action" onclick="olayKaydet()" data-i18n="btn_save">KAYDET</button>
-                <button class="btn-action" id="olay-cancel-btn" onclick="temizleOlay()" data-i18n="btn_cancel" style="background: var(--bg-hover-soft); color: var(--text-primary); display:none;">İPTAL</button>
+                <div class="form-satir-btn">
+                    <button class="btn-action" onclick="olayKaydet()" data-i18n="btn_save">KAYDET</button>
+                    <button class="btn-action" id="olay-cancel-btn" onclick="temizleOlay()" data-i18n="btn_cancel" style="background: var(--bg-hover-soft); color: var(--text-primary); display:none;">İPTAL</button>
+                </div>
             </div>
             
-            <div class="admin-section">
-                <h3 id="form-baslik" data-i18n="h_person_form" style="margin-top:0; font-weight:normal; color: var(--brand-text);">Zat Ekle / Düzenle</h3>
+            <div class="admin-section admin-section--zat">
+                <div class="admin-section-baslik">
+                    <span class="admin-section-ikon">👤</span>
+                    <h3 id="form-baslik" data-i18n="h_person_form" style="margin:0; font-weight:normal; color: var(--brand-text);">Zat Ekle / Düzenle</h3>
+                </div>
                 <input type="hidden" id="edit-id">
                 
                 <select id="in_devir">
@@ -632,8 +660,11 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 <textarea id="in_bilgi" class="bilgi-alani" data-i18n-placeholder="ph_bio" placeholder="Bilgi" rows="4" oninput="sayacGuncelle('in_bilgi','in_bilgi_sayac')"></textarea>
                 <div id="in_bilgi_sayac" class="bilgi-sayac">0 karakter</div>
                 <input id="in_kaynak" data-i18n-placeholder="ph_source" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
-                <button class="btn-action" onclick="kaydet()" data-i18n="btn_save">KAYDET</button>
-                <button class="btn-action" id="cancel-btn" onclick="temizle()" data-i18n="btn_cancel" style="background: var(--bg-hover-soft); color: var(--text-primary); display:none;">İPTAL</button>
+                <div class="form-satir-btn">
+                    <button class="btn-action" onclick="kaydet()" data-i18n="btn_save">KAYDET</button>
+                    <button class="btn-action" id="cancel-btn" onclick="temizle()" data-i18n="btn_cancel" style="background: var(--bg-hover-soft); color: var(--text-primary); display:none;">İPTAL</button>
+                </div>
+            </div>
             </div>
             
             <h3 style="font-weight:normal; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -1332,7 +1363,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         veriler.forEach(z => { let harf = (z.isim || "İ").charAt(0).toLocaleUpperCase('tr'); if (!azZatlar[harf]) azZatlar[harf] = []; azZatlar[harf].push(z); });
         Object.keys(azZatlar).sort((a,b) => a.localeCompare(b, 'tr')).forEach(h => {
             admHtml += `<details class="soy-klasor"><summary class="soy-baslik">${t('letter_of', { h: escapeHtml(h), n: azZatlar[h].length })}</summary><div class="soy-icerik">`;
-            azZatlar[h].forEach(z => { admHtml += `<div style="padding:10px; border: 1px solid var(--border-color-soft); border-radius: 6px; margin-bottom:5px; background: var(--bg-card);"><strong>${escapeHtml(z.isim)}</strong><div style="margin-top:5px;"><button onclick="duzenle('${z.id}')" style="background:transparent; border:none; color: var(--accent-blue); cursor:pointer; padding:0 10px 0 0;">${t('edit')}</button><button onclick="sil('${z.id}', 'zatlar')" style="background:transparent; border:none; color: var(--danger); cursor:pointer;">${t('del')}</button></div></div>`; });
+            azZatlar[h].forEach(z => { admHtml += `<div class="kayit-satir"><div class="kayit-avatar">${escapeHtml((z.isim||"?").charAt(0).toLocaleUpperCase('tr'))}</div><div class="kayit-isim">${escapeHtml(z.isim)}</div><div class="kayit-aksiyonlar"><button class="kayit-btn kayit-btn-duzenle" onclick="duzenle('${z.id}')">${t('edit')}</button><button class="kayit-btn kayit-btn-sil" onclick="sil('${z.id}', 'zatlar')">${t('del')}</button></div></div>`; });
             admHtml += `</div></details>`;
         });
 
@@ -1341,7 +1372,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         olaylar.forEach(o => { let harf = (o.ad || "İ").charAt(0).toLocaleUpperCase('tr'); if (!azOlaylar[harf]) azOlaylar[harf] = []; azOlaylar[harf].push(o); });
         Object.keys(azOlaylar).sort((a,b) => a.localeCompare(b, 'tr')).forEach(h => {
             admHtml += `<details class="soy-klasor"><summary class="soy-baslik">${t('letter_of', { h: escapeHtml(h), n: azOlaylar[h].length })}</summary><div class="soy-icerik">`;
-            azOlaylar[h].forEach(o => { admHtml += `<div style="padding:10px; border: 1px solid var(--border-color-soft); border-radius: 6px; margin-bottom:5px; background: var(--bg-card);"><strong>${escapeHtml(o.ad)}</strong><div style="margin-top:5px;"><button onclick="duzenleOlay('${o.id}')" style="background:transparent; border:none; color: var(--accent-blue); cursor:pointer; padding:0 10px 0 0;">${t('edit')}</button><button onclick="sil('${o.id}', 'olaylar')" style="background:transparent; border:none; color: var(--danger); cursor:pointer;">${t('del')}</button></div></div>`; });
+            azOlaylar[h].forEach(o => { admHtml += `<div class="kayit-satir"><div class="kayit-avatar">${escapeHtml((o.ad||"?").charAt(0).toLocaleUpperCase('tr'))}</div><div class="kayit-isim">${escapeHtml(o.ad)}</div><div class="kayit-aksiyonlar"><button class="kayit-btn kayit-btn-duzenle" onclick="duzenleOlay('${o.id}')">${t('edit')}</button><button class="kayit-btn kayit-btn-sil" onclick="sil('${o.id}', 'olaylar')">${t('del')}</button></div></div>`; });
             admHtml += `</div></details>`;
         });
         adminL.innerHTML = admHtml;
