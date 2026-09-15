@@ -108,7 +108,10 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         .lang-btn.active-lang { background: var(--header-text); color: var(--brand-bg); border-color: var(--header-text); }
 
         .theme-switch { display: flex; align-items: center; flex-shrink: 0; }
-        .theme-btn { background: transparent; color: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.25); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; line-height: 1; }
+        .header-uye-pill { background: rgba(255,255,255,0.15); color: var(--header-text); border: 1px solid rgba(255,255,255,0.4); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 0.85rem; font-weight: 500; flex-shrink: 0; transition: 0.2s; }
+        .header-uye-pill:hover { background: rgba(255,255,255,0.28); }
+        .header-avatar-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.9); color: var(--brand-bg); border: none; cursor: pointer; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.95rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .header-avatar-btn:hover { background: white; transform: scale(1.05); }.theme-btn { background: transparent; color: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.25); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; line-height: 1; }
         .theme-btn:hover { background: rgba(255,255,255,0.12); color: white; border-color: rgba(255,255,255,0.5); }
 
         @media (max-width: 768px) {
@@ -387,8 +390,6 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         <button class="nav-btn" onclick="sayfaDegistir('soy')" data-i18n="nav_tree">Soyağacı</button>
         <button class="nav-btn" onclick="rastgeleSahsiyet()" style="border-color: rgba(255,255,255,0.4);" data-i18n="nav_random">Rastgele Şahsiyet</button>
         <button class="nav-btn" id="nav-admin-btn" style="display:none; background:var(--header-text); color:var(--brand-text);" onclick="sayfaDegistir('admin')" data-i18n="nav_panel">Panel</button>
-        <button class="nav-btn" id="nav-uye-giris-btn" onclick="sayfaDegistir('uye-giris')">Giriş Yap</button>
-        <button class="nav-btn" id="nav-uye-hesap-btn" style="display:none;" onclick="sayfaDegistir('hesabim')">👤 Hesabım</button>
     </div>
     <div class="header-search">
         <input type="text" id="global-search" data-i18n-placeholder="ph_global_search" placeholder="Portalda Ara..." oninput="globalArama()" autocomplete="off">
@@ -399,6 +400,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         <div class="theme-switch">
             <button class="theme-btn" id="theme-toggle-btn" onclick="temaDegistir()" title="Koyu Mod"></button>
         </div>
+        <button class="header-uye-pill" id="nav-uye-giris-btn" onclick="sayfaDegistir('uye-giris')">Giriş Yap</button>
+        <button class="header-avatar-btn" id="nav-uye-hesap-btn" style="display:none;" onclick="sayfaDegistir('hesabim')" title="Hesabım"><span id="header-avatar-harf">?</span></button>
     </div>
 </header>
 
@@ -1122,7 +1125,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     const auth = firebase.auth();
     const googleProvider = new firebase.auth.GoogleAuthProvider();
     // ÖNEMLİ: Aşağıdaki e-postayı kendi yönetici e-postanla değiştir. Sadece bu e-posta ile giriş yapan kişi Yönetici Panelini kullanabilir.
-    const ADMIN_EMAIL = "yaysen0@gmail.com";
+    const ADMIN_EMAIL = "admin@ornek.com";
 
     let girisliKullanici = null;
     let kullaniciFavorileri = {};
@@ -1176,7 +1179,9 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         const girisBtn = document.getElementById('nav-uye-giris-btn');
         const hesapBtn = document.getElementById('nav-uye-hesap-btn');
         if (girisBtn) girisBtn.style.display = user ? 'none' : 'inline-block';
-        if (hesapBtn) hesapBtn.style.display = user ? 'inline-block' : 'none';
+        if (hesapBtn) hesapBtn.style.display = user ? 'flex' : 'none';
+        const avatarHarf = document.getElementById('header-avatar-harf');
+        if (avatarHarf && user) avatarHarf.innerText = (user.displayName || user.email || '?').trim().charAt(0).toLocaleUpperCase('tr');
 
         if (!user) {
             kullaniciFavorileri = {}; kullaniciNotlari = {};
