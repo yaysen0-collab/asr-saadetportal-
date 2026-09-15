@@ -305,6 +305,37 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         .bilgi-editor blockquote { margin: 10px 0; padding: 8px 14px; border-left: 3px solid var(--brand-bg); color: var(--text-secondary); font-style: italic; }
         .bilgi-editor ul, .bilgi-editor ol { margin: 8px 0; padding-left: 24px; }
         .onizleme-metin p { margin: 0 0 8px 0; }
+
+        /* ÜYELİK / FAVORİ / NOT / YORUM */
+        .uye-sekme-satir { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color-soft); }
+        .uye-sekme-btn { flex: 1; background: transparent; border: none; padding: 10px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 0.95rem; color: var(--text-secondary); border-bottom: 2px solid transparent; }
+        .uye-sekme-btn.uye-sekme-aktif { color: var(--brand-text); border-bottom-color: var(--brand-bg); font-weight: 600; }
+        .uye-ayrac { display: flex; align-items: center; text-align: center; color: var(--text-faint); font-size: 0.8rem; margin: 18px 0; }
+        .uye-ayrac::before, .uye-ayrac::after { content: ""; flex: 1; height: 1px; background: var(--border-color-soft); }
+        .uye-ayrac span { padding: 0 10px; }
+        .btn-google { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border-input); border-radius: 6px; padding: 12px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 0.95rem; color: var(--text-primary); }
+        .btn-google:hover { background: var(--bg-hover-soft); }
+        .google-g { font-weight: 700; color: #4285F4; }
+
+        .favori-btn { background: transparent; border: none; cursor: pointer; font-size: 1.4rem; color: var(--danger); line-height: 1; padding: 4px; flex-shrink: 0; }
+        .favori-btn:hover { transform: scale(1.15); }
+        .favori-dolu { animation: favoriPop 0.25s ease; }
+        @keyframes favoriPop { 0% { transform: scale(0.7); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+        .not-yorum-blok { margin-top: 25px; display: flex; flex-direction: column; gap: 18px; }
+        .not-panel, .yorum-blok { border: 1px solid var(--border-color-soft); border-radius: 10px; padding: 16px; background: var(--bg-card-soft); }
+        .not-panel-baslik { margin: 0 0 10px 0; font-size: 0.92rem; font-weight: 600; color: var(--brand-text); }
+        .not-ozel-etiket { font-size: 0.72rem; font-weight: normal; color: var(--text-faint); }
+        .not-panel-kilitli { text-align: center; color: var(--text-secondary); font-size: 0.88rem; padding: 18px; }
+        .not-textarea { width: 100%; min-height: 80px; padding: 10px; border: 1px solid var(--border-input); border-radius: 6px; background: var(--bg-card); color: var(--text-primary); font-family: 'Montserrat', sans-serif; font-size: 0.9rem; resize: vertical; box-sizing: border-box; margin-bottom: 10px; }
+        .btn-not-kaydet { background: var(--brand-bg); color: white; border: none; padding: 9px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-family: 'Montserrat', sans-serif; }
+        .btn-not-kaydet:hover { background: var(--brand-bg-hover); }
+        .yorum-liste { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; max-height: 320px; overflow-y: auto; }
+        .yorum-item { border-bottom: 1px solid var(--border-color-soft); padding-bottom: 10px; }
+        .yorum-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .yorum-item-ust { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.85rem; color: var(--text-primary); }
+        .yorum-tarih { font-size: 0.75rem; color: var(--text-faint); }
+        .yorum-metin { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; }
         input, textarea, select, button { font-family: 'Montserrat', sans-serif; }
         input, textarea, select { width: 100%; padding: 12px; margin: 6px 0 15px 0; box-sizing: border-box; border: 1px solid var(--border-input); border-radius: 6px; font-size: 15px; background: var(--bg-card); color: var(--text-primary); }
         textarea { resize: vertical; line-height: 1.6; }
@@ -356,6 +387,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         <button class="nav-btn" onclick="sayfaDegistir('soy')" data-i18n="nav_tree">Soyağacı</button>
         <button class="nav-btn" onclick="rastgeleSahsiyet()" style="border-color: rgba(255,255,255,0.4);" data-i18n="nav_random">Rastgele Şahsiyet</button>
         <button class="nav-btn" id="nav-admin-btn" style="display:none; background:var(--header-text); color:var(--brand-text);" onclick="sayfaDegistir('admin')" data-i18n="nav_panel">Panel</button>
+        <button class="nav-btn" id="nav-uye-giris-btn" onclick="sayfaDegistir('uye-giris')">Giriş Yap</button>
+        <button class="nav-btn" id="nav-uye-hesap-btn" style="display:none;" onclick="sayfaDegistir('hesabim')">👤 Hesabım</button>
     </div>
     <div class="header-search">
         <input type="text" id="global-search" data-i18n-placeholder="ph_global_search" placeholder="Portalda Ara..." oninput="globalArama()" autocomplete="off">
@@ -475,8 +508,10 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         <div class="reading-page">
             <button class="back-btn" onclick="sayfaDegistir('arsiv')" data-i18n="back_archive">← Arşive Dön</button>
             <h2 id="okuma-baslik">Olay Başlığı</h2>
-            <div style="text-align: center; color: var(--text-faint); margin-bottom: 35px; font-size: 1.05rem;" id="okuma-tarih">Tarih Bilgisi</div>
+            <div style="text-align: center; color: var(--text-faint); margin-bottom: 10px; font-size: 1.05rem;" id="okuma-tarih">Tarih Bilgisi</div>
+            <div id="okuma-favori-alan" style="text-align:center; margin-bottom: 25px;"></div>
             <div id="okuma-icerik"></div>
+            <div id="okuma-not-yorum" style="margin-top:30px;"></div>
         </div>
     </div>
 
@@ -617,7 +652,52 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             <button class="btn-action" onclick="girisYap()" style="margin-top: 15px;" data-i18n="btn_login">Giriş Yap</button>
         </div>
     </div>
-    
+
+    <div id="uye-giris" class="page">
+        <div class="admin-dashboard" style="max-width: 420px; margin: auto;">
+            <div class="uye-sekme-satir">
+                <button class="uye-sekme-btn uye-sekme-aktif" id="sekme-giris-btn" onclick="uyeSekmeDegistir('giris')">Giriş Yap</button>
+                <button class="uye-sekme-btn" id="sekme-kayit-btn" onclick="uyeSekmeDegistir('kayit')">Üye Ol</button>
+            </div>
+
+            <div id="uye-sekme-giris">
+                <input type="email" id="uye-giris-email" placeholder="E-posta Adresiniz" onkeypress="if(event.key==='Enter') uyeGirisYap();">
+                <input type="password" id="uye-giris-sifre" placeholder="Şifreniz" onkeypress="if(event.key==='Enter') uyeGirisYap();">
+                <div id="uye-giris-hata" class="canli-uyari"></div>
+                <button class="btn-action" onclick="uyeGirisYap()">Giriş Yap</button>
+            </div>
+
+            <div id="uye-sekme-kayit" style="display:none;">
+                <input type="text" id="uye-kayit-ad" placeholder="Adın Soyadın">
+                <input type="email" id="uye-kayit-email" placeholder="E-posta Adresin">
+                <input type="password" id="uye-kayit-sifre" placeholder="Şifre Belirle (en az 6 karakter)" onkeypress="if(event.key==='Enter') uyeKayitOl();">
+                <div id="uye-kayit-hata" class="canli-uyari"></div>
+                <button class="btn-action" onclick="uyeKayitOl()">Üye Ol</button>
+            </div>
+
+            <div class="uye-ayrac"><span>veya</span></div>
+            <button class="btn-google" onclick="googleIleGiris()"><span class="google-g">G</span> Google ile Devam Et</button>
+        </div>
+    </div>
+
+    <div id="hesabim" class="page">
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom: 1px solid var(--border-color); padding-bottom:15px; margin-bottom:25px;">
+                <div>
+                    <h2 style="margin:0; font-weight:normal;">👤 Hesabım</h2>
+                    <p id="hesap-bilgi" style="margin:5px 0 0 0; color:var(--text-secondary); font-size:0.9rem;"></p>
+                </div>
+                <button onclick="uyeCikisYap()" style="background: var(--bg-card-soft); color: var(--danger); border: 1px solid var(--danger-border); padding: 8px 15px; border-radius: 5px; cursor: pointer;">Çıkış Yap</button>
+            </div>
+
+            <h3 style="font-weight:normal;">⭐ Favorilerim</h3>
+            <div id="favorilerim-liste" style="margin-bottom:35px;"></div>
+
+            <h3 style="font-weight:normal;">📝 Notlarım</h3>
+            <div id="notlarim-liste"></div>
+        </div>
+    </div>
+
     <div id="cizelge" class="page"><h2 data-i18n="h_timeline" style="text-align:center; font-weight:normal; margin-bottom: 30px;">Zaman Çizelgesi</h2><div id="cizelgeList" style="max-width: 800px; margin: auto;"></div></div>
     <div id="soy" class="page"><h2 data-i18n="h_tree" style="text-align:center; font-weight:normal; margin-bottom: 30px;">Soyağacı Grupları</h2><div id="soyList" style="max-width: 800px; margin: auto;"></div></div>
 
@@ -1040,6 +1120,14 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+    // ÖNEMLİ: Aşağıdaki e-postayı kendi yönetici e-postanla değiştir. Sadece bu e-posta ile giriş yapan kişi Yönetici Panelini kullanabilir.
+    const ADMIN_EMAIL = "yaysen0@gmail.com";
+
+    let girisliKullanici = null;
+    let kullaniciFavorileri = {};
+    let kullaniciNotlari = {};
+    let favoriUnsub = null, notUnsub = null;
     
     let veriler = [];
     let olaylar = [];
@@ -1082,13 +1170,25 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     };
 
     auth.onAuthStateChanged(user => { 
+        girisliKullanici = user;
+        const adminMi = !!(user && user.email && user.email.toLocaleLowerCase('tr') === ADMIN_EMAIL.toLocaleLowerCase('tr'));
+        document.getElementById('nav-admin-btn').style.display = adminMi ? 'inline-block' : 'none';
+        const girisBtn = document.getElementById('nav-uye-giris-btn');
+        const hesapBtn = document.getElementById('nav-uye-hesap-btn');
+        if (girisBtn) girisBtn.style.display = user ? 'none' : 'inline-block';
+        if (hesapBtn) hesapBtn.style.display = user ? 'inline-block' : 'none';
+
         if (!user) {
-            document.getElementById('nav-admin-btn').style.display = 'none';
-            if (localStorage.getItem('aktifSayfa') === 'admin') sayfaDegistir('login');
+            kullaniciFavorileri = {}; kullaniciNotlari = {};
+            if (favoriUnsub) { favoriUnsub(); favoriUnsub = null; }
+            if (notUnsub) { notUnsub(); notUnsub = null; }
+            if (localStorage.getItem('aktifSayfa') === 'admin' || localStorage.getItem('aktifSayfa') === 'hesabim') sayfaDegistir('login');
         } else {
-            document.getElementById('nav-admin-btn').style.display = 'inline-block';
-            if (localStorage.getItem('aktifSayfa') === 'login') sayfaDegistir('admin');
+            if (localStorage.getItem('aktifSayfa') === 'login' || localStorage.getItem('aktifSayfa') === 'uye-giris') { sayfaDegistir(adminMi ? 'admin' : 'hesabim'); }
+            favoriVeNotDinleyiciBaslat(user.uid);
+            hesapBilgiGuncelle();
         }
+        ekranaBas();
     });
 
     db.collection("zatlar").onSnapshot(s => { veriler = s.docs.map(d => ({ id: d.id, ...d.data() })); ekranaBas(); });
@@ -1325,6 +1425,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             document.getElementById('main-header').style.display = 'flex'; 
             document.getElementById('main-footer').style.display = 'block';
             document.querySelector('.container').classList.remove('container-genis');
+            if (id === 'hesabim') { hesapBilgiGuncelle(); favorilerSayfasiGuncelle(); notlarSayfasiGuncelle(); }
         }
 
         if (id !== 'arsiv') {
@@ -1343,11 +1444,14 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         let oM = (o.miladi && o.miladi !== "?") ? " M. " + o.miladi : "";
         let tamTarih = (oH || oM) ? `${oH} ${oM}` : t('date_unknown');
         document.getElementById('okuma-tarih').innerText = tamTarih;
+        document.getElementById('okuma-favori-alan').innerHTML = favoriBtnHtml('olay', o.id, o.ad);
         let formatliBilgi = bilgiyiGoster(o.bilgi);
         if (o.kaynak && o.kaynak !== "?") {
             formatliBilgi += `<div style="margin-top:25px; font-size:0.85rem; color: var(--text-placeholder); font-style:italic; text-align:center;">${t('source')} ${escapeHtml(o.kaynak)}</div>`;
         }
         document.getElementById('okuma-icerik').innerHTML = formatliBilgi;
+        document.getElementById('okuma-not-yorum').innerHTML = notYorumPaneliHtml('olay', o.id);
+        yorumlariYukle('olay', o.id);
         sayfaDegistir('olay-okuma');
     }
 
@@ -1367,6 +1471,165 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         try { await auth.signInWithEmailAndPassword(email, pass); sayfaDegistir('admin'); } catch (e) { alert(t('login_error') + e.message); }
     }
     function cikisYap() { auth.signOut(); sayfaDegistir('home'); }
+
+    function uyeSekmeDegistir(tip) {
+        document.getElementById('uye-sekme-giris').style.display = tip === 'giris' ? 'block' : 'none';
+        document.getElementById('uye-sekme-kayit').style.display = tip === 'kayit' ? 'block' : 'none';
+        document.getElementById('sekme-giris-btn').classList.toggle('uye-sekme-aktif', tip === 'giris');
+        document.getElementById('sekme-kayit-btn').classList.toggle('uye-sekme-aktif', tip === 'kayit');
+    }
+
+    async function uyeGirisYap() {
+        const hata = document.getElementById('uye-giris-hata');
+        hata.style.display = 'none';
+        const email = document.getElementById('uye-giris-email').value.trim();
+        const sifre = document.getElementById('uye-giris-sifre').value;
+        if (!email || !sifre) { hata.innerText = 'E-posta ve şifre gerekli.'; hata.style.display = 'block'; return; }
+        try {
+            await auth.signInWithEmailAndPassword(email, sifre);
+            sayfaDegistir('hesabim');
+        } catch (e) { hata.innerText = 'Giriş başarısız: ' + e.message; hata.style.display = 'block'; }
+    }
+
+    async function uyeKayitOl() {
+        const hata = document.getElementById('uye-kayit-hata');
+        hata.style.display = 'none';
+        const ad = document.getElementById('uye-kayit-ad').value.trim();
+        const email = document.getElementById('uye-kayit-email').value.trim();
+        const sifre = document.getElementById('uye-kayit-sifre').value;
+        if (!ad || !email || !sifre) { hata.innerText = 'Tüm alanları doldur.'; hata.style.display = 'block'; return; }
+        if (sifre.length < 6) { hata.innerText = 'Şifre en az 6 karakter olmalı.'; hata.style.display = 'block'; return; }
+        try {
+            const sonuc = await auth.createUserWithEmailAndPassword(email, sifre);
+            await sonuc.user.updateProfile({ displayName: ad });
+            girisliKullanici = sonuc.user;
+            sayfaDegistir('hesabim');
+        } catch (e) { hata.innerText = 'Üyelik oluşturulamadı: ' + e.message; hata.style.display = 'block'; }
+    }
+
+    async function googleIleGiris() {
+        try {
+            await auth.signInWithPopup(googleProvider);
+            sayfaDegistir('hesabim');
+        } catch (e) { alert('Google ile giriş başarısız: ' + e.message); }
+    }
+
+    function uyeCikisYap() { auth.signOut(); sayfaDegistir('home'); }
+
+    function hesapBilgiGuncelle() {
+        const el = document.getElementById('hesap-bilgi');
+        if (el && girisliKullanici) el.innerText = (girisliKullanici.displayName || girisliKullanici.email) + ' olarak giriş yaptın.';
+    }
+
+    function favoriVeNotDinleyiciBaslat(uid) {
+        if (favoriUnsub) favoriUnsub();
+        if (notUnsub) notUnsub();
+        favoriUnsub = db.collection('favoriler').where('uid', '==', uid).onSnapshot(s => {
+            kullaniciFavorileri = {};
+            s.docs.forEach(d => { const v = d.data(); kullaniciFavorileri[v.tip + '_' + v.itemId] = { docId: d.id, ad: v.ad, tip: v.tip, itemId: v.itemId }; });
+            favorilerSayfasiGuncelle();
+            ekranaBas();
+        });
+        notUnsub = db.collection('notlar').where('uid', '==', uid).onSnapshot(s => {
+            kullaniciNotlari = {};
+            s.docs.forEach(d => { const v = d.data(); kullaniciNotlari[v.tip + '_' + v.itemId] = { docId: d.id, ad: v.ad, metin: v.metin, tip: v.tip, itemId: v.itemId }; });
+            notlarSayfasiGuncelle();
+        });
+    }
+
+    async function favoriTogle(tip, itemId, ad) {
+        if (!girisliKullanici) { sayfaDegistir('uye-giris'); return; }
+        const anahtar = tip + '_' + itemId;
+        const mevcut = kullaniciFavorileri[anahtar];
+        if (mevcut) { await db.collection('favoriler').doc(mevcut.docId).delete(); }
+        else { await db.collection('favoriler').add({ uid: girisliKullanici.uid, tip, itemId, ad, eklenmeTarihi: Date.now() }); }
+    }
+
+    function favoriBtnHtml(tip, itemId, ad) {
+        const dolu = !!kullaniciFavorileri[tip + '_' + itemId];
+        return `<button class="favori-btn ${dolu ? 'favori-dolu' : ''}" onclick="event.stopPropagation(); favoriTogle('${tip}','${itemId}','${(ad || '').replace(/'/g, "\\'")}')" title="${dolu ? 'Favorilerden çıkar' : 'Favorilere ekle'}">${dolu ? '♥' : '♡'}</button>`;
+    }
+
+    function favorilerSayfasiGuncelle() {
+        const kutu = document.getElementById('favorilerim-liste');
+        if (!kutu) return;
+        const liste = Object.values(kullaniciFavorileri);
+        if (liste.length === 0) { kutu.innerHTML = `<p class="onizleme-bos">Henüz favori eklemedin.</p>`; return; }
+        kutu.innerHTML = liste.map(f => `<div class="kayit-mini" style="padding:10px;" onclick="${f.tip === 'zat' ? `arsiveGitVeBul('${(f.ad || '').replace(/'/g, "\\'")}')` : `olayOku('${f.itemId}')`}"><div class="kayit-mini-avatar">${escapeHtml((f.ad || '?').charAt(0).toLocaleUpperCase('tr'))}</div><div class="kayit-mini-metin">${escapeHtml(f.ad || '')}</div><div class="kayit-mini-tip">${f.tip === 'zat' ? 'Zat' : 'Olay'}</div><button class="kayit-btn kayit-btn-sil" onclick="event.stopPropagation(); favoriTogle('${f.tip}','${f.itemId}','${(f.ad || '').replace(/'/g, "\\'")}')">Kaldır</button></div>`).join('');
+    }
+
+    function notlarSayfasiGuncelle() {
+        const kutu = document.getElementById('notlarim-liste');
+        if (!kutu) return;
+        const liste = Object.values(kullaniciNotlari).filter(n => n.metin && n.metin.trim());
+        if (liste.length === 0) { kutu.innerHTML = `<p class="onizleme-bos">Henüz not almadın.</p>`; return; }
+        kutu.innerHTML = liste.map(n => `<div class="kayit-mini" style="align-items:flex-start; padding:10px; cursor:pointer;" onclick="${n.tip === 'zat' ? `arsiveGitVeBul('${(n.ad || '').replace(/'/g, "\\'")}')` : `olayOku('${n.itemId}')`}"><div class="kayit-mini-avatar">${escapeHtml((n.ad || '?').charAt(0).toLocaleUpperCase('tr'))}</div><div class="kayit-mini-metin" style="white-space:normal;"><strong>${escapeHtml(n.ad || '')}</strong><br><span style="font-size:0.8rem; color:var(--text-secondary);">${escapeHtml(n.metin.substring(0, 140))}${n.metin.length > 140 ? '...' : ''}</span></div></div>`).join('');
+    }
+
+    function notYorumPaneliHtml(tip, itemId) {
+        const notKey = tip + '_' + itemId;
+        const notMevcut = kullaniciNotlari[notKey] ? kullaniciNotlari[notKey].metin : '';
+        const notPanel = girisliKullanici ?
+            `<div class="not-panel">
+                <h4 class="not-panel-baslik">📝 Kişisel Notum <span class="not-ozel-etiket">sadece sen görürsün</span></h4>
+                <textarea id="not-alani-${tip}-${itemId}" class="not-textarea" placeholder="Bu kayıtla ilgili kendine özel bir not al...">${escapeHtml(notMevcut)}</textarea>
+                <button class="btn-not-kaydet" onclick="notKaydet('${tip}','${itemId}')">Notu Kaydet</button>
+            </div>` :
+            `<div class="not-panel not-panel-kilitli">📝 Kişisel not almak için <span class="smart-link" onclick="sayfaDegistir('uye-giris')">giriş yap</span>.</div>`;
+
+        const yorumForm = girisliKullanici ?
+            `<div class="yorum-form"><textarea id="yorum-alani-giris-${tip}-${itemId}" class="not-textarea" placeholder="Bir yorum yaz..."></textarea><button class="btn-not-kaydet" onclick="yorumGonder('${tip}','${itemId}')">Yorum Yap</button></div>` :
+            `<p class="onizleme-bos">Yorum yapmak için <span class="smart-link" onclick="sayfaDegistir('uye-giris')">giriş yap</span>.</p>`;
+
+        return `<div class="not-yorum-blok">
+            ${notPanel}
+            <div class="yorum-blok">
+                <h4 class="not-panel-baslik">💬 Yorumlar</h4>
+                <div id="yorum-liste-${tip}-${itemId}" class="yorum-liste"><p class="onizleme-bos">Yükleniyor...</p></div>
+                ${yorumForm}
+            </div>
+        </div>`;
+    }
+
+    async function notKaydet(tip, itemId) {
+        if (!girisliKullanici) return;
+        const alan = document.getElementById(`not-alani-${tip}-${itemId}`);
+        const metin = alan.value;
+        const docId = girisliKullanici.uid + '_' + tip + '_' + itemId;
+        const kaynakListe = tip === 'zat' ? veriler : olaylar;
+        const kaynakKayit = kaynakListe.find(k => k.id === itemId);
+        const ad = kaynakKayit ? (tip === 'zat' ? kaynakKayit.isim : kaynakKayit.ad) : '';
+        try {
+            if (!metin.trim()) { await db.collection('notlar').doc(docId).delete(); }
+            else { await db.collection('notlar').doc(docId).set({ uid: girisliKullanici.uid, tip, itemId, ad, metin, guncellemeTarihi: Date.now() }); }
+            const btn = alan.nextElementSibling;
+            if (btn) { const eski = btn.innerText; btn.innerText = 'Kaydedildi ✓'; setTimeout(() => btn.innerText = eski, 1500); }
+        } catch (e) { /* sessiz geç */ }
+    }
+
+    async function yorumlariYukle(tip, itemId) {
+        const kutu = document.getElementById(`yorum-liste-${tip}-${itemId}`);
+        if (!kutu) return;
+        try {
+            const snap = await db.collection('yorumlar').where('tip', '==', tip).where('itemId', '==', itemId).orderBy('tarih', 'desc').limit(50).get();
+            if (snap.empty) { kutu.innerHTML = `<p class="onizleme-bos">Henüz yorum yok. İlk yorumu sen yaz.</p>`; return; }
+            kutu.innerHTML = snap.docs.map(d => {
+                const v = d.data();
+                return `<div class="yorum-item"><div class="yorum-item-ust"><strong>${escapeHtml(v.adSoyad || 'Üye')}</strong><span class="yorum-tarih">${new Date(v.tarih).toLocaleDateString('tr-TR')}</span></div><div class="yorum-metin">${escapeHtml(v.metin)}</div></div>`;
+            }).join('');
+        } catch (e) { kutu.innerHTML = `<p class="onizleme-bos">Yorumlar yüklenemedi.</p>`; }
+    }
+
+    async function yorumGonder(tip, itemId) {
+        if (!girisliKullanici) return;
+        const alan = document.getElementById(`yorum-alani-giris-${tip}-${itemId}`);
+        const metin = alan.value.trim();
+        if (!metin) return;
+        const adSoyad = girisliKullanici.displayName || girisliKullanici.email.split('@')[0];
+        await db.collection('yorumlar').add({ tip, itemId, uid: girisliKullanici.uid, adSoyad, metin, tarih: Date.now() });
+        alan.value = '';
+        yorumlariYukle(tip, itemId);
+    }
 
     function kelimeBaslariniBuyut(metin) {
         if (!metin || metin === "?") return metin;
@@ -1535,17 +1798,19 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             let ilkHarf = z.isim.charAt(0).toLocaleUpperCase('tr');
 
             aHtml += `
-            <details class="arsiv-kart search-item arsiv-detay" data-search="${aramaMetni}" data-type="zat" data-devir="${devirStr}">
+            <details class="arsiv-kart search-item arsiv-detay" data-search="${aramaMetni}" data-type="zat" data-devir="${devirStr}" ontoggle="if(this.open) yorumlariYukle('zat','${z.id}')">
                 <summary>
                     <div class="kart-baslik-isim">
                         <div class="kart-ikon">${escapeHtml(ilkHarf)}</div>
-                        <div><h3 class="kart-isim-metin">${escapeHtml(z.isim)}</h3><div>${devirRozet} ${yasStr}</div></div>
+                        <div style="flex:1;"><h3 class="kart-isim-metin">${escapeHtml(z.isim)}</h3><div>${devirRozet} ${yasStr}</div></div>
+                        ${favoriBtnHtml('zat', z.id, z.isim)}
                     </div>
                 </summary>
                 <div class="arsiv-icerik-yeni">
                     ${bilgiHTML}
                     ${kucukKutular}
                     ${sistemButonu}
+                    ${notYorumPaneliHtml('zat', z.id)}
                 </div>
             </details>`;
         });
@@ -1569,7 +1834,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             <div class="article-card search-item" data-search="${aramaMetniOlay}" data-type="olay" data-devir="${devirStr}" onclick="olayOku('${o.id}')">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <span class="category-tag">${t('hist_event')}</span>
-                    ${devirRozet}
+                    <div style="display:flex; align-items:center; gap:8px;">${devirRozet}${favoriBtnHtml('olay', o.id, o.ad)}</div>
                 </div>
                 <div>
                     <h3>${escapeHtml(o.ad)}</h3>
@@ -1666,8 +1931,10 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         sonDuzenlenenlerGuncelle();
     }
 
+    function girisliAdminMi() { return !!(auth.currentUser && auth.currentUser.email && auth.currentUser.email.toLocaleLowerCase('tr') === ADMIN_EMAIL.toLocaleLowerCase('tr')); }
+
     async function kaydet() {
-        if (!auth.currentUser) return;
+        if (!girisliAdminMi()) return;
         let ad = kelimeBaslariniBuyut(document.getElementById('in_ad').value.trim());
         if (!ad) { alert(t('need_name')); return; }
         if (document.getElementById('oto_ra').checked) { const kucukAd = ad.toLocaleLowerCase('tr'); if (!kucukAd.includes("(ra)") && !kucukAd.includes("(r.a.)") && !kucukAd.includes("(r.a)")) ad += " (ra)"; }
@@ -1686,7 +1953,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     }
 
     async function olayKaydet() {
-        if (!auth.currentUser) return;
+        if (!girisliAdminMi()) return;
         const ad = kelimeBaslariniBuyut(document.getElementById('ol_ad').value.trim());
         if (!ad) { alert(t('need_event')); return; }
         const id = document.getElementById('edit-olay-id').value;
@@ -1720,7 +1987,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         el.textContent = `${karakter} karakter · ${kelime} kelime`;
     }
 
-    async function sil(id, kol) { if(confirm(t('confirm_del'))) await db.collection(kol).doc(id).delete(); }
+    async function sil(id, kol) { if (!girisliAdminMi()) return; if(confirm(t('confirm_del'))) await db.collection(kol).doc(id).delete(); }
 
     function duzenle(id) {
         const z = veriler.find(v => v.id === id);
