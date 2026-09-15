@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yaysen0-collab.github.io/tarihizatlar/sitemap.xml
