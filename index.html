@@ -290,6 +290,21 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         .onizleme-baslik { font-weight: 600; font-size: 1rem; color: var(--text-primary); margin: 0 0 8px 0; }
         .onizleme-metin { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; max-height: 140px; overflow-y: auto; }
         .onizleme-bos { font-size: 0.82rem; color: var(--text-faint); font-style: italic; }
+
+        /* ZENGİN METİN EDİTÖRÜ */
+        .editor-sarmal { border: 1px solid var(--border-input); border-radius: 6px; overflow: hidden; background: var(--bg-card); margin-bottom: 4px; }
+        .editor-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px 8px; background: var(--bg-card-soft); border-bottom: 1px solid var(--border-color-soft); }
+        .editor-btn { background: transparent; border: 1px solid transparent; border-radius: 5px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.85rem; color: var(--text-primary); font-family: 'Montserrat', sans-serif; padding: 0; }
+        .editor-btn:hover { background: var(--bg-hover-soft); border-color: var(--border-input); }
+        .editor-ayrac { width: 1px; height: 20px; background: var(--border-color-soft); margin: 0 4px; }
+        .editor-format { border: 1px solid var(--border-input); border-radius: 5px; padding: 5px 8px; font-size: 0.8rem; background: var(--bg-card); color: var(--text-primary); font-family: 'Montserrat', sans-serif; margin: 0 0 0 4px; width: auto; }
+        .bilgi-editor { border: none; outline: none; padding: 14px; background: transparent; color: var(--text-primary); font-size: 15px; line-height: 1.6; overflow-y: auto; resize: vertical; }
+        .bilgi-editor:empty:before { content: attr(data-placeholder); color: var(--text-placeholder); pointer-events: none; }
+        .bilgi-editor p { margin: 0 0 10px 0; }
+        .bilgi-editor h3 { margin: 14px 0 8px 0; }
+        .bilgi-editor blockquote { margin: 10px 0; padding: 8px 14px; border-left: 3px solid var(--brand-bg); color: var(--text-secondary); font-style: italic; }
+        .bilgi-editor ul, .bilgi-editor ol { margin: 8px 0; padding-left: 24px; }
+        .onizleme-metin p { margin: 0 0 8px 0; }
         input, textarea, select, button { font-family: 'Montserrat', sans-serif; }
         input, textarea, select { width: 100%; padding: 12px; margin: 6px 0 15px 0; box-sizing: border-box; border: 1px solid var(--border-input); border-radius: 6px; font-size: 15px; background: var(--bg-card); color: var(--text-primary); }
         textarea { resize: vertical; line-height: 1.6; }
@@ -644,7 +659,28 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 </select>
                 
                 <div style="display: flex; gap: 10px;"><input id="ol_hicri" data-i18n-placeholder="ph_hijri" placeholder="Hicri (Örn: H. 2)"><input id="ol_miladi" data-i18n-placeholder="ph_ce" placeholder="Miladi (Örn: M. 624)"></div>
-                <textarea id="ol_bilgi" class="bilgi-alani" data-i18n-placeholder="ph_event_text" placeholder="Olayın metni..." rows="5" oninput="sayacGuncelle('ol_bilgi','ol_bilgi_sayac'); onizlemeGuncelle('olay')"></textarea>
+                <div class="editor-sarmal">
+                    <div class="editor-toolbar" data-hedef="ol_bilgi">
+                        <button type="button" class="editor-btn" data-komut="bold" title="Kalın"><b>B</b></button>
+                        <button type="button" class="editor-btn" data-komut="italic" title="İtalik"><i>I</i></button>
+                        <button type="button" class="editor-btn" data-komut="underline" title="Altı çizili"><u>U</u></button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="insertUnorderedList" title="Madde işaretli liste">☰•</button>
+                        <button type="button" class="editor-btn" data-komut="insertOrderedList" title="Numaralı liste">☰1</button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="justifyLeft" title="Sola yasla">◧</button>
+                        <button type="button" class="editor-btn" data-komut="justifyCenter" title="Ortala">▤</button>
+                        <button type="button" class="editor-btn" data-komut="justifyRight" title="Sağa yasla">◨</button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="link" title="Bağlantı ekle">🔗</button>
+                        <select class="editor-format" data-hedef="ol_bilgi" title="Metin biçimi">
+                            <option value="p">Normal</option>
+                            <option value="h3">Başlık</option>
+                            <option value="blockquote">Alıntı</option>
+                        </select>
+                    </div>
+                    <div id="ol_bilgi" class="bilgi-alani bilgi-editor" contenteditable="true" data-placeholder="Olayın metni..." oninput="sayacGuncelle('ol_bilgi','ol_bilgi_sayac'); onizlemeGuncelle('olay')"></div>
+                </div>
                 <div id="ol_bilgi_sayac" class="bilgi-sayac">0 karakter</div>
                 <input id="ol_kaynak" data-i18n-placeholder="ph_source" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
                 <div class="form-satir-btn">
@@ -705,7 +741,28 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 
                 <div style="display: flex; gap: 10px;"><input id="in_d_hicri" data-i18n-placeholder="ph_birth_hijri" placeholder="Doğum Hicri"><input id="in_d_miladi" data-i18n-placeholder="ph_birth_ce" placeholder="Doğum Miladi"></div>
                 <div style="display: flex; gap: 10px;"><input id="in_v_hicri" data-i18n-placeholder="ph_death_hijri" placeholder="Vefat Hicri"><input id="in_v_miladi" data-i18n-placeholder="ph_death_ce" placeholder="Vefat Miladi"></div>
-                <textarea id="in_bilgi" class="bilgi-alani" data-i18n-placeholder="ph_bio" placeholder="Bilgi" rows="4" oninput="sayacGuncelle('in_bilgi','in_bilgi_sayac'); onizlemeGuncelle('zat')"></textarea>
+                <div class="editor-sarmal">
+                    <div class="editor-toolbar" data-hedef="in_bilgi">
+                        <button type="button" class="editor-btn" data-komut="bold" title="Kalın"><b>B</b></button>
+                        <button type="button" class="editor-btn" data-komut="italic" title="İtalik"><i>I</i></button>
+                        <button type="button" class="editor-btn" data-komut="underline" title="Altı çizili"><u>U</u></button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="insertUnorderedList" title="Madde işaretli liste">☰•</button>
+                        <button type="button" class="editor-btn" data-komut="insertOrderedList" title="Numaralı liste">☰1</button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="justifyLeft" title="Sola yasla">◧</button>
+                        <button type="button" class="editor-btn" data-komut="justifyCenter" title="Ortala">▤</button>
+                        <button type="button" class="editor-btn" data-komut="justifyRight" title="Sağa yasla">◨</button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="link" title="Bağlantı ekle">🔗</button>
+                        <select class="editor-format" data-hedef="in_bilgi" title="Metin biçimi">
+                            <option value="p">Normal</option>
+                            <option value="h3">Başlık</option>
+                            <option value="blockquote">Alıntı</option>
+                        </select>
+                    </div>
+                    <div id="in_bilgi" class="bilgi-alani bilgi-editor" contenteditable="true" data-placeholder="Bilgi" oninput="sayacGuncelle('in_bilgi','in_bilgi_sayac'); onizlemeGuncelle('zat')"></div>
+                </div>
                 <div id="in_bilgi_sayac" class="bilgi-sayac">0 karakter</div>
                 <input id="in_kaynak" data-i18n-placeholder="ph_source" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
                 <div class="form-satir-btn">
@@ -798,6 +855,23 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             .replaceAll('>', '&gt;')
             .replaceAll('"', '&quot;')
             .replaceAll("'", '&#39;');
+    }
+
+    function bilgiyiGoster(ham) {
+        if (!ham || !ham.trim() || ham.trim() === "?") return t('no_content');
+        return /<[a-z][\s\S]*>/i.test(ham) ? ham : escapeHtml(ham).replace(/\n/g, '<br><br>');
+    }
+
+    function duzMetneCevir(ham) {
+        if (!ham) return "";
+        return ham.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function metniEditoreYukle(elId, ham) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        const deger = ham || "";
+        el.innerHTML = /<[a-z][\s\S]*>/i.test(deger) ? deger : escapeHtml(deger).replace(/\n/g, '<br>');
     }
 
     const I18N = {
@@ -1019,6 +1093,32 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
 
     db.collection("zatlar").onSnapshot(s => { veriler = s.docs.map(d => ({ id: d.id, ...d.data() })); ekranaBas(); });
     db.collection("olaylar").onSnapshot(s => { olaylar = s.docs.map(d => ({ id: d.id, ...d.data() })); ekranaBas(); });
+
+    document.querySelectorAll('.editor-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const toolbar = btn.closest('.editor-toolbar');
+            const hedef = document.getElementById(toolbar.dataset.hedef);
+            hedef.focus();
+            const komut = btn.dataset.komut;
+            if (komut === 'link') {
+                const url = prompt('Bağlantı adresi girin (https://...)');
+                if (url) document.execCommand('createLink', false, url);
+            } else {
+                document.execCommand(komut, false, null);
+            }
+            hedef.dispatchEvent(new Event('input'));
+        });
+    });
+    document.querySelectorAll('.editor-format').forEach(sel => {
+        sel.addEventListener('change', function() {
+            const hedef = document.getElementById(sel.dataset.hedef);
+            hedef.focus();
+            document.execCommand('formatBlock', false, sel.value);
+            sel.value = 'p';
+            hedef.dispatchEvent(new Event('input'));
+        });
+    });
 
     function arsiveGitVeBul(isim) {
         if(!isim || isim === "?") return;
@@ -1243,7 +1343,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         let oM = (o.miladi && o.miladi !== "?") ? " M. " + o.miladi : "";
         let tamTarih = (oH || oM) ? `${oH} ${oM}` : t('date_unknown');
         document.getElementById('okuma-tarih').innerText = tamTarih;
-        let formatliBilgi = o.bilgi ? escapeHtml(o.bilgi).replace(/\n/g, '<br><br>') : t('no_content');
+        let formatliBilgi = bilgiyiGoster(o.bilgi);
         if (o.kaynak && o.kaynak !== "?") {
             formatliBilgi += `<div style="margin-top:25px; font-size:0.85rem; color: var(--text-placeholder); font-style:italic; text-align:center;">${t('source')} ${escapeHtml(o.kaynak)}</div>`;
         }
@@ -1325,16 +1425,18 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         if (!kutu) return;
         if (tip === 'olay') {
             const baslik = (document.getElementById('ol_ad').value || "").trim();
-            const bilgi = (document.getElementById('ol_bilgi').value || "").trim();
+            const bilgiEl = document.getElementById('ol_bilgi');
+            const bilgiMetin = (bilgiEl.innerText || "").trim();
             const devir = document.getElementById('ol_devir').value;
-            if (!baslik && !bilgi) { kutu.innerHTML = `<p class="onizleme-bos">Yazmaya başladığında burada canlı önizlemesini göreceksin.</p>`; return; }
-            kutu.innerHTML = `<div class="onizleme-kart"><span class="devir-tag">${escapeHtml(devir)}</span><h5 class="onizleme-baslik">${escapeHtml(baslik || "(Başlıksız Olay)")}</h5><div class="onizleme-metin">${escapeHtml(bilgi || "(Henüz metin yok)")}</div></div>`;
+            if (!baslik && !bilgiMetin) { kutu.innerHTML = `<p class="onizleme-bos">Yazmaya başladığında burada canlı önizlemesini göreceksin.</p>`; return; }
+            kutu.innerHTML = `<div class="onizleme-kart"><span class="devir-tag">${escapeHtml(devir)}</span><h5 class="onizleme-baslik">${escapeHtml(baslik || "(Başlıksız Olay)")}</h5><div class="onizleme-metin">${bilgiEl.innerHTML || "(Henüz metin yok)"}</div></div>`;
         } else {
             const isim = (document.getElementById('in_ad').value || "").trim();
-            const bilgi = (document.getElementById('in_bilgi').value || "").trim();
+            const bilgiEl = document.getElementById('in_bilgi');
+            const bilgiMetin = (bilgiEl.innerText || "").trim();
             const devir = document.getElementById('in_devir').value;
-            if (!isim && !bilgi) { kutu.innerHTML = `<p class="onizleme-bos">Yazmaya başladığında burada canlı önizlemesini göreceksin.</p>`; return; }
-            kutu.innerHTML = `<div class="onizleme-kart"><span class="devir-tag">${escapeHtml(devir)}</span><h5 class="onizleme-baslik">${escapeHtml(isim || "(İsimsiz Zat)")}</h5><div class="onizleme-metin">${escapeHtml(bilgi || "(Henüz metin yok)")}</div></div>`;
+            if (!isim && !bilgiMetin) { kutu.innerHTML = `<p class="onizleme-bos">Yazmaya başladığında burada canlı önizlemesini göreceksin.</p>`; return; }
+            kutu.innerHTML = `<div class="onizleme-kart"><span class="devir-tag">${escapeHtml(devir)}</span><h5 class="onizleme-baslik">${escapeHtml(isim || "(İsimsiz Zat)")}</h5><div class="onizleme-metin">${bilgiEl.innerHTML || "(Henüz metin yok)"}</div></div>`;
         }
     }
 
@@ -1403,7 +1505,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             
             let bilgiHTML = (z.bilgi && z.bilgi.trim() !== "" && z.bilgi.trim() !== "?") ? 
                 `<div class="buyuk-kutu">
-                    ${escapeHtml(z.bilgi).replace(/\n/g, '<br><br>')}
+                    ${bilgiyiGoster(z.bilgi)}
                     ${(z.kaynak && z.kaynak !== "?") ? `<div style="margin-top:15px; font-size:0.8rem; color: var(--text-placeholder); font-style:italic;">${t('source')} ${escapeHtml(z.kaynak)}</div>` : ""}
                 </div>` : "";
 
@@ -1457,7 +1559,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             const aramaMetniOlay = ((o.ad || "") + " " + (o.bilgi || "")).toLocaleLowerCase('tr');
             let oH = (o.hicri && o.hicri !== "?") ? "H. " + o.hicri : "";
             let oM = (o.miladi && o.miladi !== "?") ? " M. " + o.miladi : "";
-            let kisaBilgi = (o.bilgi && o.bilgi.length > 200) ? o.bilgi.substring(0, 200) + "..." : (o.bilgi || t('no_content'));
+            let kisaBilgiDuz = duzMetneCevir(o.bilgi);
+            let kisaBilgi = (kisaBilgiDuz.length > 200) ? kisaBilgiDuz.substring(0, 200) + "..." : (kisaBilgiDuz || t('no_content'));
             
             let devirStr = o.devir || "Asr-ı Saadet";
             let devirRozet = `<span class="devir-tag">${escapeHtml(devirStr)}</span>`;
@@ -1497,7 +1600,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             homeOneCikan.innerHTML = enCokYazili.length === 0 ? `<p style="text-align: center; width: 100%; color: var(--text-muted);">${t('no_data')}</p>` : enCokYazili.map(z => {
                 let ilkHarf = (z.isim || "?").charAt(0).toLocaleUpperCase('tr');
                 let devirStr = z.devir || "Asr-ı Saadet";
-                let ozetMetin = z.bilgi.trim();
+                let ozetMetin = duzMetneCevir(z.bilgi);
                 let ozet = ozetMetin.length > 110 ? ozetMetin.substring(0, 110) + "..." : ozetMetin;
                 return `<div class="on-cikan-kart" onclick="oneCikanGit('${z.isim.replace(/'/g, "\\'")}')">
                     <div class="on-cikan-avatar">${escapeHtml(ilkHarf)}</div>
@@ -1575,7 +1678,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             baba: kelimeBaslariniBuyut(document.getElementById('in_baba').value) || "?", es: kelimeBaslariniBuyut(document.getElementById('in_es').value) || "?", 
             baglar: document.getElementById('in_baglar_liste').value || "?", d_hicri: document.getElementById('in_d_hicri').value || "?", 
             d_miladi: document.getElementById('in_d_miladi').value || "?", v_hicri: document.getElementById('in_v_hicri').value || "?", 
-            v_miladi: document.getElementById('in_v_miladi').value || "?", bilgi: document.getElementById('in_bilgi').value || "", 
+            v_miladi: document.getElementById('in_v_miladi').value || "?", bilgi: document.getElementById('in_bilgi').innerHTML || "", 
             kaynak: document.getElementById('in_kaynak').value || "?", guncellemeTarihi: Date.now()
         };
         if(id) await db.collection("zatlar").doc(id).update(obj); else await db.collection("zatlar").add(obj);
@@ -1587,7 +1690,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         const ad = kelimeBaslariniBuyut(document.getElementById('ol_ad').value.trim());
         if (!ad) { alert(t('need_event')); return; }
         const id = document.getElementById('edit-olay-id').value;
-        const obj = { ad: ad, devir: document.getElementById('ol_devir').value, hicri: document.getElementById('ol_hicri').value || "?", miladi: document.getElementById('ol_miladi').value || "?", bilgi: document.getElementById('ol_bilgi').value || "", kaynak: document.getElementById('ol_kaynak').value || "?", eklenmeTarihi: Date.now(), guncellemeTarihi: Date.now() };
+        const obj = { ad: ad, devir: document.getElementById('ol_devir').value, hicri: document.getElementById('ol_hicri').value || "?", miladi: document.getElementById('ol_miladi').value || "?", bilgi: document.getElementById('ol_bilgi').innerHTML || "", kaynak: document.getElementById('ol_kaynak').value || "?", eklenmeTarihi: Date.now(), guncellemeTarihi: Date.now() };
         
         if(id) {
             const mevcutOlay = olaylar.find(v => v.id === id);
@@ -1610,8 +1713,9 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     function sayacGuncelle(taId, sayacId) {
         const ta = document.getElementById(taId); const el = document.getElementById(sayacId);
         if (!ta || !el) return;
-        const metin = ta.value.trim();
-        const karakter = ta.value.length;
+        const ham = (ta.innerText !== undefined) ? ta.innerText : ta.value;
+        const metin = ham.trim();
+        const karakter = metin.length;
         const kelime = metin ? metin.split(/\s+/).length : 0;
         el.textContent = `${karakter} karakter · ${kelime} kelime`;
     }
@@ -1621,7 +1725,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     function duzenle(id) {
         const z = veriler.find(v => v.id === id);
         document.getElementById('edit-id').value = id; document.getElementById('in_devir').value = z.devir || "Asr-ı Saadet";
-        document.getElementById('in_ad').value = z.isim; document.getElementById('in_anne').value = z.anne; document.getElementById('in_baba').value = z.baba; document.getElementById('in_es').value = z.es; document.getElementById('in_baglar_liste').value = z.baglar; document.getElementById('in_d_hicri').value = z.d_hicri; document.getElementById('in_d_miladi').value = z.d_miladi; document.getElementById('in_v_hicri').value = z.v_hicri; document.getElementById('in_v_miladi').value = z.v_miladi; document.getElementById('in_bilgi').value = z.bilgi; document.getElementById('in_kaynak').value = z.kaynak || "";
+        document.getElementById('in_ad').value = z.isim; document.getElementById('in_anne').value = z.anne; document.getElementById('in_baba').value = z.baba; document.getElementById('in_es').value = z.es; document.getElementById('in_baglar_liste').value = z.baglar; document.getElementById('in_d_hicri').value = z.d_hicri; document.getElementById('in_d_miladi').value = z.d_miladi; document.getElementById('in_v_hicri').value = z.v_hicri; document.getElementById('in_v_miladi').value = z.v_miladi; metniEditoreYukle('in_bilgi', z.bilgi); document.getElementById('in_kaynak').value = z.kaynak || "";
         document.getElementById('cancel-btn').style.display = "inline-block"; document.getElementById('zat-uyari').style.display = "none";
         document.getElementById('oto_ra').checked = !(!z.isim.toLocaleLowerCase('tr').includes("(ra)") && !z.isim.toLocaleLowerCase('tr').includes("(r.a.)"));
         sayacGuncelle('in_bilgi','in_bilgi_sayac');
@@ -1632,15 +1736,15 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     function duzenleOlay(id) {
         const o = olaylar.find(v => v.id === id);
         document.getElementById('edit-olay-id').value = id; document.getElementById('ol_devir').value = o.devir || "Asr-ı Saadet";
-        document.getElementById('ol_ad').value = o.ad; document.getElementById('ol_hicri').value = o.hicri; document.getElementById('ol_miladi').value = o.miladi; document.getElementById('ol_bilgi').value = o.bilgi; document.getElementById('ol_kaynak').value = o.kaynak || "";
+        document.getElementById('ol_ad').value = o.ad; document.getElementById('ol_hicri').value = o.hicri; document.getElementById('ol_miladi').value = o.miladi; metniEditoreYukle('ol_bilgi', o.bilgi); document.getElementById('ol_kaynak').value = o.kaynak || "";
         document.getElementById('olay-cancel-btn').style.display = "inline-block"; document.getElementById('olay-uyari').style.display = "none";
         sayacGuncelle('ol_bilgi','ol_bilgi_sayac');
         onizlemeGuncelle('olay');
         window.scrollTo(0,0);
     }
 
-    function temizle() { document.querySelectorAll('input[id^="in_"], textarea[id^="in_"]').forEach(i => i.value = ""); document.getElementById('in_devir').value = "Asr-ı Saadet"; document.getElementById('edit-id').value = ""; document.getElementById('cancel-btn').style.display = "none"; document.getElementById('zat-uyari').style.display = "none"; if(document.getElementById('oto_ra')) document.getElementById('oto_ra').checked = true; sayacGuncelle('in_bilgi','in_bilgi_sayac'); onizlemeGuncelle('zat'); }
-    function temizleOlay() { document.querySelectorAll('input[id^="ol_"], textarea[id^="ol_"]').forEach(i => i.value = ""); document.getElementById('ol_devir').value = "Asr-ı Saadet"; document.getElementById('edit-olay-id').value = ""; document.getElementById('olay-cancel-btn').style.display = "none"; document.getElementById('olay-uyari').style.display = "none"; sayacGuncelle('ol_bilgi','ol_bilgi_sayac'); onizlemeGuncelle('olay'); }
+    function temizle() { document.querySelectorAll('input[id^="in_"], textarea[id^="in_"]').forEach(i => i.value = ""); document.getElementById('in_bilgi').innerHTML = ""; document.getElementById('in_devir').value = "Asr-ı Saadet"; document.getElementById('edit-id').value = ""; document.getElementById('cancel-btn').style.display = "none"; document.getElementById('zat-uyari').style.display = "none"; if(document.getElementById('oto_ra')) document.getElementById('oto_ra').checked = true; sayacGuncelle('in_bilgi','in_bilgi_sayac'); onizlemeGuncelle('zat'); }
+    function temizleOlay() { document.querySelectorAll('input[id^="ol_"], textarea[id^="ol_"]').forEach(i => i.value = ""); document.getElementById('ol_bilgi').innerHTML = ""; document.getElementById('ol_devir').value = "Asr-ı Saadet"; document.getElementById('edit-olay-id').value = ""; document.getElementById('olay-cancel-btn').style.display = "none"; document.getElementById('olay-uyari').style.display = "none"; sayacGuncelle('ol_bilgi','ol_bilgi_sayac'); onizlemeGuncelle('olay'); }
 
     function aramaYap() {
         const val = document.getElementById('ara').value;
