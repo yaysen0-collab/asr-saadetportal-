@@ -262,6 +262,12 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         .kayit-btn-duzenle:hover { background: var(--accent-blue-bg); border-color: var(--accent-blue-border); }
         .kayit-btn-sil { color: var(--danger); }
         .kayit-btn-sil:hover { background: var(--danger-border); border-color: var(--danger); }
+        .oneri-sarmal { position: relative; }
+        .oneri-liste { position: absolute; top: 100%; left: 0; right: 0; margin-top: 2px; background: var(--bg-card); border: 1px solid var(--border-input); border-radius: 8px; max-height: 190px; overflow-y: auto; z-index: 60; box-shadow: 0 8px 20px var(--shadow-card); display: none; }
+        .oneri-liste.oneri-liste-acik { display: block; }
+        .oneri-item { padding: 9px 14px; cursor: pointer; font-size: 0.9rem; color: var(--text-primary); border-bottom: 1px solid var(--border-color-soft); }
+        .oneri-item:last-child { border-bottom: none; }
+        .oneri-item:hover { background: var(--bg-hover-soft); }
         input, textarea, select, button { font-family: 'Montserrat', sans-serif; }
         input, textarea, select { width: 100%; padding: 12px; margin: 6px 0 15px 0; box-sizing: border-box; border: 1px solid var(--border-input); border-radius: 6px; font-size: 15px; background: var(--bg-card); color: var(--text-primary); }
         textarea { resize: vertical; line-height: 1.6; }
@@ -633,14 +639,26 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                     <option value="Diğer" data-i18n="opt_era_other_person">Yaşadığı Devir: Diğer / Bilinmiyor</option>
                 </select>
 
-                <input id="in_ad" data-i18n-placeholder="ph_name_person" placeholder="İsim" oninput="benzerZatKontrol()">
+                <div class="oneri-sarmal">
+                    <input id="in_ad" data-i18n-placeholder="ph_name_person" placeholder="İsim" oninput="benzerZatKontrol(); oneriGoster('in_ad')" onfocus="oneriGoster('in_ad')" onblur="oneriGizleGecikmeli('in_ad')" autocomplete="off">
+                    <div id="in_ad_oneri" class="oneri-liste"></div>
+                </div>
                 <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px; margin-left: 5px;">
                     <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
                         <input type="checkbox" id="oto_ra" checked style="width: auto; margin: 0;"> <span data-i18n="chk_ra">İsmin sonuna (ra) ekle</span>
                     </label>
                 </div>
                 <div id="zat-uyari" class="canli-uyari"></div>
-                <div style="display: flex; gap: 10px;"><input id="in_anne" data-i18n-placeholder="ph_mother" placeholder="Anne"><input id="in_baba" data-i18n-placeholder="ph_father" placeholder="Baba"></div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="oneri-sarmal" style="flex:1;">
+                        <input id="in_anne" data-i18n-placeholder="ph_mother" placeholder="Anne" oninput="oneriGoster('in_anne')" onfocus="oneriGoster('in_anne')" onblur="oneriGizleGecikmeli('in_anne')" autocomplete="off">
+                        <div id="in_anne_oneri" class="oneri-liste"></div>
+                    </div>
+                    <div class="oneri-sarmal" style="flex:1;">
+                        <input id="in_baba" data-i18n-placeholder="ph_father" placeholder="Baba" oninput="oneriGoster('in_baba')" onfocus="oneriGoster('in_baba')" onblur="oneriGizleGecikmeli('in_baba')" autocomplete="off">
+                        <div id="in_baba_oneri" class="oneri-liste"></div>
+                    </div>
+                </div>
                 <input id="in_es" data-i18n-placeholder="ph_spouse" placeholder="Eşi / Eşleri">
                 
                 <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
@@ -1207,6 +1225,35 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             uyariKutusu.style.display = 'block';
         } else uyariKutusu.style.display = 'none';
     }
+
+    function oneriGoster(inputId) {
+        const girdi = document.getElementById(inputId);
+        const kutu = document.getElementById(inputId + '_oneri');
+        if (!girdi || !kutu) return;
+        const deger = girdi.value.trim().toLocaleLowerCase('tr');
+        if (deger.length < 1) { kutu.classList.remove('oneri-liste-acik'); kutu.innerHTML = ''; return; }
+        const isimler = [...new Set((veriler || []).map(z => z.isim).filter(Boolean))];
+        const eslesenler = isimler.filter(isim => isim.toLocaleLowerCase('tr').includes(deger) && isim.toLocaleLowerCase('tr') !== deger).sort((a,b) => a.localeCompare(b, 'tr')).slice(0, 8);
+        if (eslesenler.length === 0) { kutu.classList.remove('oneri-liste-acik'); kutu.innerHTML = ''; return; }
+        kutu.innerHTML = eslesenler.map(isim => `<div class="oneri-item" onclick="oneriSec('${inputId}', '${isim.replace(/'/g, "\\'")}')">${escapeHtml(isim)}</div>`).join('');
+        kutu.classList.add('oneri-liste-acik');
+    }
+
+    function oneriSec(inputId, isim) {
+        const girdi = document.getElementById(inputId);
+        if (!girdi) return;
+        girdi.value = isim;
+        oneriGizle(inputId);
+        if (inputId === 'in_ad') benzerZatKontrol();
+        girdi.focus();
+    }
+
+    function oneriGizle(inputId) {
+        const kutu = document.getElementById(inputId + '_oneri');
+        if (kutu) { kutu.classList.remove('oneri-liste-acik'); kutu.innerHTML = ''; }
+    }
+
+    function oneriGizleGecikmeli(inputId) { setTimeout(() => oneriGizle(inputId), 150); }
 
     function benzerOlayKontrol() {
         const metin = document.getElementById('ol_ad').value.trim().toLocaleLowerCase('tr');
