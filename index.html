@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -22,25 +23,94 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <style>
-        body { font-family: 'Montserrat', sans-serif; background: #f9f8f6; color: #333; margin: 0; padding: 0; transition: background 0.3s; }
+        :root {
+            --bg-page: #f9f8f6;
+            --bg-card: #ffffff;
+            --bg-card-soft: #fdfcfb;
+            --bg-card-alt: #faf9f6;
+            --bg-tag-blue: #f5f7fa;
+            --bg-hover-soft: #f0ebe1;
+            --border-color: #e0dcd3;
+            --border-color-soft: #f0ebe1;
+            --border-input: #dcdacb;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-tertiary: #777777;
+            --text-muted: #999999;
+            --text-faint: #888888;
+            --text-body: #444444;
+            --text-label: #555555;
+            --text-placeholder: #aaaaaa;
+            --brand-bg: #5d4037;
+            --brand-bg-hover: #4e342e;
+            --brand-text: #5d4037;
+            --brand-soft: #8d6e63;
+            --accent-blue: #5c6ac4;
+            --accent-blue-bg: #f5f7fa;
+            --accent-blue-border: #e6e9f2;
+            --accent-blue-border-hover: #d1d8f0;
+            --danger: #d32f2f;
+            --danger-border: #ffcdd2;
+            --header-text: #ffffff;
+            --shadow-soft: rgba(0,0,0,0.08);
+            --shadow-card: rgba(0,0,0,0.04);
+        }
+        [data-theme="dark"] {
+            --bg-page: #171513;
+            --bg-card: #23201d;
+            --bg-card-soft: #29251f;
+            --bg-card-alt: #1e1b18;
+            --bg-tag-blue: #23283a;
+            --bg-hover-soft: #322d26;
+            --border-color: #3a352d;
+            --border-color-soft: #332e27;
+            --border-input: #453f36;
+            --text-primary: #ece8e2;
+            --text-secondary: #c7c1b7;
+            --text-tertiary: #b6b0a4;
+            --text-muted: #a29a8c;
+            --text-faint: #a89f92;
+            --text-body: #d6d0c4;
+            --text-label: #c2bbaf;
+            --text-placeholder: #7c7568;
+            --brand-bg: #4a352c;
+            --brand-bg-hover: #5b4236;
+            --brand-text: #cda589;
+            --brand-soft: #c1a08a;
+            --accent-blue: #98a3e8;
+            --accent-blue-bg: #262b40;
+            --accent-blue-border: #363d5c;
+            --accent-blue-border-hover: #48507a;
+            --danger: #ef5350;
+            --danger-border: #6b2d2d;
+            --header-text: #f3efe9;
+            --shadow-soft: rgba(0,0,0,0.35);
+            --shadow-card: rgba(0,0,0,0.25);
+        }
+
+        body { font-family: 'Montserrat', sans-serif; background: var(--bg-page); color: var(--text-primary); margin: 0; padding: 0; transition: background 0.3s, color 0.3s; }
         
         /* HEADER TASARIMI */
-        #main-header { background: #5d4037; color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; box-shadow: 0 2px 10px rgba(0,0,0,0.08); position: relative; z-index: 100; }
+        #main-header { background: var(--brand-bg); color: var(--header-text); padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; box-shadow: 0 2px 10px var(--shadow-soft); position: relative; z-index: 100; transition: background 0.3s; }
         #main-header h1 { margin: 0; font-size: 1.45rem; letter-spacing: 3px; white-space: nowrap; font-family: 'Montserrat', sans-serif; font-weight: 700; }
         .header-logo { height: 52px; width: 52px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
         .header-nav-container { flex-grow: 1; display: flex; justify-content: center; }
         
         .nav-btn { background: transparent; color: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; margin: 5px; cursor: pointer; border-radius: 20px; font-weight: 500; transition: 0.2s; font-size: 0.95rem; font-family: 'Montserrat', sans-serif; }
         .nav-btn:hover { background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.5); }
-        .nav-btn.active-nav { background: white; color: #5d4037; border-color: white; font-weight: bold; }
+        .nav-btn.active-nav { background: var(--header-text); color: var(--brand-bg); border-color: var(--header-text); font-weight: bold; }
         
         .header-search { display: flex; align-items: center; margin-left: 15px; gap: 10px; }
-        .header-search input { padding: 9px 15px; border-radius: 20px; border: none; outline: none; font-size: 0.95rem; width: 170px; transition: 0.3s; color: #5d4037; font-family: 'Montserrat', sans-serif; background: rgba(255,255,255,0.9); }
+        .header-search input { padding: 9px 15px; border-radius: 20px; border: none; outline: none; font-size: 0.95rem; width: 170px; transition: 0.3s; color: var(--brand-bg); font-family: 'Montserrat', sans-serif; background: rgba(255,255,255,0.9); }
         .header-search input:focus { width: 230px; background: white; box-shadow: 0 0 8px rgba(255,255,255,0.4); }
         .lang-switch { display: flex; gap: 4px; flex-shrink: 0; }
         .lang-btn { background: transparent; color: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.25); padding: 6px 11px; border-radius: 16px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
         .lang-btn:hover { background: rgba(255,255,255,0.12); color: white; }
-        .lang-btn.active-lang { background: white; color: #5d4037; border-color: white; }
+        .lang-btn.active-lang { background: var(--header-text); color: var(--brand-bg); border-color: var(--header-text); }
+
+        .theme-switch { display: flex; align-items: center; flex-shrink: 0; }
+        .theme-btn { background: transparent; color: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.25); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; line-height: 1; }
+        .theme-btn:hover { background: rgba(255,255,255,0.12); color: white; border-color: rgba(255,255,255,0.5); }
 
         @media (max-width: 768px) {
             #main-header { flex-direction: column; gap: 12px; padding: 15px; text-align: center; }
@@ -69,128 +139,143 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
 
         /* Sağ/Sol Panel Kutuları - SADELEŞTİRİLDİ */
         .right-panel-box { background: transparent; margin-bottom: 30px; }
-        .right-panel-box h4 { margin-top: 0; color: #8d6e63; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #e0dcd3; padding-bottom: 8px; }
+        .right-panel-box h4 { margin-top: 0; color: var(--brand-soft); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
         
         .filter-col { display: flex; flex-direction: column; gap: 6px; }
-        .filter-col .filter-btn { justify-content: flex-start; padding: 10px 15px; border-radius: 8px; width: 100%; font-weight: normal; background: transparent; border: 1px solid transparent; color: #555; font-family: 'Montserrat', sans-serif; }
-        .filter-col .filter-btn:hover { background: #f0ebe1; color: #333; }
-        .filter-col .filter-btn.active-filter { background: #fff; color: #5d4037; font-weight: bold; border: 1px solid #e0dcd3; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .filter-col .filter-btn { justify-content: flex-start; padding: 10px 15px; border-radius: 8px; width: 100%; font-weight: normal; background: transparent; border: 1px solid transparent; color: var(--text-label); font-family: 'Montserrat', sans-serif; }
+        .filter-col .filter-btn:hover { background: var(--bg-hover-soft); color: var(--text-primary); }
+        .filter-col .filter-btn.active-filter { background: var(--bg-card); color: var(--brand-text); font-weight: bold; border: 1px solid var(--border-color); box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
 
         @media (max-width: 1024px) { .arsiv-layout { grid-template-columns: 1fr 280px; gap: 20px; } .arsiv-left { display: none; } }
         @media (max-width: 768px) { .arsiv-layout { grid-template-columns: 1fr; } .arsiv-right { position: static; } }
 
         /* BÜYÜK / KÜÇÜK KUTU SİSTEMİ - MİNİMALİST REVİZYON */
-        .buyuk-kutu { font-size: 1.05rem; line-height: 1.8; color: #444; margin-bottom: 25px; text-align: justify; }
+        .buyuk-kutu { font-size: 1.05rem; line-height: 1.8; color: var(--text-body); margin-bottom: 25px; text-align: justify; }
         
-        .relation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; border-top: 1px solid #f0ebe1; padding-top: 25px; }
-        .rel-box { background: #fdfcfb; padding: 15px; border-radius: 8px; font-size: 0.95rem; display: flex; flex-direction: column; justify-content: center; }
-        .rel-box strong { display: block; color: #999; margin-bottom: 6px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
-        .rel-box-wide { grid-column: 1 / -1; background: transparent; padding: 0 0 15px 0; border-bottom: 1px dashed #f0ebe1; border-radius: 0; flex-direction: row; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .relation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; border-top: 1px solid var(--border-color-soft); padding-top: 25px; }
+        .rel-box { background: var(--bg-card-soft); padding: 15px; border-radius: 8px; font-size: 0.95rem; display: flex; flex-direction: column; justify-content: center; }
+        .rel-box strong { display: block; color: var(--text-muted); margin-bottom: 6px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .rel-box-wide { grid-column: 1 / -1; background: transparent; padding: 0 0 15px 0; border-bottom: 1px dashed var(--border-color-soft); border-radius: 0; flex-direction: row; align-items: center; gap: 20px; flex-wrap: wrap; }
         
         /* Ana Sayfa Elemanları */
-        .quote-box { background: transparent; padding: 30px; text-align: center; margin-bottom: 40px; border-top: 1px solid #e0dcd3; border-bottom: 1px solid #e0dcd3; }
-        .quote-box p { font-size: 1.5rem; color: #5d4037; margin: 0 0 15px 0; line-height: 1.6; font-style: italic; font-family: 'Montserrat', sans-serif; font-weight: 500; }
+        .quote-box { background: transparent; padding: 30px; text-align: center; margin-bottom: 40px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+        .quote-box p { font-size: 1.5rem; color: var(--brand-text); margin: 0 0 15px 0; line-height: 1.6; font-style: italic; font-family: 'Montserrat', sans-serif; font-weight: 500; }
         
         .home-stats-container { display: flex; justify-content: center; gap: 30px; margin-bottom: 50px; flex-wrap: wrap; }
         .home-stat-box { text-align: center; min-width: 140px; }
-        .home-stat-num { display: block; font-size: 3rem; font-weight: 500; color: #5d4037; font-family: 'Montserrat', sans-serif; line-height: 1; margin-bottom: 5px; }
-        .home-stat-label { display: block; font-size: 0.8rem; color: #999; text-transform: uppercase; letter-spacing: 1px; }
+        .home-stat-num { display: block; font-size: 3rem; font-weight: 500; color: var(--brand-text); font-family: 'Montserrat', sans-serif; line-height: 1; margin-bottom: 5px; }
+        .home-stat-label { display: block; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
 
         .mini-timeline-container { display: flex; gap: 20px; overflow-x: auto; padding: 10px 5px 20px 5px; margin-bottom: 15px; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
         .mini-timeline-container::-webkit-scrollbar { height: 6px; }
         .mini-timeline-container::-webkit-scrollbar-track { background: transparent; }
-        .mini-timeline-container::-webkit-scrollbar-thumb { background: #e0dcd3; border-radius: 10px; }
-        .mini-timeline-kart { min-width: 200px; max-width: 240px; background: white; border-radius: 12px; padding: 20px; scroll-snap-align: start; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #f0ebe1; }
-        .mini-timeline-yil { color: #8d6e63; font-size: 1.1rem; border-bottom: 1px solid #f0ebe1; padding-bottom: 10px; margin-bottom: 15px; font-family: 'Montserrat', sans-serif; font-weight: 600; }
-        .mini-timeline-isim { color: #333; font-size: 1.05rem; line-height: 1.4; font-weight: 500; }
+        .mini-timeline-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        .mini-timeline-kart { min-width: 200px; max-width: 240px; background: var(--bg-card); border-radius: 12px; padding: 20px; scroll-snap-align: start; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-color-soft); }
+        .mini-timeline-yil { color: var(--brand-soft); font-size: 1.1rem; border-bottom: 1px solid var(--border-color-soft); padding-bottom: 10px; margin-bottom: 15px; font-family: 'Montserrat', sans-serif; font-weight: 600; }
+        .mini-timeline-isim { color: var(--text-primary); font-size: 1.05rem; line-height: 1.4; font-weight: 500; }
+
+        /* ÖNE ÇIKAN ŞAHSİYETLER */
+        .on-cikan-container { display: flex; gap: 20px; overflow-x: auto; padding: 10px 5px 20px 5px; margin-bottom: 15px; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
+        .on-cikan-container::-webkit-scrollbar { height: 6px; }
+        .on-cikan-container::-webkit-scrollbar-track { background: transparent; }
+        .on-cikan-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        .on-cikan-kart { min-width: 230px; max-width: 250px; background: var(--bg-card); border-radius: 16px; padding: 25px 20px; scroll-snap-align: start; flex-shrink: 0; border: 1px solid var(--border-color); cursor: pointer; transition: 0.3s; text-align: center; }
+        .on-cikan-kart:hover { box-shadow: 0 10px 30px var(--shadow-card); transform: translateY(-3px); border-color: var(--border-input); }
+        .on-cikan-avatar { font-size: 1.8rem; background: var(--bg-card-soft); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color-soft); color: var(--brand-soft); margin: 0 auto 15px auto; }
+        .on-cikan-isim { font-size: 1.1rem; color: var(--text-primary); margin-bottom: 8px; font-weight: 500; }
+        .on-cikan-ozet { font-size: 0.85rem; color: var(--text-faint); line-height: 1.5; margin-top: 12px; text-align: left; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 
         /* Arşiv Kartları - Temiz Görünüm */
-        .arsiv-kart { background: white; border-radius: 16px; border: 1px solid #e0dcd3; transition: box-shadow 0.3s; overflow: hidden; width: 100%; box-sizing: border-box; margin-bottom: 5px; }
-        .arsiv-kart:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.04); }
+        .arsiv-kart { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); transition: box-shadow 0.3s, background 0.3s; overflow: hidden; width: 100%; box-sizing: border-box; margin-bottom: 5px; }
+        .arsiv-kart:hover { box-shadow: 0 10px 30px var(--shadow-card); }
         
         details.arsiv-kart summary { padding: 25px 30px; cursor: pointer; outline: none; list-style: none; position: relative; display: flex; justify-content: space-between; align-items: center; background: transparent; transition: 0.3s; }
         details.arsiv-kart summary::-webkit-details-marker { display: none; }
-        details.arsiv-kart[open] summary { border-bottom: 1px solid #f0ebe1; }
-        details.arsiv-kart summary::after { content: '⮟'; font-size: 1rem; transition: transform 0.3s; color: #999; }
-        details.arsiv-kart[open] summary::after { transform: rotate(180deg); color: #5d4037; }
+        details.arsiv-kart[open] summary { border-bottom: 1px solid var(--border-color-soft); }
+        details.arsiv-kart summary::after { content: '⮟'; font-size: 1rem; transition: transform 0.3s; color: var(--text-muted); }
+        details.arsiv-kart[open] summary::after { transform: rotate(180deg); color: var(--brand-text); }
         
         .arsiv-icerik-yeni { padding: 30px; background: transparent; }
         
         .kart-baslik-isim { display: flex; align-items: center; gap: 20px; }
-        .kart-ikon { font-size: 1.8rem; background: #fdfcfb; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid #f0ebe1; color: #8d6e63; }
-        .kart-isim-metin { font-size: 1.5rem; color: #333; margin: 0 0 6px 0; font-family: 'Montserrat', sans-serif; font-weight: 600; }
+        .kart-ikon { font-size: 1.8rem; background: var(--bg-card-soft); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color-soft); color: var(--brand-soft); }
+        .kart-isim-metin { font-size: 1.5rem; color: var(--text-primary); margin: 0 0 6px 0; font-family: 'Montserrat', sans-serif; font-weight: normal; }
         
         /* Etiketler - Zarif */
-        .devir-tag { background: #f5f7fa; color: #5c6ac4; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; font-weight: 500; display: inline-block; margin-right: 5px; }
-        .yas-badge { background: #fdfcfb; color: #888; border: 1px solid #f0ebe1; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; display: inline-block; }
-        .category-tag { background: #f0ebe1; color: #5d4037; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; font-weight: 500; display: inline-block; }
+        .devir-tag { background: var(--bg-tag-blue); color: var(--accent-blue); font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; font-weight: 500; display: inline-block; margin-right: 5px; }
+        .yas-badge { background: var(--bg-card-soft); color: var(--text-faint); border: 1px solid var(--border-color-soft); padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; display: inline-block; }
+        .category-tag { background: var(--bg-hover-soft); color: var(--brand-text); font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; font-weight: 500; display: inline-block; }
 
         /* Olay Makale Kartları */
         .article-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 40px; }
-        .article-card { background: white; padding: 30px; border-radius: 16px; cursor: pointer; border: 1px solid #e0dcd3; transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; width: 100%; box-sizing: border-box; }
-        .article-card:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.04); transform: translateY(-3px); }
-        .article-card h3 { color: #333; margin-top: 15px; font-family: 'Montserrat', sans-serif; font-size: 1.4rem; margin-bottom: 15px; line-height: 1.4; font-weight: 600; }
-        .article-card p { color: #666; font-size: 1rem; line-height: 1.7; margin-bottom: 20px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
-        .read-more { color: #8d6e63; font-weight: 500; font-size: 0.9rem; border-bottom: 1px solid transparent; transition: 0.2s; padding-bottom: 2px; }
-        .article-card:hover .read-more { border-bottom-color: #8d6e63; }
+        .article-card { background: var(--bg-card); padding: 30px; border-radius: 16px; cursor: pointer; border: 1px solid var(--border-color); transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; width: 100%; box-sizing: border-box; }
+        .article-card:hover { box-shadow: 0 10px 30px var(--shadow-card); transform: translateY(-3px); }
+        .article-card h3 { color: var(--text-primary); margin-top: 15px; font-family: 'Montserrat', sans-serif; font-size: 1.4rem; margin-bottom: 15px; line-height: 1.4; font-weight: normal; }
+        .article-card p { color: var(--text-secondary); font-size: 1rem; line-height: 1.7; margin-bottom: 20px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+        .read-more { color: var(--brand-soft); font-weight: 500; font-size: 0.9rem; border-bottom: 1px solid transparent; transition: 0.2s; padding-bottom: 2px; }
+        .article-card:hover .read-more { border-bottom-color: var(--brand-soft); }
 
         /* Okuma Sayfası */
-        .reading-page { background: white; padding: 50px; border-radius: 16px; border: 1px solid #e0dcd3; text-align: justify; line-height: 1.9; font-size: 1.1rem; color: #444; }
-        .reading-page h2 { color: #333; font-family: 'Montserrat', sans-serif; text-align: center; font-size: 2.2rem; font-weight: 600; margin-bottom: 10px; }
-        .back-btn { background: transparent; color: #888; border: none; padding: 0 0 20px 0; cursor: pointer; font-weight: 500; font-size: 0.9rem; display: inline-block; transition: 0.3s; font-family: 'Montserrat', sans-serif; }
-        .back-btn:hover { color: #333; }
+        .reading-page { background: var(--bg-card); padding: 50px; border-radius: 16px; border: 1px solid var(--border-color); text-align: justify; line-height: 1.9; font-size: 1.1rem; color: var(--text-body); }
+        .reading-page h2 { color: var(--text-primary); font-family: 'Montserrat', sans-serif; text-align: center; font-size: 2.2rem; font-weight: normal; margin-bottom: 10px; }
+        .back-btn { background: transparent; color: var(--text-faint); border: none; padding: 0 0 20px 0; cursor: pointer; font-weight: 500; font-size: 0.9rem; display: inline-block; transition: 0.3s; font-family: 'Montserrat', sans-serif; }
+        .back-btn:hover { color: var(--text-primary); }
 
         /* BAĞLANTILI TARİH SİSTEMİ - MİNİMALİST */
-        .btn-sistem { background: #fdfcfb; color: #5c6ac4; border: 1px solid #e6e9f2; padding: 12px 20px; border-radius: 8px; font-size: 0.95rem; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; margin-top: 30px; width: 100%; font-family: 'Montserrat', sans-serif; }
-        .btn-sistem:hover { background: #f5f7fa; border-color: #d1d8f0; }
-        .sistem-container { margin-top: 15px; padding: 25px; background: #faf9f6; border-radius: 12px; display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.4s ease; border: 1px solid #f0ebe1; }
-        .sistem-baslik { font-weight: 600; color: #555; margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .sistem-grup { font-size: 0.98rem; line-height: 1.8; color: #444; }
+        .btn-sistem { background: var(--bg-card-soft); color: var(--accent-blue); border: 1px solid var(--accent-blue-border); padding: 12px 20px; border-radius: 8px; font-size: 0.95rem; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; margin-top: 30px; width: 100%; font-family: 'Montserrat', sans-serif; }
+        .btn-sistem:hover { background: var(--accent-blue-bg); border-color: var(--accent-blue-border-hover); }
+        .sistem-container { margin-top: 15px; padding: 25px; background: var(--bg-card-alt); border-radius: 12px; display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.4s ease; border: 1px solid var(--border-color-soft); }
+        .sistem-baslik { font-weight: 600; color: var(--text-label); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sistem-grup { font-size: 0.98rem; line-height: 1.8; color: var(--text-body); }
 
-        .smart-link { color: #5c6ac4; cursor: pointer; text-decoration: none; font-weight: 500; border-bottom: 1px solid transparent; transition: 0.2s; }
-        .smart-link:hover { border-bottom-color: #5c6ac4; }
+        .smart-link { color: var(--accent-blue); cursor: pointer; text-decoration: none; font-weight: 500; border-bottom: 1px solid transparent; transition: 0.2s; }
+        .smart-link:hover { border-bottom-color: var(--accent-blue); }
 
         /* Arama Kutusu Sağ Panel */
         .arsiv-arama-kutu { position: relative; margin-bottom: 25px; } 
-        #ara { width: 100%; padding: 14px 20px 14px 45px; font-size: 1.05rem; border: 1px solid #e0dcd3; border-radius: 12px; transition: 0.3s; box-sizing: border-box; background: white; color: #333; font-family: 'Montserrat', sans-serif; }
-        #ara:focus { border-color: #a8a092; outline: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
-        .arama-ikon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #aaa; }
+        #ara { width: 100%; padding: 14px 20px 14px 45px; font-size: 1.05rem; border: 1px solid var(--border-color); border-radius: 12px; transition: 0.3s; box-sizing: border-box; background: var(--bg-card); color: var(--text-primary); font-family: 'Montserrat', sans-serif; }
+        #ara:focus { border-color: var(--text-placeholder); outline: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .arama-ikon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: var(--text-placeholder); }
         
         .populer-aramalar { display: flex; gap: 8px; flex-wrap: wrap; }
-        .populer-btn { background: white; color: #777; border: 1px solid #e0dcd3; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; font-family: 'Montserrat', sans-serif; }
-        .populer-btn:hover { background: #f0ebe1; color: #333; }
+        .populer-btn { background: var(--bg-card); color: var(--text-tertiary); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; font-family: 'Montserrat', sans-serif; }
+        .populer-btn:hover { background: var(--bg-hover-soft); color: var(--text-primary); }
 
         /* Alt Sayfalar & Admin & Footer */
-        .admin-dashboard { background: white; padding: 40px; border-radius: 16px; border: 1px solid #e0dcd3; }
-        .admin-section { background: #fdfcfb; padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #f0ebe1; }
+        .admin-dashboard { background: var(--bg-card); padding: 40px; border-radius: 16px; border: 1px solid var(--border-color); }
+        .admin-section { background: var(--bg-card-soft); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--border-color-soft); box-shadow: 0 2px 6px var(--shadow-card); }
         input, textarea, select, button { font-family: 'Montserrat', sans-serif; }
-        input, textarea, select { width: 100%; padding: 12px; margin: 6px 0 15px 0; box-sizing: border-box; border: 1px solid #dcdacb; border-radius: 6px; font-size: 15px; background: #fff; }
-        .btn-action { background: #5d4037; color: white; border: none; padding: 14px; width: 100%; cursor: pointer; font-weight: 500; border-radius: 6px; transition: 0.2s; font-size: 1rem; }
-        .btn-action:hover { background: #4e342e; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 6px 0 15px 0; box-sizing: border-box; border: 1px solid var(--border-input); border-radius: 6px; font-size: 15px; background: var(--bg-card); color: var(--text-primary); }
+        textarea { resize: vertical; line-height: 1.6; }
+        textarea:focus, input:focus, select:focus { outline: none; border-color: var(--brand-soft); box-shadow: 0 0 0 3px rgba(93, 64, 55, 0.12); }
+        .bilgi-alani { min-height: 240px; margin-bottom: 4px; }
+        .bilgi-sayac { text-align: right; font-size: 0.78rem; color: var(--text-muted); margin: -8px 2px 15px 0; }
+        .btn-action { background: var(--brand-bg); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; font-weight: 500; border-radius: 6px; transition: 0.2s; font-size: 1rem; }
+        .btn-action:hover { background: var(--brand-bg-hover); }
 
-        details.soy-klasor { background: white; border-radius: 12px; margin-bottom: 12px; border: 1px solid #e0dcd3; }
-        summary.soy-baslik { cursor: pointer; padding: 18px 20px; font-weight: 500; color: #333; list-style: none; display: flex; align-items: center; border-bottom: 1px solid transparent; transition: 0.2s; }
-        details.soy-klasor[open] summary.soy-baslik { border-bottom-color: #e0dcd3; background: #faf9f6; }
-        summary.soy-baslik::before { content: "▸"; margin-right: 15px; font-size: 1.2rem; color: #999; transition: 0.2s; }
+        details.soy-klasor { background: var(--bg-card); border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); }
+        summary.soy-baslik { cursor: pointer; padding: 18px 20px; font-weight: 500; color: var(--text-primary); list-style: none; display: flex; align-items: center; border-bottom: 1px solid transparent; transition: 0.2s; }
+        details.soy-klasor[open] summary.soy-baslik { border-bottom-color: var(--border-color); background: var(--bg-card-alt); }
+        summary.soy-baslik::before { content: "▸"; margin-right: 15px; font-size: 1.2rem; color: var(--text-muted); transition: 0.2s; }
         details.soy-klasor[open] summary.soy-baslik::before { transform: rotate(90deg); }
-        .soy-icerik { padding: 20px 20px 20px 45px; background: white; }
-        .soy-kart { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f0ebe1; }
+        .soy-icerik { padding: 20px 20px 20px 45px; background: var(--bg-card); }
+        .soy-kart { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color-soft); }
         
-        #main-footer { border-top: 1px solid #e0dcd3; margin-top: 60px; padding: 50px 20px 30px 20px; background: white; }
+        #main-footer { border-top: 1px solid var(--border-color); margin-top: 60px; padding: 50px 20px 30px 20px; background: var(--bg-card); }
         .footer-container { max-width: 1000px; margin: 0 auto; display: flex; gap: 40px; justify-content: space-between; flex-wrap: wrap; }
-        .footer-col h4 { color: #333; margin-top: 0; margin-bottom: 20px; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.5px; }
+        .footer-col h4 { color: var(--text-primary); margin-top: 0; margin-bottom: 20px; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.5px; }
         .footer-col ul { list-style: none; padding: 0; margin: 0; }
         .footer-col ul li { margin-bottom: 12px; }
-        .footer-col ul li a { text-decoration: none; color: #777; cursor: pointer; transition: 0.2s; font-size: 0.95rem; }
-        .footer-col ul li a:hover { color: #333; }
-        .footer-bottom { max-width: 1000px; margin: 50px auto 0 auto; padding-top: 25px; border-top: 1px solid #f0ebe1; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #999; flex-wrap: wrap; gap: 15px; }
-        .footer-bottom a { color: #999; text-decoration: none; transition: 0.2s; }
-        .footer-bottom a:hover { color: #333; }
+        .footer-col ul li a { text-decoration: none; color: var(--text-tertiary); cursor: pointer; transition: 0.2s; font-size: 0.95rem; }
+        .footer-col ul li a:hover { color: var(--text-primary); }
+        .footer-bottom { max-width: 1000px; margin: 50px auto 0 auto; padding-top: 25px; border-top: 1px solid var(--border-color-soft); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; gap: 15px; }
+        .footer-bottom a { color: var(--text-muted); text-decoration: none; transition: 0.2s; }
+        .footer-bottom a:hover { color: var(--text-primary); }
 
-        .canli-uyari { color: #d32f2f; font-size: 0.85em; margin: -5px 0 10px 5px; display: none; }
-        .oto-liste { position: absolute; display: none; background: #fff; border: 1px solid #e0dcd3; max-height: 250px; overflow-y: auto; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; }
-        .oto-liste div { padding: 12px 18px; cursor: pointer; border-bottom: 1px solid #f0ebe1; color: #444; transition: 0.2s; }
-        .oto-liste div:hover { background: #faf9f6; }
+        .canli-uyari { color: var(--danger); font-size: 0.85em; margin: -5px 0 10px 5px; display: none; }
+        .oto-liste { position: absolute; display: none; background: var(--bg-card); border: 1px solid var(--border-color); max-height: 250px; overflow-y: auto; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; }
+        .oto-liste div { padding: 12px 18px; cursor: pointer; border-bottom: 1px solid var(--border-color-soft); color: var(--text-body); transition: 0.2s; }
+        .oto-liste div:hover { background: var(--bg-card-alt); }
     </style>
 </head>
 <body>
@@ -209,14 +294,17 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         <button class="nav-btn" onclick="sayfaDegistir('cizelge')" data-i18n="nav_timeline">Çizelge</button>
         <button class="nav-btn" onclick="sayfaDegistir('soy')" data-i18n="nav_tree">Soyağacı</button>
         <button class="nav-btn" onclick="rastgeleSahsiyet()" style="border-color: rgba(255,255,255,0.4);" data-i18n="nav_random">Rastgele Şahsiyet</button>
-        <button class="nav-btn" id="nav-admin-btn" style="display:none; background:white; color:#5d4037;" onclick="sayfaDegistir('admin')" data-i18n="nav_panel">Panel</button>
+        <button class="nav-btn" id="nav-admin-btn" style="display:none; background:var(--header-text); color:var(--brand-text);" onclick="sayfaDegistir('admin')" data-i18n="nav_panel">Panel</button>
     </div>
     <div class="header-search">
-        <div class="lang-switch" role="group" aria-label="Language">
-            <button type="button" class="lang-btn active-lang" data-dil="tr" onclick="dilDegistir('tr')">TR</button>
-            <button type="button" class="lang-btn" data-dil="en" onclick="dilDegistir('en')">EN</button>
-        </div>
         <input type="text" id="global-search" data-i18n-placeholder="ph_global_search" placeholder="Portalda Ara..." oninput="globalArama()" autocomplete="off">
+        <div class="lang-switch">
+            <button class="lang-btn" data-lang="tr" onclick="dilDegistir('tr')">TR</button>
+            <button class="lang-btn" data-lang="en" onclick="dilDegistir('en')">EN</button>
+        </div>
+        <div class="theme-switch">
+            <button class="theme-btn" id="theme-toggle-btn" onclick="temaDegistir()" title="Koyu Mod"></button>
+        </div>
     </div>
 </header>
 
@@ -224,7 +312,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     <div id="home" class="page active">
         <div class="quote-box">
             <p data-i18n="quote_text">"Ashabım, yıldızlar gibidir. Hangisine tabi olursanız hidayete erersiniz."</p>
-            <span data-i18n="quote_attr" style="color:#888; font-size:0.95rem;">- Peygamber Efendimiz (s.a.v.)</span>
+            <span data-i18n="quote_attr" style="color: var(--text-faint); font-size:0.95rem;">- Peygamber Efendimiz (s.a.v.)</span>
         </div>
         
         <div class="home-stats-container">
@@ -234,13 +322,16 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         </div>
 
         <div style="text-align: center; margin-bottom: 60px;">
-            <button onclick="sayfaDegistir('arsiv')" data-i18n="btn_explore" style="background: #5d4037; color: white; border:none; font-size: 1.1rem; padding: 14px 30px; border-radius: 30px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(93,64,55,0.2);">Tüm Arşivi Keşfet ➔</button>
+            <button onclick="sayfaDegistir('arsiv')" data-i18n="btn_explore" style="background: var(--brand-bg); color: white; border:none; font-size: 1.1rem; padding: 14px 30px; border-radius: 30px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(93,64,55,0.2);">Tüm Arşivi Keşfet ➔</button>
         </div>
 
-        <h2 data-i18n="h_latest_events" style="text-align: center; color: #333; font-weight: 600; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Son Eklenen Tarihi Olaylar</h2>
+        <h2 data-i18n="h_featured_persons" style="text-align: center; color: var(--text-primary); font-weight: normal; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Öne Çıkan Şahsiyetler</h2>
+        <div class="on-cikan-container" id="home-one-cikan"></div>
+
+        <h2 data-i18n="h_latest_events" style="text-align: center; color: var(--text-primary); font-weight: normal; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Son Eklenen Tarihi Olaylar</h2>
         <div class="article-grid" id="home-olaylar-grid"></div>
         
-        <h2 data-i18n="h_core_readings" style="text-align: center; color: #333; font-weight: 600; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Temel Okumalar</h2>
+        <h2 data-i18n="h_core_readings" style="text-align: center; color: var(--text-primary); font-weight: normal; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Temel Okumalar</h2>
         <div class="article-grid">
             <div class="article-card" onclick="sayfaDegistir('makale1')">
                 <div class="card-meta-top"><span class="category-tag" data-i18n="cat_itikad">İtikat</span></div>
@@ -259,10 +350,10 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             </div>
         </div>
 
-        <h2 data-i18n="h_mini_timeline" style="text-align: center; color: #333; font-weight: 600; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Mini Zaman Çizelgesi</h2>
+        <h2 data-i18n="h_mini_timeline" style="text-align: center; color: var(--text-primary); font-weight: normal; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Mini Zaman Çizelgesi</h2>
         <div class="mini-timeline-container" id="home-mini-timeline"></div>
         <div style="text-align: center; margin-bottom: 40px;">
-            <button onclick="sayfaDegistir('cizelge')" data-i18n="btn_full_timeline" style="background: transparent; color: #777; border: 1px solid #dcdacb; padding: 10px 20px; border-radius: 20px; cursor:pointer; transition:0.2s;">Tüm Çizelgeyi Gör</button>
+            <button onclick="sayfaDegistir('cizelge')" data-i18n="btn_full_timeline" style="background: transparent; color: var(--text-tertiary); border: 1px solid var(--border-input); padding: 10px 20px; border-radius: 20px; cursor:pointer; transition:0.2s;">Tüm Çizelgeyi Gör</button>
         </div>
     </div>
 
@@ -271,8 +362,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             <div class="arsiv-left">
                 <div class="right-panel-box">
                     <h4 data-i18n="guide_title">Arşiv Rehberi</h4>
-                    <p data-i18n="guide_p1" style="font-size: 0.95rem; color: #666; line-height: 1.7; margin-top:0;">Asr-ı Saadet döneminden Endülüs'e uzanan bilgi bankasına hoş geldiniz.</p>
-                    <p data-i18n="guide_p2" style="font-size: 0.95rem; color: #666; line-height: 1.7; margin-bottom:0;">Geniş orta alanda tarihi detayları okuyabilir, sağ paneldeki filtrelerle zaman yolculuğunuzu daraltabilirsiniz.</p>
+                    <p data-i18n="guide_p1" style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; margin-top:0;">Asr-ı Saadet döneminden Endülüs'e uzanan bilgi bankasına hoş geldiniz.</p>
+                    <p data-i18n="guide_p2" style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; margin-bottom:0;">Geniş orta alanda tarihi detayları okuyabilir, sağ paneldeki filtrelerle zaman yolculuğunuzu daraltabilirsiniz.</p>
                 </div>
             </div>
 
@@ -323,112 +414,27 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         <div class="reading-page">
             <button class="back-btn" onclick="sayfaDegistir('arsiv')" data-i18n="back_archive">← Arşive Dön</button>
             <h2 id="okuma-baslik">Olay Başlığı</h2>
-            <div style="text-align: center; color: #888; margin-bottom: 35px; font-size: 1.05rem;" id="okuma-tarih">Tarih Bilgisi</div>
+            <div style="text-align: center; color: var(--text-faint); margin-bottom: 35px; font-size: 1.05rem;" id="okuma-tarih">Tarih Bilgisi</div>
             <div id="okuma-icerik"></div>
         </div>
     </div>
 
-    <div id="makale1" class="page">
-        <div class="reading-page">
-            <button class="back-btn" onclick="sayfaDegistir('home')" data-i18n="back_home">← Ana Sayfaya Dön</button>
-            <div data-lang="tr">
-                <h2>Ashab-ı Kiram'ın İzinde</h2>
-                <p>İslam’ın kuvvetli olduğu zamanlarda doğduk. Kuran-ı Kerim'i bize öğretenler oldu. Maalesef ki yeni nesil elimizden kayıp gidiyor. Bunları nerede kaybettik? Hangi mezhebe ait olduğunu bilmeyen, peygamberimizi tanımayan birine nasıl namaz kıl diyebiliriz?</p>
-                <p>Hangi mezhepteniz, mezhep neden var, zorunda mıyız biz? <em>"El ilmü ferizatin ala küllü müslimin ve müslimetin"</em>. İlim öğrenmek her Müslüman erkek ve kadın üzerine farzdır. Burada kastedilen nasıl amel etmesi gerektiğini öğrenmektir. İtikadını bilmektir. Herkese tek tek vaciptir. Selam verse birisi, alsa diğerlerinden hüküm kalkar ama 5 vakit namaz herkese tek tek farzdır. İtikat konusunda da herkesin tek tek, fert fert kendisinin yapması lazımdır. İman ne demek? Hz. Allah’a, O'nun peygamberine, O'nun kulu ve resulü olduğuna iman etmektir.</p>
-                <p>Amel imandan bir cüz müdür? Günümüzde çok fazla var; Müslümanım diyor, namaz kılmıyor, zekât vermiyor. Peki, biz ona "Sen Müslüman değilsin" dersek ne olur? Dinden çıkmış oluruz. Amelinde eksik vardır evet ama Allah’a iman ettim diyordur; amelinde kusur vardır bizi alakadar etmez. İman asıldır, amel onu kuvvetlendirmek içindir. Rabbim bize kâmil iman versin.</p>
-                <p>Şimdi bir tane mumu yaksak onun sönmesi kolaydır ama biz iman ettik, <em>La ilahe illallah Muhammeden rasulullah</em> dedik. Namazla, rabıtayla, hatimle, zekât ve sadakayla o ateşi güçlendireceğiz. Zayıf olan muma bir kere üflesek söner ama kuvvetli olan ateşe üflesen de su atsan da sönmez. Kimisinin ki ampul gibi, kimisinin ki projektör gibidir. Evet, imanı biliyoruz ama güçlendirmek için çabalamamız gerek. Nasıl güçlendireceğiz? Ne ile? Amel-i Saliha ile.</p>
-                <p>Peygamber efendimiz de yıllar öncesinden ehlisünnete ve bu dört mezhepten birine uyulması hususunda şöyle buyurmuştur; <em>“Din, iman sahipleri yılanın deliğine, yuvasına çekilmesi gibi elbette Hicaz’a ve Medine-i Münevvere’ye çekilir, sığınır ve toplanır. İslam dini garip olarak başlayıp, yayıldığı gibi yakın zamanda da garip olarak döner. O zaman müjde ve saadet garip olanlar içindir.”</em> Buyurmuşlardır. Bunun üzerine <em>“Ya Rasulallah garip olanlar kimlerdir?”</em> diye soruldu. <em>“Benden sonra benim sünnetimden insanların bozduğu şeyleri düzeltenlerdir.“</em> cevabını verdi. Buradaki garipler kimlerdir? Yani ehlisünnet vel cemaat mezhebi üzerine olanlardır.</p>
-                <p>Peygamber efendimiz <em>“Yakında ümmetim 73 fırkaya ayrılacaktır. Onlardan biri hariç hepsi cehennemliktir.”</em> buyurdu. Ashab-ı Kiram <em>“Ya Rasulallah onlar kimlerdir?”</em> dedi. Peygamber efendimiz <em>“Onlar benim ve Ashabımın yolu üzerine olanlardır.”</em> buyurmuşlardır.</p>
-                <p style="text-align: center; margin-top: 30px; color: #5d4037;">Hazreti Allah bu yol üzerine bizleri daim etsin.</p>
-            </div>
-            <div data-lang="en" style="display:none;">
-                <h2>In the Footsteps of the Noble Companions</h2>
-                <p>We were born in times when Islam was strong. There were those who taught us the Qur’an. Sadly, the younger generation is slipping from our hands. Where did we lose them? How can we tell someone who does not know their school of law, and does not know our Prophet, to pray?</p>
-                <p>Which madhhab do you follow, why do madhhabs exist, are we obliged? <em>"Seeking knowledge is an obligation upon every Muslim man and woman."</em> What is meant here is learning how to act, and knowing one’s creed. It is binding on each person individually. If one person gives the greeting of peace and another returns it, the duty lifts from the rest; but the five daily prayers are obligatory upon each person. In matters of creed, too, each person must take it up for themselves. What is faith? It is to believe in Allah, in His Prophet, and that he is His servant and messenger.</p>
-                <p>Is action a part of faith? Today many say “I am Muslim” yet do not pray or give zakat. If we say to them “You are not a Muslim,” we ourselves would leave the religion. There is a shortcoming in their deeds, yet they affirm faith in Allah; their failings in action are not for us to judge in that way. Faith is the foundation; righteous deeds strengthen it. May our Lord grant us complete faith.</p>
-                <p>If we light a single candle, it is easily extinguished. But we have believed and said <em>La ilaha illallah Muhammadun rasulullah</em>. With prayer, connection of the heart, completing the Qur’an, zakat and charity we strengthen that fire. A weak candle goes out with one breath; a strong fire does not die even if you blow on it or pour water. Some shine like a lamp, some like a floodlight. We know faith, but we must strive to strengthen it — through righteous deeds.</p>
-                <p>The Prophet (peace be upon him) said that the religion will withdraw to the Hijaz and to Madinah like a snake withdrawing into its hole, and that Islam began as something strange and will return as something strange; glad tidings are for the strangers — those who restore what people have corrupted of his Sunnah: the people of the Sunnah and the community, upon one of the four schools.</p>
-                <p>He also said his community would divide into seventy-three groups, all but one in the Fire. When the Companions asked who they were, he said: those upon his path and the path of his Companions.</p>
-                <p style="text-align: center; margin-top: 30px; color: #5d4037;">May Allah keep us upon this path.</p>
-            </div>
-        </div>
-    </div>
-    <div id="makale2" class="page">
-        <div class="reading-page">
-            <button class="back-btn" onclick="sayfaDegistir('home')" data-i18n="back_home">← Ana Sayfaya Dön</button>
-            <div data-lang="tr">
-                <h2>Neden Bu İlimleri Öğreniyoruz?</h2>
-                <p>İslam dini, okuyup ilim sahibi olmaya çok önem vermiştir. Hatta Peygamber Efendimize indirilen ilk ayeti kerime “Oku” emri ile başlar. Cenabı Hak Kuran-ı Keriminde; <em>“Ey Habibim! Yaratan Rabbinin adı ile oku”</em> buyurmuştur.</p>
-                <p>Kur’an-ı Kerim’e bakacak olursak, Allah lafzından sonra en çok geçen kelimelerden biri de ilim ve ilim manasını ifade eden kelimeler olduğunu görürüz. Yine Cenabı Hak Kuran-ı Keriminde: <em>“Habibim! De ki: Hiç bilenler ile bilmeyenler bir olur mu?"</em> buyurarak ilmin ve âlimin üstünlüğünü bildirmiştir.</p>
-                <p>Yine Hz. Allah bütün peygamberlerini âlim yapmıştır. Ümmetleri için öğretmen kılmıştır. Eğer ilimden daha yüce bir mertebe, daha güzel bir meslek olsaydı, Hz. Allah seçerek gönderdiği peygamberlerine o mesleği verirdi.</p>
-                <p style="margin-top: 25px; color: #333;">Abdullah bin Mübarek Hazretleri’ne sordular:</p>
-                <p style="margin-left: 20px;">— “Eğer Cenabı-ı Hak, sana öleceğin anı bildirse idi ne ile meşgul olurdun?”<br>— “İlim ile meşgul olurdum." dedi.<br>— “İlimden daha üstün bir ibadet yok mu ki, onunla meşgul olsanız?”<br>— “Evet. İlimden daha üstün bir ibadet yoktur.” dedi. Yanındakiler:<br>— “İlme çalışmanın her türlü ibadetten üstün olduğunu ne ile ispat edersiniz?” deyince,</p>
-                <p style="margin-top: 20px; color: #333;">Abdullah bin Mübarek Hazretleri şöyle cevap verdi:</p>
-                <p style="margin-left: 20px; font-style: italic; color: #666;">— “İlim her şeyden üstündür. Çünkü Cenabı-ı Hak (c.c.) Peygamber Efendimize (s.a.v.) her şeyi verdi. Fazlasını istemekle emir buyurmadı. İlim hakkında ise: ‘Ey Habibim! De ki: Rabbim benim ilmimi artır.’ Eğer ilimden daha üstün bir şey olsa idi, Rasulullah Efendimiz (s.a.v.), onun artmasını istemekle emrolunurdu. Bundan dolayı ben ilimden daha üstün bir amel göremiyorum.”</p>
-                <p style="margin-top: 25px;">İslam dini ilme o kadar değer ve kıymet vermiştir ki, Bedir harbi esirlerinin okuryazar olanlarına, Müslümanlardan on kişiye okuyup yazmayı öğrettikleri takdirde serbest bırakılacakları, Fahr-i Kâinat Efendimiz tarafından va’d edilmiş ve esirler denileni yaptıkları zaman serbest bırakılmışlardır.</p>
-                <p>Bir milletin en büyük düşmanı cehalettir. Onu imha etmeden diğer düşmanlara karşı zafer mümkün değildir.</p>
-                <p style="text-align: center; margin-top: 30px; color: #5d4037;">Hiç kimse hakikati anlayacak ilimle doğmamıştır. Bu yüzden bu ilimleri okumaya ve anlamaya önem göstermeliyiz.</p>
-            </div>
-            <div data-lang="en" style="display:none;">
-                <h2>Why Do We Study These Sciences?</h2>
-                <p>Islam has given great importance to reading and seeking knowledge. The first verse revealed to the Prophet begins with the command “Read.” Allah says in the Qur’an: <em>“Read in the name of your Lord who created.”</em></p>
-                <p>After the name of Allah, among the most frequent words in the Qur’an are those that mean knowledge. Allah also says: <em>“Say: Are those who know equal to those who do not know?”</em> — affirming the rank of knowledge and of the scholar.</p>
-                <p>Allah made all of His prophets people of knowledge and teachers for their communities. Had there been a nobler station or a finer vocation than knowledge, He would have given that vocation to the messengers He chose.</p>
-                <p style="margin-top: 25px; color: #333;">They asked Abdullah ibn al-Mubarak:</p>
-                <p style="margin-left: 20px;">— “If Allah told you the moment of your death, with what would you occupy yourself?”<br>— “With knowledge,” he said.<br>— “Is there no worship higher than knowledge?”<br>— “There is no worship higher than knowledge.” When they asked how he proved that studying knowledge is above every other act of worship,</p>
-                <p style="margin-left: 20px; font-style: italic; color: #666;">he answered that knowledge is above all else, because Allah gave the Prophet everything and did not command him to ask for more — except in knowledge: “Say: My Lord, increase me in knowledge.” Had anything been higher, he would have been commanded to ask for an increase in that. Therefore he saw no deed above knowledge.</p>
-                <p style="margin-top: 25px;">Islam valued knowledge so highly that literate captives of Badr were promised freedom if they taught ten Muslims to read and write — and they were freed when they did so.</p>
-                <p>A nation’s greatest enemy is ignorance. Without removing it, victory over other enemies is not possible.</p>
-                <p style="text-align: center; margin-top: 30px; color: #5d4037;">No one is born with the knowledge needed to grasp the truth. That is why we must give importance to reading and understanding these sciences.</p>
-            </div>
-        </div>
-    </div>
-    <div id="makale3" class="page">
-        <div class="reading-page">
-            <button class="back-btn" onclick="sayfaDegistir('home')" data-i18n="back_home">← Ana Sayfaya Dön</button>
-            <div data-lang="tr">
-                <h2>Rasulullah Sevgisi ve Kur'an Eğitimi</h2>
-                <p>Resulullah efendimiz bir hadisi şeriflerinde şöyle buyuruyor;</p>
-                <p style="font-style: italic; color: #333; font-size: 1.15rem;">”Evlatlarınızı üç haslet üzerine edeplendiriniz:</p>
-                <ul style="color: #555; line-height: 1.8; margin-bottom: 25px;"><li><strong>1. Rasulullah sevgisi</strong></li><li><strong>2. Rasulullah’ın ehlibeytinin sevgisi</strong></li><li><strong>3. Kur'an-ı Kerim okumak</strong></li></ul>
-                <p>Çünkü Kur'an-ı Kerim okuyan, okutan ve onun hizmetinde bulunanlar hiçbir gölgenin bulunmadığı o kıyamet gününde evliya ve esfiya ile beraber Allah’ımızın Arşının gölgesinde bulunacaklardır.</p>
-                <h3 style="color: #333; margin-top: 40px; font-weight: 600; border-bottom: 1px solid #f0ebe1; padding-bottom: 10px;">Kur'an-ı Kerim ilk olarak nerede ve nasıl öğretilmeye başlandı?</h3>
-                <p>Peygamber Efendimiz (s.a.v.), nübüvvetin ilk yıllarında Müslümanlar ile Safa tepesi eteklerindeki Hazret-i Erkam’ın (r.a.) evinde gizlice toplanır, onlara İslâm’ın emir ve hükümlerini bildirir, Kur’an-ı Kerim'in nazil olan Ayet-i Kerimelerini okur ve öğretirlerdi. <strong>Dârü'l-Erkam</strong> ismi verilen bu hane, İslam tarihinde ilk eğitim-öğretim yapılan ilim müessesesi olarak kabul edilir.</p>
-                <p>Rasulullah Efendimiz (s.a.v.), Medine-i Münevvere‘ye hicretlerinin ardından Mescid-i Nebevi ve ona bitişik olarak da Hücre-i Saadet'i inşa ettirdiler. Mescidin kuzey tarafına, bir suffa (gölgelik) yaptırdılar. Sahabe-i Kiramdan burada ikamet edenlere <strong>Ashab-ı Suffe</strong> denilirdi. Onların ihtiyaçlarıyla bizzat Efendimiz (s.a.v.) ilgilenir, eğitimiyle de yine kendileri alakadar olurlardı. Ayrıca onlara yazı yazmayı ve Kur’an-ı Kerim okumayı öğretmek üzere Ubâde b. Sâmit, Mus'ab bin Umeyr (r.anhüma) gibi hocalar tayin etmişlerdi.</p>
-            </div>
-            <div data-lang="en" style="display:none;">
-                <h2>Love of the Messenger and Qur’an Education</h2>
-                <p>The Messenger of Allah (peace be upon him) said in a hadith:</p>
-                <p style="font-style: italic; color: #333; font-size: 1.15rem;">“Raise your children upon three qualities:</p>
-                <ul style="color: #555; line-height: 1.8; margin-bottom: 25px;"><li><strong>1. Love of the Messenger of Allah</strong></li><li><strong>2. Love of the Messenger’s household</strong></li><li><strong>3. Reciting the Qur’an</strong></li></ul>
-                <p>Those who recite the Qur’an, teach it, and serve it will, on the Day when there is no shade, be in the shade of Allah’s Throne with the friends and chosen ones of Allah.</p>
-                <h3 style="color: #333; margin-top: 40px; font-weight: 600; border-bottom: 1px solid #f0ebe1; padding-bottom: 10px;">Where and how was the Qur’an first taught?</h3>
-                <p>In the early years of prophethood, the Prophet (peace be upon him) met secretly with the Muslims in the house of Arqam (may Allah be pleased with him) at the foot of Safa. There he taught them the commands of Islam and the verses as they were revealed. This house, known as <strong>Dar al-Arqam</strong>, is regarded as the first teaching institution in Islamic history.</p>
-                <p>After the migration to Madinah, he had the Prophet’s Mosque built, and beside it the Chamber of Felicity. On the northern side of the mosque a shaded platform (suffah) was made. Those Companions who lived there were called the <strong>People of the Suffah</strong>. The Prophet himself looked after their needs and their education, and appointed teachers such as Ubadah ibn al-Samit and Mus‘ab ibn Umayr to teach them writing and recitation of the Qur’an.</p>
-            </div>
-        </div>
-    </div>
+    <div id="makale1" class="page"><div class="reading-page"><button class="back-btn" onclick="sayfaDegistir('home')" data-i18n="back_home">← Ana Sayfaya Dön</button><h2>Ashab-ı Kiram'ın İzinde</h2><p>İslam’ın kuvvetli olduğu zamanlarda doğduk. Kuran-ı Kerim'i bize öğretenler oldu. Maalesef ki yeni nesil elimizden kayıp gidiyor. Bunları nerede kaybettik? Hangi mezhebe ait olduğunu bilmeyen, peygamberimizi tanımayan birine nasıl namaz kıl diyebiliriz?</p><p>Hangi mezhepteniz, mezhep neden var, zorunda mıyız biz? <em>"El ilmü ferizatin ala küllü müslimin ve müslimetin"</em>. İlim öğrenmek her Müslüman erkek ve kadın üzerine farzdır. Burada kastedilen nasıl amel etmesi gerektiğini öğrenmektir. İtikadını bilmektir. Herkese tek tek vaciptir. Selam verse birisi, alsa diğerlerinden hüküm kalkar ama 5 vakit namaz herkese tek tek farzdır. İtikat konusunda da herkesin tek tek, fert fert kendisinin yapması lazımdır. İman ne demek? Hz. Allah’a, O'nun peygamberine, O'nun kulu ve resulü olduğuna iman etmektir.</p><p>Amel imandan bir cüz müdür? Günümüzde çok fazla var; Müslümanım diyor, namaz kılmıyor, zekât vermiyor. Peki, biz ona "Sen Müslüman değilsin" dersek ne olur? Dinden çıkmış oluruz. Amelinde eksik vardır evet ama Allah’a iman ettim diyordur; amelinde kusur vardır bizi alakadar etmez. İman asıldır, amel onu kuvvetlendirmek içindir. Rabbim bize kâmil iman versin.</p><p>Şimdi bir tane mumu yaksak onun sönmesi kolaydır ama biz iman ettik, <em>La ilahe illallah Muhammeden rasulullah</em> dedik. Namazla, rabıtayla, hatimle, zekât ve sadakayla o ateşi güçlendireceğiz. Zayıf olan muma bir kere üflesek söner ama kuvvetli olan ateşe üflesen de su atsan da sönmez. Kimisinin ki ampul gibi, kimisinin ki projektör gibidir. Evet, imanı biliyoruz ama güçlendirmek için çabalamamız gerek. Nasıl güçlendireceğiz? Ne ile? Amel-i Saliha ile.</p><p>Peygamber efendimiz de yıllar öncesinden ehlisünnete ve bu dört mezhepten birine uyulması hususunda şöyle buyurmuştur; <em>“Din, iman sahipleri yılanın deliğine, yuvasına çekilmesi gibi elbette Hicaz’a ve Medine-i Münevvere’ye çekilir, sığınır ve toplanır. İslam dini garip olarak başlayıp, yayıldığı gibi yakın zamanda da garip olarak döner. O zaman müjde ve saadet garip olanlar içindir.”</em> Buyurmuşlardır. Bunun üzerine <em>“Ya Rasulallah garip olanlar kimlerdir?”</em> diye soruldu. <em>“Benden sonra benim sünnetimden insanların bozduğu şeyleri düzeltenlerdir.“</em> cevabını verdi. Buradaki garipler kimlerdir? Yani ehlisünnet vel cemaat mezhebi üzerine olanlardır.</p><p>Peygamber efendimiz <em>“Yakında ümmetim 73 fırkaya ayrılacaktır. Onlardan biri hariç hepsi cehennemliktir.”</em> buyurdu. Ashab-ı Kiram <em>“Ya Rasulallah onlar kimlerdir?”</em> dedi. Peygamber efendimiz <em>“Onlar benim ve Ashabımın yolu üzerine olanlardır.”</em> buyurmuşlardır.</p><p style="text-align: center; margin-top: 30px; color: var(--brand-text);">Hazreti Allah bu yol üzerine bizleri daim etsin.</p></div></div>
+    <div id="makale2" class="page"><div class="reading-page"><button class="back-btn" onclick="sayfaDegistir('home')" data-i18n="back_home">← Ana Sayfaya Dön</button><h2>Neden Bu İlimleri Öğreniyoruz?</h2><p>İslam dini, okuyup ilim sahibi olmaya çok önem vermiştir. Hatta Peygamber Efendimize indirilen ilk ayeti kerime “Oku” emri ile başlar. Cenabı Hak Kuran-ı Keriminde; <em>“Ey Habibim! Yaratan Rabbinin adı ile oku”</em> buyurmuştur.</p><p>Kur’an-ı Kerim’e bakacak olursak, Allah lafzından sonra en çok geçen kelimelerden biri de ilim ve ilim manasını ifade eden kelimeler olduğunu görürüz. Yine Cenabı Hak Kuran-ı Keriminde: <em>“Habibim! De ki: Hiç bilenler ile bilmeyenler bir olur mu?"</em> buyurarak ilmin ve âlimin üstünlüğünü bildirmiştir.</p><p>Yine Hz. Allah bütün peygamberlerini âlim yapmıştır. Ümmetleri için öğretmen kılmıştır. Eğer ilimden daha yüce bir mertebe, daha güzel bir meslek olsaydı, Hz. Allah seçerek gönderdiği peygamberlerine o mesleği verirdi.</p><p style="margin-top: 25px; color: var(--text-primary);">Abdullah bin Mübarek Hazretleri’ne sordular:</p><p style="margin-left: 20px;">— “Eğer Cenabı-ı Hak, sana öleceğin anı bildirse idi ne ile meşgul olurdun?”<br>— “İlim ile meşgul olurdum." dedi.<br>— “İlimden daha üstün bir ibadet yok mu ki, onunla meşgul olsanız?”<br>— “Evet. İlimden daha üstün bir ibadet yoktur.” dedi. Yanındakiler:<br>— “İlme çalışmanın her türlü ibadetten üstün olduğunu ne ile ispat edersiniz?” deyince,</p><p style="margin-top: 20px; color: var(--text-primary);">Abdullah bin Mübarek Hazretleri şöyle cevap verdi:</p><p style="margin-left: 20px; font-style: italic; color: var(--text-secondary);">— “İlim her şeyden üstündür. Çünkü Cenabı-ı Hak (c.c.) Peygamber Efendimize (s.a.v.) her şeyi verdi. Fazlasını istemekle emir buyurmadı. İlim hakkında ise: ‘Ey Habibim! De ki: Rabbim benim ilmimi artır.’ Eğer ilimden daha üstün bir şey olsa idi, Rasulullah Efendimiz (s.a.v.), onun artmasını istemekle emrolunurdu. Bundan dolayı ben ilimden daha üstün bir amel göremiyorum.”</p><p style="margin-top: 25px;">İslam dini ilme o kadar değer ve kıymet vermiştir ki, Bedir harbi esirlerinin okuryazar olanlarına, Müslümanlardan on kişiye okuyup yazmayı öğrettikleri takdirde serbest bırakılacakları, Fahr-i Kâinat Efendimiz tarafından va’d edilmiş ve esirler denileni yaptıkları zaman serbest bırakılmışlardır.</p><p>Bir milletin en büyük düşmanı cehalettir. Onu imha etmeden diğer düşmanlara karşı zafer mümkün değildir.</p><p style="text-align: center; margin-top: 30px; color: var(--brand-text);">Hiç kimse hakikati anlayacak ilimle doğmamıştır. Bu yüzden bu ilimleri okumaya ve anlamaya önem göstermeliyiz.</p></div></div>
+    <div id="makale3" class="page"><div class="reading-page"><button class="back-btn" onclick="sayfaDegistir('home')" data-i18n="back_home">← Ana Sayfaya Dön</button><h2>Rasulullah Sevgisi ve Kur'an Eğitimi</h2><p>Resulullah efendimiz bir hadisi şeriflerinde şöyle buyuruyor;</p><p style="font-style: italic; color: var(--text-primary); font-size: 1.15rem;">”Evlatlarınızı üç haslet üzerine edeplendiriniz:</p><ul style="color: var(--text-label); line-height: 1.8; margin-bottom: 25px;"><li><strong>1. Rasulullah sevgisi</strong></li><li><strong>2. Rasulullah’ın ehlibeytinin sevgisi</strong></li><li><strong>3. Kur'an-ı Kerim okumak</strong></li></ul><p>Çünkü Kur'an-ı Kerim okuyan, okutan ve onun hizmetinde bulunanlar hiçbir gölgenin bulunmadığı o kıyamet gününde evliya ve esfiya ile beraber Allah’ımızın Arşının gölgesinde bulunacaklardır.</p><h3 style="color: var(--text-primary); margin-top: 40px; font-weight: normal; border-bottom: 1px solid var(--border-color-soft); padding-bottom: 10px;">Kur'an-ı Kerim ilk olarak nerede ve nasıl öğretilmeye başlandı?</h3><p>Peygamber Efendimiz (s.a.v.), nübüvvetin ilk yıllarında Müslümanlar ile Safa tepesi eteklerindeki Hazret-i Erkam’ın (r.a.) evinde gizlice toplanır, onlara İslâm’ın emir ve hükümlerini bildirir, Kur’an-ı Kerim'in nazil olan Ayet-i Kerimelerini okur ve öğretirlerdi. <strong>Dârü'l-Erkam</strong> ismi verilen bu hane, İslam tarihinde ilk eğitim-öğretim yapılan ilim müessesesi olarak kabul edilir.</p><p>Rasulullah Efendimiz (s.a.v.), Medine-i Münevvere‘ye hicretlerinin ardından Mescid-i Nebevi ve ona bitişik olarak da Hücre-i Saadet'i inşa ettirdiler. Mescidin kuzey tarafına, bir suffa (gölgelik) yaptırdılar. Sahabe-i Kiramdan burada ikamet edenlere <strong>Ashab-ı Suffe</strong> denilirdi. Onların ihtiyaçlarıyla bizzat Efendimiz (s.a.v.) ilgilenir, eğitimiyle de yine kendileri alakadar olurlardı. Ayrıca onlara yazı yazmayı ve Kur’an-ı Kerim okumayı öğretmek üzere Ubâde b. Sâmit, Mus'ab bin Umeyr (r.anhüma) gibi hocalar tayin etmişlerdi.</p></div></div>
 
     <div id="proje-amaci" class="page">
         <div class="admin-dashboard" style="text-align: justify; line-height: 1.8; font-size: 1.05rem; max-width: 900px; margin: auto;">
-            <h2 data-i18n="h_purpose" style="color: #333; border-bottom: 1px solid #e0dcd3; padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: 600;">Proje Amacı</h2>
-            <div data-lang="tr">
+            <h2 data-i18n="h_purpose" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Proje Amacı</h2>
             <p>Asr-ı Saadet dönemi, İslam tarihinin temelini oluşturan ve sosyal, kültürel ve dini açıdan büyük önem taşıyan bir zaman dilimidir. Bu dönemde yaşamış olan Ashab-ı Kiram, İslam’ın yayılmasında ve temel ilkelerinin sonraki nesillere aktarılmasında belirleyici bir role sahiptir. Ancak Ashab-ı Kiram’ın sayıca fazla olması, tarihsel kaynakların dağınık yapısı ve bilgilerin farklı eserlerde yer alması nedeniyle, sahabelerin isimleri, biyografileri ve aralarındaki akrabalık ile sosyal ilişkiler günümüzde yeterince sistematik ve bütüncül bir şekilde ele alınamamaktadır.</p>
             <p>Asr-ı Saadet Portalı projesinin temel amacı; Ashab-ı Kiram’a ait biyografik verileri, nesep bilgilerini ve sosyal ilişkileri güvenilir kaynaklara dayalı olarak bir araya getirmek ve bu bilgileri dijital bir platform aracılığıyla düzenli, erişilebilir ve analiz edilebilir hâle getirmektir. Bu kapsamda geliştirilecek sistem, sahabelerin yalnızca bireysel özelliklerini değil; aynı zamanda aile bağları, kabile ilişkileri, evlilikler ve toplumsal etkileşimler gibi çok boyutlu ilişkileri de görselleştirerek sunmayı hedeflemektedir.</p>
             <p>Proje, kullanıcıların Asr-ı Saadet döneminin sosyal yapısını daha iyi kavrayabilmesine katkı sağlamayı, akademik çalışmalar için referans niteliğinde bir veri kaynağı oluşturmayı ve tarihsel bilginin dijital ortamda sürdürülebilir bir şekilde korunmasını amaçlamaktadır. Bu yönüyle Asr-ı Saadet Portalı, hem akademik araştırmacılara hem de konuya ilgi duyan genel kullanıcılara yönelik kapsamlı ve bilimsel bir bilgi sistemi sunmayı hedeflemektedir.</p>
-            </div>
-            <div data-lang="en" style="display:none;">
-            <p>The Age of Felicity (Asr-ı Saadet) is a foundational period of Islamic history, of great social, cultural and religious importance. The Noble Companions who lived in this era played a decisive role in the spread of Islam and in transmitting its core principles to later generations. Because the Companions are so numerous, sources are scattered, and information sits in different works, their names, biographies, kinship and social ties are not always treated in a systematic, unified way today.</p>
-            <p>The core aim of the Asr-ı Saadet Portal is to bring together biographical data, genealogies and social relations of the Companions on the basis of reliable sources, and to make this knowledge orderly, accessible and analyzable on a digital platform. The system aims to present not only individual traits but also family bonds, tribal relations, marriages and social interactions.</p>
-            <p>The project seeks to help users understand the social fabric of the era, to serve as a reference dataset for academic work, and to preserve historical knowledge sustainably in digital form — for researchers and for the general public alike.</p>
-            </div>
         </div>
     </div>
 
     <div id="sss" class="page">
         <div class="admin-dashboard" style="line-height: 1.6; max-width: 900px; margin: auto;">
-            <h2 data-i18n="h_faq" style="color: #333; border-bottom: 1px solid #e0dcd3; padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: 600;">Sıkça Sorulan Sorular</h2>
-            <div data-lang="tr">
+            <h2 data-i18n="h_faq" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Sıkça Sorulan Sorular</h2>
             <div style="margin-bottom: 15px;"><strong>Bu projenin temel amacı nedir?</strong><br>Bu projenin temel amacı, Asr-ı Saadet döneminde yaşamış olan Ashab-ı Kiram’a ait biyografik bilgileri, akrabalık ve sosyal ilişkileri sistemli bir yapıda sunarak tarihsel bilginin daha anlaşılır ve erişilebilir hâle getirilmesini sağlamaktır.</div>
             <div style="margin-bottom: 15px;"><strong>Asr-ı Saadet Portalı hangi ihtiyaca cevap vermektedir?</strong><br>Ashab-ı Kiram’ın sayıca fazla olması ve bilgilerin farklı kaynaklara dağılmış olması nedeniyle oluşan bilgi karmaşasını gidermeyi amaçlamaktadır. Portal, bu bilgileri tek bir dijital platformda toplayarak düzenli ve bütüncül bir yapı sunmaktadır.</div>
             <div style="margin-bottom: 15px;"><strong>Proje hangi tarihsel dönemi kapsamaktadır?</strong><br>Proje, Asr-ı Saadet olarak adlandırılan ve Peygamber Efendimiz Muhammed Mustafa (s.a.v.)’ in yaşadığı dönemi kapsayan tarihsel süreci esas almaktadır.</div>
@@ -441,28 +447,13 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             <div style="margin-bottom: 15px;"><strong>İçerik genel kullanıcılar için anlaşılır mıdır?</strong><br>Evet. İçerikler akademik temele dayanmakla birlikte sade ve anlaşılır bir dil kullanılarak hazırlanmıştır. Böylece hem akademik hem de genel kullanıcılar için erişilebilir bir yapı sunulmaktadır.</div>
             <div style="margin-bottom: 15px;"><strong>Portalın gelecekte geliştirilmesi planlanmakta mıdır?</strong><br>Evet. Projenin ilerleyen aşamalarında içeriklerin genişletilmesi, yeni sahabelerin eklenmesi ve görselleştirme araçlarının geliştirilmesi planlanmaktadır.</div>
             <div style="margin-bottom: 15px;"><strong>Portal eğitim amaçlı kullanılabilir mi?</strong><br>Portal, eğitim kurumlarında yardımcı bir kaynak olarak kullanılabilecek niteliktedir ve tarihsel bilginin dijital ortamda sunulmasına katkı sağlamayı hedeflemektedir.</div>
-            </div>
-            <div data-lang="en" style="display:none;">
-            <div style="margin-bottom: 15px;"><strong>What is the main aim of this project?</strong><br>To present biographical information, kinship and social relations of the Noble Companions of the Age of Felicity in a systematic way, making historical knowledge clearer and more accessible.</div>
-            <div style="margin-bottom: 15px;"><strong>What need does the portal address?</strong><br>It aims to reduce the confusion caused by the large number of Companions and by information scattered across sources, gathering it on one digital platform.</div>
-            <div style="margin-bottom: 15px;"><strong>Which historical period does the project cover?</strong><br>It is based on the period known as Asr-ı Saadet, the lifetime of the Prophet Muhammad (peace be upon him).</div>
-            <div style="margin-bottom: 15px;"><strong>What sources are used?</strong><br>Classical works of Islamic history, sira literature and reliable academic studies, compiled with care.</div>
-            <div style="margin-bottom: 15px;"><strong>How is accuracy ensured?</strong><br>By comparative reading of multiple reliable sources. Uncertain information is treated cautiously, as academic method requires.</div>
-            <div style="margin-bottom: 15px;"><strong>How is the portal used?</strong><br>Users can look up Companions by name, read biographies, and view kinship and social ties in text and visual form.</div>
-            <div style="margin-bottom: 15px;"><strong>How are kinship and social ties shown?</strong><br>Through a linked data structure of genealogy, marriages and social relations, so historical bonds are easier to see.</div>
-            <div style="margin-bottom: 15px;"><strong>Can it be used as an academic source?</strong><br>It does not claim to be a primary source, but it can serve as a helpful digital reference for researchers.</div>
-            <div style="margin-bottom: 15px;"><strong>Who is the audience?</strong><br>Students, academics, researchers and anyone interested in Islamic history.</div>
-            <div style="margin-bottom: 15px;"><strong>Is the content clear for general readers?</strong><br>Yes. It is grounded in scholarship but written in plain language for both academic and general users.</div>
-            <div style="margin-bottom: 15px;"><strong>Will the portal be developed further?</strong><br>Yes. Later stages plan more content, additional Companions and richer visualization tools.</div>
-            <div style="margin-bottom: 15px;"><strong>Can it be used in education?</strong><br>Yes. It is suitable as a supporting resource in educational institutions.</div>
-            </div>
         </div>
     </div>
 
     <div id="iletisim" class="page">
         <div class="admin-dashboard" style="max-width: 600px; margin: auto;">
-            <h2 data-i18n="h_contact" style="color: #333; border-bottom: 1px solid #e0dcd3; padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: 600;">İletişim</h2>
-            <p data-i18n="contact_intro" style="text-align: center; color: #666; margin-bottom: 25px;">Sorularınız, önerileriniz veya katkıda bulunmak istediğiniz konular için aşağıdaki formu kullanarak bize ulaşabilirsiniz.</p>
+            <h2 data-i18n="h_contact" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">İletişim</h2>
+            <p data-i18n="contact_intro" style="text-align: center; color: var(--text-secondary); margin-bottom: 25px;">Sorularınız, önerileriniz veya katkıda bulunmak istediğiniz konular için aşağıdaki formu kullanarak bize ulaşabilirsiniz.</p>
             <form action="https://formspree.io/f/xaeygoey" method="POST">
                 <input type="text" name="isim" data-i18n-placeholder="ph_name" placeholder="Adınız Soyadınız" required>
                 <input type="email" name="email" data-i18n-placeholder="ph_email" placeholder="E-posta Adresiniz" required>
@@ -475,126 +466,82 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
 
     <div id="katkida-bulun" class="page">
         <div class="admin-dashboard" style="text-align: justify; line-height: 1.8; font-size: 1.05rem; max-width: 900px; margin: auto;">
-            <h2 data-i18n="h_contribute" style="color: #333; border-bottom: 1px solid #e0dcd3; padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: 600;">Katkıda Bulun</h2>
-            <div data-lang="tr">
+            <h2 data-i18n="h_contribute" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Katkıda Bulun</h2>
             <p>Asr-ı Saadet Portalı, İslam tarihini, Ashab-ı Kiram'ın eşsiz hayatlarını ve bu döneme ait kıymetli bilgileri dijital ortamda herkes için erişilebilir kılmayı amaçlayan gönüllü bir projedir. Bu değerli arşivi büyütmek ve daha kapsamlı hale getirmek için sizlerin desteğine her zaman açığız.</p>
-            <h4 style="color: #333; margin-bottom: 5px; font-weight: 600;">Nasıl Katkı Sağlayabilirsiniz?</h4>
-            <ul style="color: #555; margin-top: 0;">
+            <h4 style="color: var(--text-primary); margin-bottom: 5px; font-weight: normal;">Nasıl Katkı Sağlayabilirsiniz?</h4>
+            <ul style="color: var(--text-label); margin-top: 0;">
                 <li><strong>Bilgi ve Belge Desteği:</strong> Arşivimizde eksik olduğunu düşündüğünüz tarihi şahsiyetler, soyağacı bilgileri veya önemli olaylar hakkında kaynak belirterek bize bilgi gönderebilirsiniz.</li>
                 <li><strong>Hata Bildirimi:</strong> Portalımızda karşılaştığınız yazım hatalarını, tarihsel uyuşmazlıkları veya teknik sorunları bize bildirerek sistemin kusursuzlaşmasına yardımcı olabilirsiniz.</li>
                 <li><strong>Akademik İnceleme:</strong> Eğer tarih alanında akademik çalışmalar yürütüyorsanız, mevcut verilerimizin doğruluğunu teyit etme konusunda gönüllü danışmanımız olabilirsiniz.</li>
             </ul>
             <p style="margin-top: 20px;">Destek olmak veya fikirlerinizi paylaşmak için <span class="smart-link" onclick="sayfaDegistir('iletisim')">İletişim Formu</span> üzerinden bizimle irtibata geçebilirsiniz. Katkılarınız, bu dijital mirasın gelecek nesillere aktarılmasında büyük bir rol oynayacaktır.</p>
-            </div>
-            <div data-lang="en" style="display:none;">
-            <p>The Asr-ı Saadet Portal is a volunteer project that aims to make Islamic history, the lives of the Noble Companions, and the knowledge of this era accessible to everyone in digital form. We welcome your support in growing this archive.</p>
-            <h4 style="color: #333; margin-bottom: 5px; font-weight: 600;">How can you contribute?</h4>
-            <ul style="color: #555; margin-top: 0;">
-                <li><strong>Information and documents:</strong> You may send us sourced information about figures, genealogies or events you believe are missing.</li>
-                <li><strong>Error reports:</strong> Typos, historical inconsistencies or technical issues help us improve the system.</li>
-                <li><strong>Academic review:</strong> If you work in historical studies, you may volunteer as an advisor on the accuracy of our data.</li>
-            </ul>
-            <p style="margin-top: 20px;">To support us or share ideas, please use the <span class="smart-link" onclick="sayfaDegistir('iletisim')">contact form</span>. Your contributions help pass this digital heritage to future generations.</p>
-            </div>
         </div>
     </div>
 
     <div id="gizlilik" class="page">
         <div class="admin-dashboard" style="text-align: justify; line-height: 1.8; font-size: 1.05rem; max-width: 900px; margin: auto;">
-            <h2 data-i18n="h_privacy" style="color: #333; border-bottom: 1px solid #e0dcd3; padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: 600;">Gizlilik Politikası</h2>
-            <div data-lang="tr">
+            <h2 data-i18n="h_privacy" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Gizlilik Politikası</h2>
             <p>Asr-ı Saadet Portalı olarak, sitemizi ziyaret eden tüm kullanıcılarımızın gizliliğine ve kişisel verilerinin güvenliğine büyük önem vermekteyiz. Bu portal, temel olarak genel kullanıma açık tarihi bilgilerin sunulduğu bir eğitim ve araştırma platformudur.</p>
-            <ul style="color: #555; margin-top: 15px;">
+            <ul style="color: var(--text-label); margin-top: 15px;">
                 <li><strong>Veri Toplama:</strong> Sitemiz, normal ziyaretleriniz sırasında sizi kişisel olarak tanımlayabilecek hiçbir veriyi (isim, adres, telefon vb.) otomatik olarak toplamaz. Yalnızca İletişim Formu'nu kullandığınızda, size geri dönüş yapabilmemiz için kendi isteğinizle paylaştığınız ad, soyad ve e-posta bilgileriniz alınır.</li>
                 <li><strong>Çerezler (Cookies):</strong> Sistemimiz, sadece sitedeki kullanıcı deneyimini iyileştirmek (örneğin son kalınan sayfayı hatırlamak) amacıyla tarayıcınızda geçici yerel veriler (localStorage) kullanabilir. Sitemiz üzerinden reklam veya izleme amaçlı üçüncü taraf çerezleri kullanılmamaktadır.</li>
                 <li><strong>Veri Paylaşımı:</strong> İletişim formu aracılığıyla bize ilettiğiniz hiçbir bilgi, üçüncü şahıslarla, kurumlarla veya reklam şirketleriyle kesinlikle paylaşılmaz.</li>
                 <li><strong>Yönetici Paneli Güvenliği:</strong> Veritabanına kayıt ekleme yetkisi bulunan yöneticilerin giriş işlemleri, Google Firebase'in üst düzey güvenlik altyapısı ile korunmaktadır. Şifreler sistemimizde açık metin olarak tutulmaz.</li>
             </ul>
             <p style="margin-top: 20px;">Gizlilik politikamız veya verilerinizle ilgili her türlü sorunuz için <span class="smart-link" onclick="sayfaDegistir('iletisim')">İletişim</span> bölümünden bizimle iletişime geçebilirsiniz.</p>
-            </div>
-            <div data-lang="en" style="display:none;">
-            <p>We take the privacy and security of our visitors’ personal data seriously. This portal is an educational and research platform that presents historical information for general use.</p>
-            <ul style="color: #555; margin-top: 15px;">
-                <li><strong>Data collection:</strong> We do not automatically collect personally identifying data (name, address, phone, etc.) during ordinary visits. Only if you use the contact form do we receive the name and email you choose to share so that we can reply.</li>
-                <li><strong>Cookies:</strong> We may use localStorage only to improve experience (for example remembering the last page). We do not use third-party advertising or tracking cookies.</li>
-                <li><strong>Sharing:</strong> Information you send via the contact form is never shared with third parties, institutions or advertisers.</li>
-                <li><strong>Admin security:</strong> Administrator sign-in is protected by Google Firebase. Passwords are not stored in plain text.</li>
-            </ul>
-            <p style="margin-top: 20px;">For questions about privacy or your data, please use the <span class="smart-link" onclick="sayfaDegistir('iletisim')">Contact</span> page.</p>
-            </div>
         </div>
     </div>
     
     <div id="surum" class="page">
-        <div class="admin-dashboard" style="background: #faf9f6; max-width: 900px; margin: auto;">
-            <h2 data-i18n="h_changelog" style="color: #333; border-bottom: 1px solid #e0dcd3; padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: 600;">Sürüm Notları ve Güncellemeler</h2>
-            <div data-lang="tr">
-            <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #e0dcd3;">
-                <div style="color: #888; font-size: 0.85rem; margin-bottom: 5px;">Mayıs 2026</div>
-                <h3 style="margin-top: 0; color: #5d4037; font-weight: 600;">v2.5.0 - Büyük Arşiv Tasarımı (3 Sütunlu Grid)</h3>
-                <ul style="margin: 0; padding-left: 20px; color: #555; line-height: 1.6;">
+        <div class="admin-dashboard" style="background: var(--bg-card-alt); max-width: 900px; margin: auto;">
+            <h2 data-i18n="h_changelog" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Sürüm Notları ve Güncellemeler</h2>
+            <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed var(--border-color);">
+                <div style="color: var(--text-faint); font-size: 0.85rem; margin-bottom: 5px;">Mayıs 2026</div>
+                <h3 style="margin-top: 0; color: var(--brand-text); font-weight: normal;">v2.5.0 - Büyük Arşiv Tasarımı (3 Sütunlu Grid)</h3>
+                <ul style="margin: 0; padding-left: 20px; color: var(--text-label); line-height: 1.6;">
                     <li>Arşiv ekranı 3 sütunlu modern bir yapıya (Sol: Rehber, Orta: Ana İçerik, Sağ: Filtreler) kavuşturuldu.</li>
                     <li>Şahsiyet kartlarında "Görsel Öncelik Sistemi" kullanıldı (Büyük kutularda ana metin, Grid çiplerde ilişkiler).</li>
                 </ul>
             </div>
             <div>
-                <div style="color: #888; font-size: 0.85rem; margin-bottom: 5px;">Mayıs 2026</div>
-                <h3 style="margin-top: 0; color: #5d4037; font-weight: 600;">v2.0.0 - Devirler Sistemi ve Bağlantılı Tarih</h3>
-                <ul style="margin: 0; padding-left: 20px; color: #555; line-height: 1.6;">
+                <div style="color: var(--text-faint); font-size: 0.85rem; margin-bottom: 5px;">Mayıs 2026</div>
+                <h3 style="margin-top: 0; color: var(--brand-text); font-weight: normal;">v2.0.0 - Devirler Sistemi ve Bağlantılı Tarih</h3>
+                <ul style="margin: 0; padding-left: 20px; color: var(--text-label); line-height: 1.6;">
                     <li>Arşive Devirler Sistemi eklendi.</li>
                     <li>Şahsiyet kartlarına yapay zeka mantığıyla çalışan "Bağlantılı Tarih Sistemi" entegre edildi.</li>
                 </ul>
-            </div>
-            </div>
-            <div data-lang="en" style="display:none;">
-            <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #e0dcd3;">
-                <div style="color: #888; font-size: 0.85rem; margin-bottom: 5px;">May 2026</div>
-                <h3 style="margin-top: 0; color: #5d4037; font-weight: 600;">v2.5.0 - Large Archive Layout (3-column grid)</h3>
-                <ul style="margin: 0; padding-left: 20px; color: #555; line-height: 1.6;">
-                    <li>The archive became a modern three-column layout (Left: guide, Center: content, Right: filters).</li>
-                    <li>Person cards use a visual-priority system (main text in large boxes, relations in grid chips).</li>
-                </ul>
-            </div>
-            <div>
-                <div style="color: #888; font-size: 0.85rem; margin-bottom: 5px;">May 2026</div>
-                <h3 style="margin-top: 0; color: #5d4037; font-weight: 600;">v2.0.0 - Eras and Linked History</h3>
-                <ul style="margin: 0; padding-left: 20px; color: #555; line-height: 1.6;">
-                    <li>An era system was added to the archive.</li>
-                    <li>A “Linked History” system was integrated into person cards.</li>
-                </ul>
-            </div>
             </div>
         </div>
     </div>
 
     <div id="kaynakca" class="page">
         <div class="admin-dashboard" style="max-width: 900px; margin: auto;">
-            <h2 data-i18n="h_sources" style="color: #333; border-bottom: 1px solid #e0dcd3; padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: 600;">Kaynakça ve Temel Eserler</h2>
-            <p data-i18n="sources_intro" style="text-align: center; color: #666; margin-bottom: 25px;">Portalımızda yer alan bilgilerin doğrulanmasında ve derlenmesinde temel alınan başlıca eserler aşağıda sınıflandırılmıştır.</p>
+            <h2 data-i18n="h_sources" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Kaynakça ve Temel Eserler</h2>
+            <p data-i18n="sources_intro" style="text-align: center; color: var(--text-secondary); margin-bottom: 25px;">Portalımızda yer alan bilgilerin doğrulanmasında ve derlenmesinde temel alınan başlıca eserler aşağıda sınıflandırılmıştır.</p>
             <details class="soy-klasor">
                 <summary class="soy-baslik" data-i18n="src_sira">Siyer ve Peygamber Efendimiz'in (s.a.v.) Hayatı</summary>
                 <div class="soy-icerik">
-                    <ul style="color: #555; line-height: 1.8;">
-                        <li><span style="font-weight: 500; color: #333;">Peygamber Efendimiz'in (Sav) Hayatı</span> - Ahmed Cevdet Paşa (Çamlıca Basım Yayın)</li>
-                        <li><span style="font-weight: 500; color: #333;">Herkes İçin Peygamber Efendimizin Hayatı</span> - Ahmed Cevdet Paşa (Çamlıca Basım Yayın)</li>
-                        <li><span style="font-weight: 500; color: #333;">Peygamberimiz ve Peygamberler (a.s.)</span> - Ahmed Cevdet Paşa (Çamlıca Basım Yayın)</li>
+                    <ul style="color: var(--text-label); line-height: 1.8;">
+                        <li><span style="font-weight: 500; color: var(--text-primary);">Peygamber Efendimiz'in (Sav) Hayatı</span> - Ahmed Cevdet Paşa (Çamlıca Basım Yayın)</li>
+                        <li><span style="font-weight: 500; color: var(--text-primary);">Herkes İçin Peygamber Efendimizin Hayatı</span> - Ahmed Cevdet Paşa (Çamlıca Basım Yayın)</li>
+                        <li><span style="font-weight: 500; color: var(--text-primary);">Peygamberimiz ve Peygamberler (a.s.)</span> - Ahmed Cevdet Paşa (Çamlıca Basım Yayın)</li>
                     </ul>
                 </div>
             </details>
             <details class="soy-klasor">
                 <summary class="soy-baslik" data-i18n="src_hadith">Şemail ve Hadis Kaynakları</summary>
                 <div class="soy-icerik">
-                    <ul style="color: #555; line-height: 1.8;">
-                        <li><span style="font-weight: 500; color: #333;">Şemâil-i Şerife</span> - Muhammed bin İsa et-Tirmizî (r.a.) (Fazilet Neşriyat)</li>
-                        <li><span style="font-weight: 500; color: #333;">500 Hadîs-i Şerîf</span> - Ömer Nasuhi Bilmen (Fazilet Neşriyat)</li>
+                    <ul style="color: var(--text-label); line-height: 1.8;">
+                        <li><span style="font-weight: 500; color: var(--text-primary);">Şemâil-i Şerife</span> - Muhammed bin İsa et-Tirmizî (r.a.) (Fazilet Neşriyat)</li>
+                        <li><span style="font-weight: 500; color: var(--text-primary);">500 Hadîs-i Şerîf</span> - Ömer Nasuhi Bilmen (Fazilet Neşriyat)</li>
                     </ul>
                 </div>
             </details>
             <details class="soy-klasor">
                 <summary class="soy-baslik" data-i18n="src_companions">Ashâb-ı Kirâm ve İtikad</summary>
                 <div class="soy-icerik">
-                    <ul style="color: #555; line-height: 1.8;">
-                        <li><span style="font-weight: 500; color: #333;">Ashâb-ı Kirâm Hakkında Müslümanların Nezih İtikâdları</span> - Ömer Nasuhi Bilmen (Fazilet Neşriyat)</li>
+                    <ul style="color: var(--text-label); line-height: 1.8;">
+                        <li><span style="font-weight: 500; color: var(--text-primary);">Ashâb-ı Kirâm Hakkında Müslümanların Nezih İtikâdları</span> - Ömer Nasuhi Bilmen (Fazilet Neşriyat)</li>
                     </ul>
                 </div>
             </details>
@@ -603,28 +550,28 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
 
     <div id="login" class="page">
         <div class="admin-dashboard" style="max-width: 400px; margin: auto;">
-            <h2 data-i18n="h_login" style="text-align: center; color: #333; font-weight: 600; border-bottom: 1px solid #e0dcd3; padding-bottom: 15px;">Yönetici Girişi</h2>
+            <h2 data-i18n="h_login" style="text-align: center; color: var(--text-primary); font-weight: normal; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">Yönetici Girişi</h2>
             <input type="email" id="login-email" data-i18n-placeholder="ph_login_email" placeholder="E-posta Adresiniz" onkeypress="if(event.key === 'Enter') girisYap();">
             <input type="password" id="login-pass" data-i18n-placeholder="ph_login_pass" placeholder="Şifreniz" onkeypress="if(event.key === 'Enter') girisYap();">
             <button class="btn-action" onclick="girisYap()" style="margin-top: 15px;" data-i18n="btn_login">Giriş Yap</button>
         </div>
     </div>
     
-    <div id="cizelge" class="page"><h2 data-i18n="h_timeline" style="text-align:center; font-weight:600; margin-bottom: 30px;">Zaman Çizelgesi</h2><div id="cizelgeList" style="max-width: 800px; margin: auto;"></div></div>
-    <div id="soy" class="page"><h2 data-i18n="h_tree" style="text-align:center; font-weight:600; margin-bottom: 30px;">Soyağacı Grupları</h2><div id="soyList" style="max-width: 800px; margin: auto;"></div></div>
+    <div id="cizelge" class="page"><h2 data-i18n="h_timeline" style="text-align:center; font-weight:normal; margin-bottom: 30px;">Zaman Çizelgesi</h2><div id="cizelgeList" style="max-width: 800px; margin: auto;"></div></div>
+    <div id="soy" class="page"><h2 data-i18n="h_tree" style="text-align:center; font-weight:normal; margin-bottom: 30px;">Soyağacı Grupları</h2><div id="soyList" style="max-width: 800px; margin: auto;"></div></div>
 
     <div id="admin" class="page">
         <div class="admin-dashboard" style="max-width: 1000px; margin: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0dcd3; padding-bottom: 20px; margin-bottom: 30px;">
-                <h2 data-i18n="h_admin" style="margin: 0; font-weight: 600;">Yönetici Kontrol Merkezi</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px;">
+                <h2 data-i18n="h_admin" style="margin: 0; font-weight: normal;">Yönetici Kontrol Merkezi</h2>
                 <div>
-                    <button onclick="sayfaDegistir('home')" data-i18n="btn_view_site" style="background: white; border: 1px solid #dcdacb; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Siteyi Gör</button>
-                    <button onclick="cikisYap()" data-i18n="btn_logout" style="background: #fdfcfb; color: #d32f2f; border: 1px solid #ffcdd2; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Çıkış Yap</button>
+                    <button onclick="sayfaDegistir('home')" data-i18n="btn_view_site" style="background: var(--bg-card); border: 1px solid var(--border-input); padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Siteyi Gör</button>
+                    <button onclick="cikisYap()" data-i18n="btn_logout" style="background: var(--bg-card-soft); color: var(--danger); border: 1px solid var(--danger-border); padding: 8px 15px; border-radius: 5px; cursor: pointer;">Çıkış Yap</button>
                 </div>
             </div>
             
             <div class="admin-section">
-                <h3 id="olay-form-baslik" data-i18n="h_event_form" style="margin-top:0; font-weight:600; color:#5d4037;">Olay Ekle / Düzenle</h3>
+                <h3 id="olay-form-baslik" data-i18n="h_event_form" style="margin-top:0; font-weight:normal; color: var(--brand-text);">Olay Ekle / Düzenle</h3>
                 <input type="hidden" id="edit-olay-id">
                 <input id="ol_ad" data-i18n-placeholder="ph_event_title" placeholder="Olay Başlığı" oninput="benzerOlayKontrol()">
                 <div id="olay-uyari" class="canli-uyari"></div>
@@ -639,14 +586,15 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 </select>
                 
                 <div style="display: flex; gap: 10px;"><input id="ol_hicri" data-i18n-placeholder="ph_hijri" placeholder="Hicri (Örn: H. 2)"><input id="ol_miladi" data-i18n-placeholder="ph_ce" placeholder="Miladi (Örn: M. 624)"></div>
-                <textarea id="ol_bilgi" data-i18n-placeholder="ph_event_text" placeholder="Olayın metni..." rows="5"></textarea>
+                <textarea id="ol_bilgi" class="bilgi-alani" data-i18n-placeholder="ph_event_text" placeholder="Olayın metni..." rows="5" oninput="sayacGuncelle('ol_bilgi','ol_bilgi_sayac')"></textarea>
+                <div id="ol_bilgi_sayac" class="bilgi-sayac">0 karakter</div>
                 <input id="ol_kaynak" data-i18n-placeholder="ph_source" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
                 <button class="btn-action" onclick="olayKaydet()" data-i18n="btn_save">KAYDET</button>
-                <button class="btn-action" id="olay-cancel-btn" onclick="temizleOlay()" data-i18n="btn_cancel" style="background:#f0ebe1; color:#333; display:none;">İPTAL</button>
+                <button class="btn-action" id="olay-cancel-btn" onclick="temizleOlay()" data-i18n="btn_cancel" style="background: var(--bg-hover-soft); color: var(--text-primary); display:none;">İPTAL</button>
             </div>
             
             <div class="admin-section">
-                <h3 id="form-baslik" data-i18n="h_person_form" style="margin-top:0; font-weight:600; color:#5d4037;">Zat Ekle / Düzenle</h3>
+                <h3 id="form-baslik" data-i18n="h_person_form" style="margin-top:0; font-weight:normal; color: var(--brand-text);">Zat Ekle / Düzenle</h3>
                 <input type="hidden" id="edit-id">
                 
                 <select id="in_devir">
@@ -659,7 +607,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 </select>
 
                 <input id="in_ad" data-i18n-placeholder="ph_name_person" placeholder="İsim" oninput="benzerZatKontrol()">
-                <div style="font-size: 0.85rem; color: #666; margin-bottom: 10px; margin-left: 5px;">
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px; margin-left: 5px;">
                     <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
                         <input type="checkbox" id="oto_ra" checked style="width: auto; margin: 0;"> <span data-i18n="chk_ra">İsmin sonuna (ra) ekle</span>
                     </label>
@@ -676,21 +624,22 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                         <option value="Amca" data-i18n="rel_paternal_uncle">Amca</option><option value="Hala" data-i18n="rel_paternal_aunt">Hala</option><option value="Dayı" data-i18n="rel_maternal_uncle">Dayı</option>
                         <option value="Teyze" data-i18n="rel_maternal_aunt">Teyze</option><option value="Yeğen" data-i18n="rel_nephew">Yeğen</option>
                     </select>
-                    <button type="button" onclick="bagEkle()" data-i18n="btn_add" style="background: white; border: 1px solid #dcdacb; padding: 11px 15px; border-radius: 6px; cursor: pointer;">Ekle</button>
+                    <button type="button" onclick="bagEkle()" data-i18n="btn_add" style="background: var(--bg-card); border: 1px solid var(--border-input); padding: 11px 15px; border-radius: 6px; cursor: pointer;">Ekle</button>
                 </div>
                 <textarea id="in_baglar_liste" data-i18n-placeholder="ph_links" placeholder="Eklenen Bağlar" rows="2"></textarea>
                 
                 <div style="display: flex; gap: 10px;"><input id="in_d_hicri" data-i18n-placeholder="ph_birth_hijri" placeholder="Doğum Hicri"><input id="in_d_miladi" data-i18n-placeholder="ph_birth_ce" placeholder="Doğum Miladi"></div>
                 <div style="display: flex; gap: 10px;"><input id="in_v_hicri" data-i18n-placeholder="ph_death_hijri" placeholder="Vefat Hicri"><input id="in_v_miladi" data-i18n-placeholder="ph_death_ce" placeholder="Vefat Miladi"></div>
-                <textarea id="in_bilgi" data-i18n-placeholder="ph_bio" placeholder="Bilgi" rows="4"></textarea>
+                <textarea id="in_bilgi" class="bilgi-alani" data-i18n-placeholder="ph_bio" placeholder="Bilgi" rows="4" oninput="sayacGuncelle('in_bilgi','in_bilgi_sayac')"></textarea>
+                <div id="in_bilgi_sayac" class="bilgi-sayac">0 karakter</div>
                 <input id="in_kaynak" data-i18n-placeholder="ph_source" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
                 <button class="btn-action" onclick="kaydet()" data-i18n="btn_save">KAYDET</button>
-                <button class="btn-action" id="cancel-btn" onclick="temizle()" data-i18n="btn_cancel" style="background:#f0ebe1; color:#333; display:none;">İPTAL</button>
+                <button class="btn-action" id="cancel-btn" onclick="temizle()" data-i18n="btn_cancel" style="background: var(--bg-hover-soft); color: var(--text-primary); display:none;">İPTAL</button>
             </div>
             
-            <h3 style="font-weight:600; border-bottom: 1px solid #e0dcd3; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-weight:normal; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
                 <span data-i18n="h_records">Mevcut Kayıtlar</span>
-                <span id="admin-toplam-kayit" style="font-size: 0.85rem; color: #888; font-weight: normal;"></span>
+                <span id="admin-toplam-kayit" style="font-size: 0.85rem; color: var(--text-faint); font-weight: normal;"></span>
             </h3>
             <div id="adminList"></div>
         </div>
@@ -753,14 +702,13 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     const I18N = {
         tr: {
             page_title: "Asr-ı Saadet Portalı | Sahabeler, Siyer ve İslam Tarihi",
-            meta_desc: "Asr-ı Saadet Portalı; sahabeler, siyer, nesep bağları, kronolojik olaylar ve İslam tarihini modern bir arayüzle sunan dijital bilgi platformudur.",
             tagline: "İslam tarihi ve Ashab-ı Kiram arşivi.",
             nav_home: "Ana Sayfa", nav_archive: "Arşiv & Olaylar", nav_timeline: "Çizelge", nav_tree: "Soyağacı", nav_random: "Rastgele Şahsiyet", nav_panel: "Panel",
             ph_global_search: "Portalda Ara...", ph_archive_search: "İsim veya içerik...",
             quote_text: "\"Ashabım, yıldızlar gibidir. Hangisine tabi olursanız hidayete erersiniz.\"",
             quote_attr: "- Peygamber Efendimiz (s.a.v.)",
             stat_person: "Şahsiyet", stat_event: "Olay", stat_link: "Bağlantı",
-            btn_explore: "Tüm Arşivi Keşfet ➔", h_latest_events: "Son Eklenen Tarihi Olaylar", h_core_readings: "Temel Okumalar",
+            btn_explore: "Tüm Arşivi Keşfet ➔", h_featured_persons: "Öne Çıkan Şahsiyetler", h_latest_events: "Son Eklenen Tarihi Olaylar", h_core_readings: "Temel Okumalar",
             h_mini_timeline: "Mini Zaman Çizelgesi", btn_full_timeline: "Tüm Çizelgeyi Gör",
             cat_itikad: "İtikat", cat_ilim: "İlim", cat_siyer: "Siyer", read_more: "Devamını Oku ➔",
             art1_title: "Ashab-ı Kiram'ın İzinde", art1_teaser: "İslam’ın kuvvetli olduğu zamanlarda doğduk. Kuran-ı Kerim'i bize öğretenler oldu. Maalesef ki yeni nesil elimizden kayıp gidiyor...",
@@ -801,100 +749,109 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             source: "Kaynak:", date_unknown: "Tarih Belirtilmemiş", no_content: "İçerik bulunamadı.",
             no_bio_random: "Henüz bilgi girilmiş şahsiyet bulunmuyor.", confirm_del: "Silinsin mi?", need_name: "Lütfen isim girin!", need_event: "Lütfen olay ismi girin!",
             similar_names: "Sistemde benzer isimler var: {list}", similar_events: "Sistemde benzer olaylar var: {list}",
-            login_error: "Hata: "
+            login_error: "Hata: ", theme_dark: "Koyu Mod", theme_light: "Aydınlık Mod"
         },
         en: {
-            page_title: "Asr-ı Saadet Portal | Companions, Sira and Islamic History",
-            meta_desc: "Asr-ı Saadet Portal is a digital knowledge platform presenting the Companions, sira, genealogical ties, chronological events and Islamic history in a modern interface.",
-            tagline: "An archive of Islamic history and the Noble Companions.",
+            page_title: "Asr-ı Saadet Portal | Companions, Sīrah and Islamic History",
+            tagline: "An archive of Islamic history and the noble Companions.",
             nav_home: "Home", nav_archive: "Archive & Events", nav_timeline: "Timeline", nav_tree: "Family Tree", nav_random: "Random Figure", nav_panel: "Panel",
             ph_global_search: "Search the portal...", ph_archive_search: "Name or content...",
-            quote_text: "\"My Companions are like the stars; whichever of them you follow, you will be guided.\"",
+            quote_text: "\"My Companions are like stars; whichever of them you follow, you will be rightly guided.\"",
             quote_attr: "- The Prophet (peace be upon him)",
-            stat_person: "Figures", stat_event: "Events", stat_link: "Links",
-            btn_explore: "Explore the Full Archive ➔", h_latest_events: "Latest Historical Events", h_core_readings: "Essential Readings",
+            stat_person: "Figure", stat_event: "Event", stat_link: "Link",
+            btn_explore: "Explore the Full Archive ➔", h_featured_persons: "Featured Figures", h_latest_events: "Latest Historical Events", h_core_readings: "Core Readings",
             h_mini_timeline: "Mini Timeline", btn_full_timeline: "View Full Timeline",
-            cat_itikad: "Creed", cat_ilim: "Knowledge", cat_siyer: "Sira", read_more: "Read more ➔",
-            art1_title: "In the Footsteps of the Noble Companions", art1_teaser: "We were born in times when Islam was strong. There were those who taught us the Qur’an. Sadly, the younger generation is slipping from our hands...",
-            art2_title: "Why Do We Study These Sciences?", art2_teaser: "Islam has given great importance to reading and seeking knowledge. The first verse revealed to the Prophet begins with the command “Read”...",
-            art3_title: "Love of the Messenger and Qur’an Education", art3_teaser: "The Messenger of Allah said: “Raise your children upon three qualities...”",
-            guide_title: "Archive Guide", guide_p1: "Welcome to the knowledge bank stretching from the Age of Felicity to Andalusia.",
-            guide_p2: "Read historical detail in the wide center column, and narrow your journey with the filters on the right.",
-            search_archive_title: "Search the Archive", type_filter: "Type Filter", era_filter: "Era Filter",
-            filter_all: "All (Mixed)", filter_persons: "Historical Figures", filter_events: "Major Events",
-            era_all: "All Eras", era_asri: "Age of Felicity", era_rashidun: "Rightly Guided Caliphs", era_umayyad: "Umayyad Period", era_abbasid: "Abbasid Period", era_andalus: "Andalusian Period", era_other: "Other",
-            era_asri_short: "Age of Felicity", era_rashidun_short: "Rashidun", era_umayyad_short: "Umayyads", era_abbasid_short: "Abbasids", era_andalus_short: "Andalusia", era_other_short: "Other",
+            cat_itikad: "Creed", cat_ilim: "Knowledge", cat_siyer: "Sīrah", read_more: "Read More ➔",
+            art1_title: "In the Footsteps of the Noble Companions", art1_teaser: "We were born in an era when Islam was strong, taught the Qur'an by those who came before us. Sadly, the new generation is slipping away from us...",
+            art2_title: "Why Do We Study These Sciences?", art2_teaser: "Islam places great importance on reading and acquiring knowledge. In fact, the first verse revealed to the Prophet begins with the command \"Read\"...",
+            art3_title: "Love for the Messenger and Qur'anic Education", art3_teaser: "The Messenger of Allah said in one of his noble hadiths: \"Discipline your children in three qualities...\"",
+            guide_title: "Archive Guide", guide_p1: "Welcome to a knowledge bank spanning from the Age of Happiness to Andalusia.",
+            guide_p2: "You can read historical details in the wide central area and narrow your journey through time using the filters on the right panel.",
+            search_archive_title: "Search Archive", type_filter: "Type Filter", era_filter: "Era Filter",
+            filter_all: "All (Mixed)", filter_persons: "Historical Figures", filter_events: "Notable Events",
+            era_all: "All Eras", era_asri: "Age of Happiness", era_rashidun: "Rightly Guided Caliphs", era_umayyad: "Umayyad Era", era_abbasid: "Abbasid Era", era_andalus: "Andalusian Era", era_other: "Other",
+            era_asri_short: "Age of Happiness", era_rashidun_short: "Rightly Guided", era_umayyad_short: "Umayyad", era_abbasid_short: "Abbasid", era_andalus_short: "Andalusia", era_other_short: "Other",
             back_archive: "← Back to Archive", back_home: "← Back to Home",
             h_purpose: "Project Purpose", h_faq: "Frequently Asked Questions", h_contact: "Contact", h_contribute: "Contribute", h_privacy: "Privacy Policy",
-            h_changelog: "Release Notes and Updates", h_sources: "Bibliography and Core Works", h_login: "Administrator Login", h_timeline: "Timeline", h_tree: "Family Tree Groups",
-            h_admin: "Administrator Control Center", btn_view_site: "View Site", btn_logout: "Sign Out",
-            contact_intro: "For questions, suggestions or contributions, please reach us with the form below.",
-            ph_name: "Your full name", ph_email: "Your email", ph_subject: "Subject", ph_message: "Your message...", btn_send: "SEND MESSAGE",
-            sources_intro: "The principal works used to verify and compile the information on this portal are classified below.",
-            src_sira: "Sira and the Life of the Prophet (peace be upon him)", src_hadith: "Shama’il and Hadith Sources", src_companions: "The Noble Companions and Creed",
-            ph_login_email: "Your email", ph_login_pass: "Your password", btn_login: "Sign In",
-            h_event_form: "Add / Edit Event", h_person_form: "Add / Edit Person", h_records: "Existing Records",
+            h_changelog: "Release Notes & Updates", h_sources: "Bibliography & Core Works", h_login: "Administrator Login", h_timeline: "Timeline", h_tree: "Family Tree Groups",
+            h_admin: "Administrator Control Center", btn_view_site: "View Site", btn_logout: "Log Out",
+            contact_intro: "You can reach us using the form below for your questions, suggestions, or topics you'd like to contribute to.",
+            ph_name: "Your Full Name", ph_email: "Your Email Address", ph_subject: "Subject", ph_message: "Your Message...", btn_send: "SEND MESSAGE",
+            sources_intro: "The main works used as a basis for verifying and compiling the information on our portal are classified below.",
+            src_sira: "Sīrah and the Life of the Prophet (peace be upon him)", src_hadith: "Shamā'il and Hadith Sources", src_companions: "The Noble Companions and Creed",
+            ph_login_email: "Your Email Address", ph_login_pass: "Your Password", btn_login: "Log In",
+            h_event_form: "Add / Edit Event", h_person_form: "Add / Edit Figure", h_records: "Existing Records",
             btn_save: "SAVE", btn_cancel: "CANCEL", btn_add: "Add", chk_ra: "Append (ra) to the name",
-            ph_event_title: "Event title", ph_hijri: "Hijri (e.g. H. 2)", ph_ce: "CE (e.g. 624)", ph_event_text: "Event text...",
-            ph_source: "Source / page (e.g. Life of the Prophet, p. 45)", ph_name_person: "Name", ph_mother: "Mother", ph_father: "Father", ph_spouse: "Spouse(s)",
-            ph_link_name: "Type a name", ph_links: "Added ties", ph_birth_hijri: "Birth (Hijri)", ph_birth_ce: "Birth (CE)", ph_death_hijri: "Death (Hijri)", ph_death_ce: "Death (CE)", ph_bio: "Biography",
-            opt_era_asri_event: "Period: Age of Felicity", opt_era_rashidun_event: "Period: Rightly Guided Caliphs", opt_era_umayyad_event: "Period: Umayyads", opt_era_abbasid_event: "Period: Abbasids", opt_era_andalus_event: "Period: Andalusia", opt_era_other_event: "Period: Other / General",
-            opt_era_asri_person: "Era lived: Age of Felicity", opt_era_rashidun_person: "Era lived: Rightly Guided Caliphs", opt_era_umayyad_person: "Era lived: Umayyads", opt_era_abbasid_person: "Era lived: Abbasids", opt_era_andalus_person: "Era lived: Andalusia", opt_era_other_person: "Era lived: Other / Unknown",
-            opt_link_type: "Tie type...", rel_child: "Child", rel_sibling: "Sibling", rel_grandfather: "Grandfather", rel_grandmother: "Grandmother", rel_grandchild: "Grandchild", rel_paternal_uncle: "Paternal uncle", rel_paternal_aunt: "Paternal aunt", rel_maternal_uncle: "Maternal uncle", rel_maternal_aunt: "Maternal aunt", rel_nephew: "Nephew/niece",
-            foot_quick: "QUICK LINKS", foot_about: "ABOUT", foot_admin: "ADMIN", foot_archive: "Full Archive", foot_timeline: "Timeline", foot_trees: "Family Trees", foot_sources: "Bibliography", foot_changelog: "Release Notes",
-            life_info: "LIFE DETAILS:", birth: "Birth:", death: "Death:", father: "Father", mother: "Mother", spouses: "Spouse(s)", family_ties: "Family and lineage",
+            ph_event_title: "Event Title", ph_hijri: "Hijri (e.g. H. 2)", ph_ce: "CE (e.g. CE 624)", ph_event_text: "Event text...",
+            ph_source: "Source / Page No. (e.g. The Prophet's Life, p. 45)", ph_name_person: "Name", ph_mother: "Mother", ph_father: "Father", ph_spouse: "Spouse(s)",
+            ph_link_name: "Enter Name", ph_links: "Added Links", ph_birth_hijri: "Birth (Hijri)", ph_birth_ce: "Birth (CE)", ph_death_hijri: "Death (Hijri)", ph_death_ce: "Death (CE)", ph_bio: "Information",
+            opt_era_asri_event: "Era: Age of Happiness", opt_era_rashidun_event: "Era: Rightly Guided Caliphs", opt_era_umayyad_event: "Era: Umayyad", opt_era_abbasid_event: "Era: Abbasid", opt_era_andalus_event: "Era: Andalusia", opt_era_other_event: "Era: Other / General",
+            opt_era_asri_person: "Era Lived In: Age of Happiness", opt_era_rashidun_person: "Era Lived In: Rightly Guided Caliphs", opt_era_umayyad_person: "Era Lived In: Umayyad", opt_era_abbasid_person: "Era Lived In: Abbasid", opt_era_andalus_person: "Era Lived In: Andalusia", opt_era_other_person: "Era Lived In: Other / Unknown",
+            opt_link_type: "Link Type...", rel_child: "Child", rel_sibling: "Sibling", rel_grandfather: "Grandfather", rel_grandmother: "Grandmother", rel_grandchild: "Grandchild", rel_paternal_uncle: "Paternal Uncle", rel_paternal_aunt: "Paternal Aunt", rel_maternal_uncle: "Maternal Uncle", rel_maternal_aunt: "Maternal Aunt", rel_nephew: "Nephew/Niece",
+            foot_quick: "QUICK ACCESS", foot_about: "ABOUT", foot_admin: "ADMIN", foot_archive: "Full Archive", foot_timeline: "Timeline", foot_trees: "Family Trees", foot_sources: "Bibliography", foot_changelog: "Release Notes",
+            life_info: "LIFE INFORMATION:", birth: "Born:", death: "Died:", father: "Father", mother: "Mother", spouses: "Spouse(s)", family_ties: "Family and Lineage Ties",
             years_old: "years old", linked_history: "View Linked History", hide_links: "Hide Links",
-            intersecting: "Intersecting Figures", related_events: "Related Events", contemporaries: "Lived in the Same Period",
-            no_intersection: "No intersection data was found in the system yet.",
-            hist_event: "Historical Event", read_article: "Read article", no_events: "No events yet.", no_data: "No data yet.",
-            admin_total: "Total: {zat} persons, {olay} events", persons: "Persons", events: "Events", letter_of: "Letter {h} ({n} records)",
-            edit: "Edit", del: "Delete", type_person: "Person", type_event: "Event", mini_birth: "Birth",
-            unknown_father: "Lineage pending", father_prefix: "Father:", mother_prefix: "Mother:", spouse_prefix: "Spouse:", other_ties: "Other ties:",
-            source: "Source:", date_unknown: "Date not specified", no_content: "Content not found.",
-            no_bio_random: "There is not yet a figure with biography text.", confirm_del: "Delete this record?", need_name: "Please enter a name!", need_event: "Please enter an event name!",
-            similar_names: "Similar names exist: {list}", similar_events: "Similar events exist: {list}",
-            login_error: "Error: "
+            intersecting: "Intersecting Figures", related_events: "Related Events", contemporaries: "Contemporaries",
+            no_intersection: "No intersection data found in the system at this time.",
+            hist_event: "Historical Event", read_article: "Read Article", no_events: "No events yet.", no_data: "No data yet.",
+            admin_total: "Total: {zat} Figures, {olay} Events", persons: "Figures", events: "Events", letter_of: "Letter {h} ({n} Records)",
+            edit: "Edit", del: "Delete", type_person: "Figure", type_event: "Event", mini_birth: "Born",
+            unknown_father: "Lineage Info Pending", father_prefix: "Father:", mother_prefix: "Mother:", spouse_prefix: "Spouse:", other_ties: "Other Ties:",
+            source: "Source:", date_unknown: "Date Not Specified", no_content: "No content found.",
+            no_bio_random: "No figure with information entered yet.", confirm_del: "Delete this?", need_name: "Please enter a name!", need_event: "Please enter an event name!",
+            similar_names: "Similar names exist in the system: {list}", similar_events: "Similar events exist in the system: {list}",
+            login_error: "Error: ", theme_dark: "Dark Mode", theme_light: "Light Mode"
         }
     };
 
-    let aktifDil = localStorage.getItem('portalDil') || 'tr';
+    let aktifDil = localStorage.getItem('aktifDil') || 'tr';
 
     function t(key, vars) {
-        let s = (I18N[aktifDil] && I18N[aktifDil][key]) || (I18N.tr[key]) || key;
+        let s = (I18N[aktifDil] && I18N[aktifDil][key]) || I18N.tr[key] || key;
         if (vars) Object.keys(vars).forEach(k => { s = String(s).split('{' + k + '}').join(vars[k]); });
         return s;
     }
 
     function cevirDevir(d) {
-        const map = {
-            "Asr-ı Saadet": "era_asri_short",
-            "Hulefâ-yi Râşidîn": "era_rashidun_short",
-            "Emeviler": "era_umayyad_short",
-            "Abbasiler": "era_abbasid_short",
-            "Endülüs": "era_andalus_short",
-            "Diğer": "era_other_short"
-        };
-        return map[d] ? t(map[d]) : d;
+        return d;
     }
 
     function uygulaDil() {
-        document.documentElement.lang = aktifDil === 'en' ? 'en' : 'tr';
         document.title = t('page_title');
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc) metaDesc.setAttribute('content', t('meta_desc'));
+        document.documentElement.lang = aktifDil;
         document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.getAttribute('data-i18n')); });
         document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
-        document.querySelectorAll('[data-lang]').forEach(el => {
-            el.style.display = el.getAttribute('data-lang') === aktifDil ? '' : 'none';
-        });
-        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active-lang', b.getAttribute('data-dil') === aktifDil));
+        document.querySelectorAll('.lang-btn').forEach(el => { el.classList.toggle('active-lang', el.getAttribute('data-lang') === aktifDil); });
+        temaButonuGuncelle();
     }
 
-    function dilDegistir(dil) {
-        aktifDil = dil;
-        localStorage.setItem('portalDil', dil);
+    function dilDegistir(lang) {
+        if (!I18N[lang] || lang === aktifDil) return;
+        aktifDil = lang;
+        localStorage.setItem('aktifDil', lang);
         uygulaDil();
         ekranaBas();
+    }
+
+    let aktifTema = localStorage.getItem('aktifTema') || 'light';
+
+    function temaButonuGuncelle() {
+        const btn = document.getElementById('theme-toggle-btn');
+        if (!btn) return;
+        btn.innerHTML = aktifTema === 'dark' ? '☀️' : '🌙';
+        btn.title = t(aktifTema === 'dark' ? 'theme_light' : 'theme_dark');
+    }
+
+    function temaUygula() {
+        if (aktifTema === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        else document.documentElement.removeAttribute('data-theme');
+        temaButonuGuncelle();
+    }
+
+    function temaDegistir() {
+        aktifTema = aktifTema === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('aktifTema', aktifTema);
+        temaUygula();
     }
 
     const firebaseConfig = {
@@ -921,6 +878,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     });
 
     window.onload = function() {
+        temaUygula();
         uygulaDil();
         let baslangicSayfasi = 'home';
         if (window.location.hash) baslangicSayfasi = window.location.hash.substring(1);
@@ -1004,6 +962,40 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         }, 300); 
     }
 
+    function oneCikanGit(isim) {
+        const secilen = veriler.find(z => z.isim === isim);
+
+        aktifFiltre = 'tumu';
+        aktifDevir = 'tumu';
+
+        const filterCols = document.querySelectorAll('.filter-col');
+        if(filterCols.length > 0) {
+            filterCols[0].querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active-filter'));
+            filterCols[0].querySelector('.filter-btn').classList.add('active-filter');
+        }
+        if(filterCols.length > 1) {
+            filterCols[1].querySelectorAll('.devir-btn').forEach(b => b.classList.remove('active-filter'));
+            filterCols[1].querySelector('.devir-btn').classList.add('active-filter');
+        }
+
+        arsiveGitVeBul(isim);
+        const temizIsim = isim.split('(')[0].trim();
+
+        setTimeout(() => {
+            document.querySelectorAll('.arsiv-detay').forEach(el => {
+                if (el.style.display !== 'none' && el.querySelector('summary').innerText.includes(temizIsim)) {
+                    el.open = true;
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (secilen) {
+                        const btnId = 'btn-bag-' + secilen.id;
+                        const kutu = document.getElementById('baglanti-kutu-' + secilen.id);
+                        if (kutu && kutu.style.display !== 'flex') baglantilariYukle(secilen.id, btnId);
+                    }
+                }
+            });
+        }, 300);
+    }
+
     function baglantilariYukle(id, btnId) {
         const btn = document.getElementById(btnId);
         const kutu = document.getElementById('baglanti-kutu-' + id);
@@ -1038,7 +1030,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         if(ilgiliOlaylar.length > 0) html += `<div class="sistem-grup"><div class="sistem-baslik">${t('related_events')}</div><div>${ilgiliOlaylar.map(o => `<span class="smart-link" onclick="olayOku('${o.id}')">${escapeHtml(o.ad)}</span>`).join(', ')}</div></div>`;
         if(donemdaslar.length > 0) html += `<div class="sistem-grup"><div class="sistem-baslik">${t('contemporaries')}</div><div>${donemdaslar.map(k => `<span class="smart-link" onclick="arsiveGitVeBul('${k.isim.replace(/'/g, "\\'")}')">${escapeHtml(k.isim)}</span>`).join(', ')}</div></div>`;
 
-        if(html === '') html = `<div style="color:#999; font-style:italic; font-size:0.95rem; text-align:center;">${t('no_intersection')}</div>`;
+        if(html === '') html = `<div style="color: var(--text-muted); font-style:italic; font-size:0.95rem; text-align:center;">${t('no_intersection')}</div>`;
 
         kutu.innerHTML = html;
         kutu.style.display = 'flex';
@@ -1147,7 +1139,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         document.getElementById('okuma-tarih').innerText = tamTarih;
         let formatliBilgi = o.bilgi ? escapeHtml(o.bilgi).replace(/\n/g, '<br><br>') : t('no_content');
         if (o.kaynak && o.kaynak !== "?") {
-            formatliBilgi += `<div style="margin-top:25px; font-size:0.85rem; color:#aaa; font-style:italic; text-align:center;">${t('source')} ${escapeHtml(o.kaynak)}</div>`;
+            formatliBilgi += `<div style="margin-top:25px; font-size:0.85rem; color: var(--text-placeholder); font-style:italic; text-align:center;">${t('source')} ${escapeHtml(o.kaynak)}</div>`;
         }
         document.getElementById('okuma-icerik').innerHTML = formatliBilgi;
         sayfaDegistir('olay-okuma');
@@ -1220,7 +1212,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             const aramaMetni = ((z.isim || "") + " " + (z.bilgi || "")).toLocaleLowerCase('tr');
             let dM = parseInt(z.d_miladi), vM = parseInt(z.v_miladi);
             let devirStr = z.devir || "Asr-ı Saadet";
-            let devirRozet = `<span class="devir-tag">${escapeHtml(cevirDevir(devirStr))}</span>`;
+            let devirRozet = `<span class="devir-tag">${escapeHtml(devirStr)}</span>`;
             let yasStr = (!isNaN(dM) && !isNaN(vM)) ? `<span class="yas-badge">${vM - dM} ${t('years_old')}</span>` : "";
             
             let dH = (z.d_hicri && z.d_hicri !== "?") ? "H. " + z.d_hicri : ""; let dMil = (z.d_miladi && z.d_miladi !== "?") ? " (M. " + z.d_miladi + ")" : "";
@@ -1229,16 +1221,16 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             let bilgiHTML = (z.bilgi && z.bilgi.trim() !== "" && z.bilgi.trim() !== "?") ? 
                 `<div class="buyuk-kutu">
                     ${escapeHtml(z.bilgi).replace(/\n/g, '<br><br>')}
-                    ${(z.kaynak && z.kaynak !== "?") ? `<div style="margin-top:15px; font-size:0.8rem; color:#aaa; font-style:italic;">${t('source')} ${escapeHtml(z.kaynak)}</div>` : ""}
+                    ${(z.kaynak && z.kaynak !== "?") ? `<div style="margin-top:15px; font-size:0.8rem; color: var(--text-placeholder); font-style:italic;">${t('source')} ${escapeHtml(z.kaynak)}</div>` : ""}
                 </div>` : "";
 
             let kucukKutular = `<div class="relation-grid">`;
             
             if (dH || dMil || vH || vMil) {
                 kucukKutular += `<div class="rel-box rel-box-wide">
-                     <strong style="color:#a8a092; margin:0; font-size:0.8rem;">${t('life_info')}</strong>
-                     ${(dH||dMil) ? `<span style="color:#555;">${t('birth')} ${escapeHtml(dH+dMil)}</span>` : ""}
-                     ${(vH||vMil) ? `<span style="color:#555;">${t('death')} ${escapeHtml(vH+vMil)}</span>` : ""}
+                     <strong style="color: var(--text-placeholder); margin:0; font-size:0.8rem;">${t('life_info')}</strong>
+                     ${(dH||dMil) ? `<span style="color: var(--text-label);">${t('birth')} ${escapeHtml(dH+dMil)}</span>` : ""}
+                     ${(vH||vMil) ? `<span style="color: var(--text-label);">${t('death')} ${escapeHtml(vH+vMil)}</span>` : ""}
                 </div>`;
             }
             
@@ -1285,7 +1277,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             let kisaBilgi = (o.bilgi && o.bilgi.length > 200) ? o.bilgi.substring(0, 200) + "..." : (o.bilgi || t('no_content'));
             
             let devirStr = o.devir || "Asr-ı Saadet";
-            let devirRozet = `<span class="devir-tag">${escapeHtml(cevirDevir(devirStr))}</span>`;
+            let devirRozet = `<span class="devir-tag">${escapeHtml(devirStr)}</span>`;
             
             let kartHtml = `
             <div class="article-card search-item" data-search="${aramaMetniOlay}" data-type="olay" data-devir="${devirStr}" onclick="olayOku('${o.id}')">
@@ -1297,8 +1289,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                     <h3>${escapeHtml(o.ad)}</h3>
                     <p>${escapeHtml(kisaBilgi)}</p>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f0ebe1; padding-top: 15px; margin-top: 15px;">
-                    <span style="font-size: 0.85rem; color: #888;">${oH}${oM}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color-soft); padding-top: 15px; margin-top: 15px;">
+                    <span style="font-size: 0.85rem; color: var(--text-faint);">${oH}${oM}</span>
                     <span class="read-more">${t('read_article')}</span>
                 </div>
             </div>`;
@@ -1310,26 +1302,47 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         arsiv.innerHTML = aHtml + aOlayHtml; 
         
         const homeOlaylarGrid = document.getElementById('home-olaylar-grid');
-        if(homeOlaylarGrid) homeOlaylarGrid.innerHTML = hOlayHtml === "" ? `<p style="text-align: center; color: #999; width: 100%;">${t('no_events')}</p>` : hOlayHtml;
+        if(homeOlaylarGrid) homeOlaylarGrid.innerHTML = hOlayHtml === "" ? `<p style="text-align: center; color: var(--text-muted); width: 100%;">${t('no_events')}</p>` : hOlayHtml;
+
+        const homeOneCikan = document.getElementById('home-one-cikan');
+        if (homeOneCikan) {
+            const enCokYazili = veriler
+                .filter(z => z.bilgi && z.bilgi.trim() !== "" && z.bilgi.trim() !== "?")
+                .slice()
+                .sort((a, b) => b.bilgi.trim().length - a.bilgi.trim().length)
+                .slice(0, 8);
+            homeOneCikan.innerHTML = enCokYazili.length === 0 ? `<p style="text-align: center; width: 100%; color: var(--text-muted);">${t('no_data')}</p>` : enCokYazili.map(z => {
+                let ilkHarf = (z.isim || "?").charAt(0).toLocaleUpperCase('tr');
+                let devirStr = z.devir || "Asr-ı Saadet";
+                let ozetMetin = z.bilgi.trim();
+                let ozet = ozetMetin.length > 110 ? ozetMetin.substring(0, 110) + "..." : ozetMetin;
+                return `<div class="on-cikan-kart" onclick="oneCikanGit('${z.isim.replace(/'/g, "\\'")}')">
+                    <div class="on-cikan-avatar">${escapeHtml(ilkHarf)}</div>
+                    <div class="on-cikan-isim">${escapeHtml(z.isim)}</div>
+                    <span class="devir-tag">${escapeHtml(devirStr)}</span>
+                    <div class="on-cikan-ozet">${escapeHtml(ozet)}</div>
+                </div>`;
+            }).join('');
+        }
 
         const toplamKayitEl = document.getElementById('admin-toplam-kayit');
         if (toplamKayitEl) toplamKayitEl.innerText = t('admin_total', { zat: veriler.length, olay: olaylar.length });
 
-        let admHtml = `<h4 style="color:#5d4037; margin-top:0;">${t('persons')}</h4>`;
+        let admHtml = `<h4 style="color: var(--brand-text); margin-top:0;">${t('persons')}</h4>`;
         const azZatlar = {};
         veriler.forEach(z => { let harf = (z.isim || "İ").charAt(0).toLocaleUpperCase('tr'); if (!azZatlar[harf]) azZatlar[harf] = []; azZatlar[harf].push(z); });
         Object.keys(azZatlar).sort((a,b) => a.localeCompare(b, 'tr')).forEach(h => {
             admHtml += `<details class="soy-klasor"><summary class="soy-baslik">${t('letter_of', { h: escapeHtml(h), n: azZatlar[h].length })}</summary><div class="soy-icerik">`;
-            azZatlar[h].forEach(z => { admHtml += `<div style="padding:10px; border: 1px solid #f0ebe1; border-radius: 6px; margin-bottom:5px; background: white;"><strong>${escapeHtml(z.isim)}</strong><div style="margin-top:5px;"><button onclick="duzenle('${z.id}')" style="background:transparent; border:none; color:#5c6ac4; cursor:pointer; padding:0 10px 0 0;">${t('edit')}</button><button onclick="sil('${z.id}', 'zatlar')" style="background:transparent; border:none; color:#d32f2f; cursor:pointer;">${t('del')}</button></div></div>`; });
+            azZatlar[h].forEach(z => { admHtml += `<div style="padding:10px; border: 1px solid var(--border-color-soft); border-radius: 6px; margin-bottom:5px; background: var(--bg-card);"><strong>${escapeHtml(z.isim)}</strong><div style="margin-top:5px;"><button onclick="duzenle('${z.id}')" style="background:transparent; border:none; color: var(--accent-blue); cursor:pointer; padding:0 10px 0 0;">${t('edit')}</button><button onclick="sil('${z.id}', 'zatlar')" style="background:transparent; border:none; color: var(--danger); cursor:pointer;">${t('del')}</button></div></div>`; });
             admHtml += `</div></details>`;
         });
 
-        admHtml += `<h4 style="color:#5d4037; margin-top:20px;">${t('events')}</h4>`;
+        admHtml += `<h4 style="color: var(--brand-text); margin-top:20px;">${t('events')}</h4>`;
         const azOlaylar = {};
         olaylar.forEach(o => { let harf = (o.ad || "İ").charAt(0).toLocaleUpperCase('tr'); if (!azOlaylar[harf]) azOlaylar[harf] = []; azOlaylar[harf].push(o); });
         Object.keys(azOlaylar).sort((a,b) => a.localeCompare(b, 'tr')).forEach(h => {
             admHtml += `<details class="soy-klasor"><summary class="soy-baslik">${t('letter_of', { h: escapeHtml(h), n: azOlaylar[h].length })}</summary><div class="soy-icerik">`;
-            azOlaylar[h].forEach(o => { admHtml += `<div style="padding:10px; border: 1px solid #f0ebe1; border-radius: 6px; margin-bottom:5px; background: white;"><strong>${escapeHtml(o.ad)}</strong><div style="margin-top:5px;"><button onclick="duzenleOlay('${o.id}')" style="background:transparent; border:none; color:#5c6ac4; cursor:pointer; padding:0 10px 0 0;">${t('edit')}</button><button onclick="sil('${o.id}', 'olaylar')" style="background:transparent; border:none; color:#d32f2f; cursor:pointer;">${t('del')}</button></div></div>`; });
+            azOlaylar[h].forEach(o => { admHtml += `<div style="padding:10px; border: 1px solid var(--border-color-soft); border-radius: 6px; margin-bottom:5px; background: var(--bg-card);"><strong>${escapeHtml(o.ad)}</strong><div style="margin-top:5px;"><button onclick="duzenleOlay('${o.id}')" style="background:transparent; border:none; color: var(--accent-blue); cursor:pointer; padding:0 10px 0 0;">${t('edit')}</button><button onclick="sil('${o.id}', 'olaylar')" style="background:transparent; border:none; color: var(--danger); cursor:pointer;">${t('del')}</button></div></div>`; });
             admHtml += `</div></details>`;
         });
         adminL.innerHTML = admHtml;
@@ -1339,14 +1352,13 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         olaylar.forEach(o => { if(!isNaN(parseInt(o.miladi))) bil.push({s: parseInt(o.miladi), ad: o.ad, t: 'Olay'}); });
         bil.sort((a,b) => a.s - b.s);
         cizelge.innerHTML = bil.map(i => {
-            let tRenk = i.t === 'Olay' ? '#d32f2f' : '#5c6ac4';
-            let tipYazi = i.t === 'Olay' ? t('type_event') : t('type_person');
-            return `<div style="padding:15px; border-bottom: 1px solid #e0dcd3; background: white; margin-bottom: 5px; border-radius: 6px;"><b>M. ${i.s}</b>: <span class="smart-link" onclick="arsiveGitVeBul('${i.ad.replace(/'/g, "\\'")}')">${escapeHtml(i.ad)}</span> <small style="color:${tRenk}; font-weight:500; margin-left: 10px;">[${tipYazi}]</small></div>`;
+            let tRenk = i.t === 'Olay' ? 'var(--danger)' : 'var(--accent-blue)';
+            return `<div style="padding:15px; border-bottom: 1px solid var(--border-color); background: var(--bg-card); margin-bottom: 5px; border-radius: 6px;"><b>M. ${i.s}</b>: <span class="smart-link" onclick="arsiveGitVeBul('${i.ad.replace(/'/g, "\\'")}')">${escapeHtml(i.ad)}</span> <small style="color:${tRenk}; font-weight:500; margin-left: 10px;">[${i.t}]</small></div>`;
         }).join('');
 
         const homeMiniTimeline = document.getElementById('home-mini-timeline');
         if (homeMiniTimeline) {
-            homeMiniTimeline.innerHTML = bil.length === 0 ? `<p style="text-align: center; width: 100%; color: #999;">${t('no_data')}</p>` : bil.slice(0, 12).map(i => `<div class="mini-timeline-kart"><div><div class="mini-timeline-yil">M. ${i.s}</div><div class="mini-timeline-isim"><span class="smart-link" onclick="arsiveGitVeBul('${i.ad.replace(/'/g, "\\'")}')">${escapeHtml(i.ad)}</span></div></div><div style="color:#999; font-size:0.8rem; margin-top:15px;">${i.t === 'Olay' ? t('type_event') : t('mini_birth')}</div></div>`).join('');
+            homeMiniTimeline.innerHTML = bil.length === 0 ? `<p style="text-align: center; width: 100%; color: var(--text-muted);">${t('no_data')}</p>` : bil.slice(0, 12).map(i => `<div class="mini-timeline-kart"><div><div class="mini-timeline-yil">M. ${i.s}</div><div class="mini-timeline-isim"><span class="smart-link" onclick="arsiveGitVeBul('${i.ad.replace(/'/g, "\\'")}')">${escapeHtml(i.ad)}</span></div></div><div style="color: var(--text-muted); font-size:0.8rem; margin-top:15px;">${i.t === 'Olay' ? t('type_event') : t('mini_birth')}</div></div>`).join('');
         }
 
         const gruplar = {};
@@ -1361,7 +1373,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         
         soy.innerHTML = Object.keys(gruplar).sort((a, b) => a.toLocaleLowerCase('tr').localeCompare(b.toLocaleLowerCase('tr'), 'tr')).map(baba => {
             let babaBaslik = baba === t('unknown_father') ? t('unknown_father') : `${t('father_prefix')} <span class="smart-link" onclick="event.stopPropagation(); arsiveGitVeBul('${baba.replace(/'/g, "\\'")}')">${escapeHtml(baba)}</span>`;
-            const kisilerHtml = gruplar[baba].map(k => `<div class="soy-kart"><strong><span class="smart-link" onclick="arsiveGitVeBul('${k.isim.replace(/'/g, "\\'")}')">${escapeHtml(k.isim)}</span></strong><br>${k.anne && k.anne !== "?" ? `<small style="color:#666;">${t('mother_prefix')} <span class="smart-link" onclick="arsiveGitVeBul('${k.anne.replace(/'/g, "\\'")}')">${escapeHtml(k.anne)}</span></small>` : ""}${k.es && k.es !== "?" ? `<br><small style="color:#666;">${t('spouse_prefix')} ` + k.es.split(',').map(e => `<span class="smart-link" onclick="arsiveGitVeBul('${e.trim().replace(/'/g, "\\'")}')">${escapeHtml(e.trim())}</span>`).join(', ') + `</small>` : ""}${k.baglar && k.baglar !== "?" ? `<br><small style="color:#666;">${t('other_ties')} ` + k.baglar.split(',').map(b => `<span class="smart-link" onclick="arsiveGitVeBul('${b.split('(')[0].trim().replace(/'/g, "\\'")}')">${escapeHtml(b.trim())}</span>`).join(', ') + `</small>` : ""}</div>`).join('');
+            const kisilerHtml = gruplar[baba].map(k => `<div class="soy-kart"><strong><span class="smart-link" onclick="arsiveGitVeBul('${k.isim.replace(/'/g, "\\'")}')">${escapeHtml(k.isim)}</span></strong><br>${k.anne && k.anne !== "?" ? `<small style="color: var(--text-secondary);">${t('mother_prefix')} <span class="smart-link" onclick="arsiveGitVeBul('${k.anne.replace(/'/g, "\\'")}')">${escapeHtml(k.anne)}</span></small>` : ""}${k.es && k.es !== "?" ? `<br><small style="color: var(--text-secondary);">${t('spouse_prefix')} ` + k.es.split(',').map(e => `<span class="smart-link" onclick="arsiveGitVeBul('${e.trim().replace(/'/g, "\\'")}')">${escapeHtml(e.trim())}</span>`).join(', ') + `</small>` : ""}${k.baglar && k.baglar !== "?" ? `<br><small style="color: var(--text-secondary);">${t('other_ties')} ` + k.baglar.split(',').map(b => `<span class="smart-link" onclick="arsiveGitVeBul('${b.split('(')[0].trim().replace(/'/g, "\\'")}')">${escapeHtml(b.trim())}</span>`).join(', ') + `</small>` : ""}</div>`).join('');
             return `<details class="soy-klasor"><summary class="soy-baslik">${babaBaslik}</summary><div class="soy-icerik">${kisilerHtml}</div></details>`;
         }).join('');
         aramaYap();
@@ -1411,6 +1423,15 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         document.getElementById('in_baglar_isim').value = "";
     }
 
+    function sayacGuncelle(taId, sayacId) {
+        const ta = document.getElementById(taId); const el = document.getElementById(sayacId);
+        if (!ta || !el) return;
+        const metin = ta.value.trim();
+        const karakter = ta.value.length;
+        const kelime = metin ? metin.split(/\s+/).length : 0;
+        el.textContent = `${karakter} karakter · ${kelime} kelime`;
+    }
+
     async function sil(id, kol) { if(confirm(t('confirm_del'))) await db.collection(kol).doc(id).delete(); }
 
     function duzenle(id) {
@@ -1419,6 +1440,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         document.getElementById('in_ad').value = z.isim; document.getElementById('in_anne').value = z.anne; document.getElementById('in_baba').value = z.baba; document.getElementById('in_es').value = z.es; document.getElementById('in_baglar_liste').value = z.baglar; document.getElementById('in_d_hicri').value = z.d_hicri; document.getElementById('in_d_miladi').value = z.d_miladi; document.getElementById('in_v_hicri').value = z.v_hicri; document.getElementById('in_v_miladi').value = z.v_miladi; document.getElementById('in_bilgi').value = z.bilgi; document.getElementById('in_kaynak').value = z.kaynak || "";
         document.getElementById('cancel-btn').style.display = "inline-block"; document.getElementById('zat-uyari').style.display = "none";
         document.getElementById('oto_ra').checked = !(!z.isim.toLocaleLowerCase('tr').includes("(ra)") && !z.isim.toLocaleLowerCase('tr').includes("(r.a.)"));
+        sayacGuncelle('in_bilgi','in_bilgi_sayac');
         window.scrollTo(0,0);
     }
 
@@ -1427,11 +1449,12 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         document.getElementById('edit-olay-id').value = id; document.getElementById('ol_devir').value = o.devir || "Asr-ı Saadet";
         document.getElementById('ol_ad').value = o.ad; document.getElementById('ol_hicri').value = o.hicri; document.getElementById('ol_miladi').value = o.miladi; document.getElementById('ol_bilgi').value = o.bilgi; document.getElementById('ol_kaynak').value = o.kaynak || "";
         document.getElementById('olay-cancel-btn').style.display = "inline-block"; document.getElementById('olay-uyari').style.display = "none";
+        sayacGuncelle('ol_bilgi','ol_bilgi_sayac');
         window.scrollTo(0,0);
     }
 
-    function temizle() { document.querySelectorAll('input[id^="in_"], textarea[id^="in_"]').forEach(i => i.value = ""); document.getElementById('in_devir').value = "Asr-ı Saadet"; document.getElementById('edit-id').value = ""; document.getElementById('cancel-btn').style.display = "none"; document.getElementById('zat-uyari').style.display = "none"; if(document.getElementById('oto_ra')) document.getElementById('oto_ra').checked = true; }
-    function temizleOlay() { document.querySelectorAll('input[id^="ol_"], textarea[id^="ol_"]').forEach(i => i.value = ""); document.getElementById('ol_devir').value = "Asr-ı Saadet"; document.getElementById('edit-olay-id').value = ""; document.getElementById('olay-cancel-btn').style.display = "none"; document.getElementById('olay-uyari').style.display = "none"; }
+    function temizle() { document.querySelectorAll('input[id^="in_"], textarea[id^="in_"]').forEach(i => i.value = ""); document.getElementById('in_devir').value = "Asr-ı Saadet"; document.getElementById('edit-id').value = ""; document.getElementById('cancel-btn').style.display = "none"; document.getElementById('zat-uyari').style.display = "none"; if(document.getElementById('oto_ra')) document.getElementById('oto_ra').checked = true; sayacGuncelle('in_bilgi','in_bilgi_sayac'); }
+    function temizleOlay() { document.querySelectorAll('input[id^="ol_"], textarea[id^="ol_"]').forEach(i => i.value = ""); document.getElementById('ol_devir').value = "Asr-ı Saadet"; document.getElementById('edit-olay-id').value = ""; document.getElementById('olay-cancel-btn').style.display = "none"; document.getElementById('olay-uyari').style.display = "none"; sayacGuncelle('ol_bilgi','ol_bilgi_sayac'); }
 
     function aramaYap() {
         const val = document.getElementById('ara').value;
