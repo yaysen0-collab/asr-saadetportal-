@@ -928,7 +928,6 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
 
 <div id="oto-kutu" class="oto-liste"></div>
 <div id="arama-oto-kutu" class="oto-liste" style="z-index: 10000;"></div>
-
 <script>
     function escapeHtml(str) {
         if (str === null || str === undefined) return "";
@@ -1007,7 +1006,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             source: "Kaynak:", date_unknown: "Tarih Belirtilmemiş", no_content: "İçerik bulunamadı.",
             no_bio_random: "Henüz bilgi girilmiş şahsiyet bulunmuyor.", confirm_del: "Silinsin mi?", need_name: "Lütfen isim girin!", need_event: "Lütfen olay ismi girin!",
             similar_names: "Sistemde benzer isimler var: {list}", similar_events: "Sistemde benzer olaylar var: {list}",
-            login_error: "Hata: ", theme_dark: "Koyu Mod", theme_light: "Aydınlık Mod"
+            login_error: "Hata: ", theme_dark: "Koyu Mod", theme_light: "Aydınlık Mod",
+            save_error: "Kayıt başarısız oldu: ", perm_error_hint: " (Bu genellikle Firebase Firestore güvenlik kurallarının yazmaya izin vermediği veya giriş yapan e-postanın ADMIN_EMAIL ile eşleşmediği anlamına gelir.)"
         },
         en: {
             page_title: "Asr-ı Saadet Portal | Companions, Sīrah and Islamic History",
@@ -1058,7 +1058,8 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             source: "Source:", date_unknown: "Date Not Specified", no_content: "No content found.",
             no_bio_random: "No figure with information entered yet.", confirm_del: "Delete this?", need_name: "Please enter a name!", need_event: "Please enter an event name!",
             similar_names: "Similar names exist in the system: {list}", similar_events: "Similar events exist in the system: {list}",
-            login_error: "Error: ", theme_dark: "Dark Mode", theme_light: "Light Mode"
+            login_error: "Error: ", theme_dark: "Dark Mode", theme_light: "Light Mode",
+            save_error: "Save failed: ", perm_error_hint: " (This usually means Firestore security rules are blocking the write, or the signed-in email doesn't match ADMIN_EMAIL.)"
         }
     };
 
@@ -1125,7 +1126,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     const auth = firebase.auth();
     const googleProvider = new firebase.auth.GoogleAuthProvider();
     // ÖNEMLİ: Aşağıdaki e-postayı kendi yönetici e-postanla değiştir. Sadece bu e-posta ile giriş yapan kişi Yönetici Panelini kullanabilir.
-    const ADMIN_EMAIL = "admin@ornek.com";
+    const ADMIN_EMAIL = "yaysen0@gmail.com";
 
     let girisliKullanici = null;
     let kullaniciFavorileri = {};
@@ -1196,8 +1197,14 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         ekranaBas();
     });
 
-    db.collection("zatlar").onSnapshot(s => { veriler = s.docs.map(d => ({ id: d.id, ...d.data() })); ekranaBas(); });
-    db.collection("olaylar").onSnapshot(s => { olaylar = s.docs.map(d => ({ id: d.id, ...d.data() })); ekranaBas(); });
+    db.collection("zatlar").onSnapshot(s => { veriler = s.docs.map(d => ({ id: d.id, ...d.data() })); ekranaBas(); }, err => {
+        console.error("zatlar dinleme hatası:", err);
+        alert(t('save_error') + err.message + t('perm_error_hint'));
+    });
+    db.collection("olaylar").onSnapshot(s => { olaylar = s.docs.map(d => ({ id: d.id, ...d.data() })); ekranaBas(); }, err => {
+        console.error("olaylar dinleme hatası:", err);
+        alert(t('save_error') + err.message + t('perm_error_hint'));
+    });
 
     document.querySelectorAll('.editor-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
@@ -1546,8 +1553,13 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         if (!girisliKullanici) { sayfaDegistir('uye-giris'); return; }
         const anahtar = tip + '_' + itemId;
         const mevcut = kullaniciFavorileri[anahtar];
-        if (mevcut) { await db.collection('favoriler').doc(mevcut.docId).delete(); }
-        else { await db.collection('favoriler').add({ uid: girisliKullanici.uid, tip, itemId, ad, eklenmeTarihi: Date.now() }); }
+        try {
+            if (mevcut) { await db.collection('favoriler').doc(mevcut.docId).delete(); }
+            else { await db.collection('favoriler').add({ uid: girisliKullanici.uid, tip, itemId, ad, eklenmeTarihi: Date.now() }); }
+        } catch (e) {
+            console.error("favoriTogle hatası:", e);
+            alert(t('save_error') + e.message);
+        }
     }
 
     function favoriBtnHtml(tip, itemId, ad) {
@@ -1609,7 +1621,10 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             else { await db.collection('notlar').doc(docId).set({ uid: girisliKullanici.uid, tip, itemId, ad, metin, guncellemeTarihi: Date.now() }); }
             const btn = alan.nextElementSibling;
             if (btn) { const eski = btn.innerText; btn.innerText = 'Kaydedildi ✓'; setTimeout(() => btn.innerText = eski, 1500); }
-        } catch (e) { /* sessiz geç */ }
+        } catch (e) {
+            console.error("notKaydet hatası:", e);
+            alert(t('save_error') + e.message);
+        }
     }
 
     async function yorumlariYukle(tip, itemId) {
@@ -1631,9 +1646,14 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         const metin = alan.value.trim();
         if (!metin) return;
         const adSoyad = girisliKullanici.displayName || girisliKullanici.email.split('@')[0];
-        await db.collection('yorumlar').add({ tip, itemId, uid: girisliKullanici.uid, adSoyad, metin, tarih: Date.now() });
-        alan.value = '';
-        yorumlariYukle(tip, itemId);
+        try {
+            await db.collection('yorumlar').add({ tip, itemId, uid: girisliKullanici.uid, adSoyad, metin, tarih: Date.now() });
+            alan.value = '';
+            yorumlariYukle(tip, itemId);
+        } catch (e) {
+            console.error("yorumGonder hatası:", e);
+            alert(t('save_error') + e.message);
+        }
     }
 
     function kelimeBaslariniBuyut(metin) {
@@ -1760,25 +1780,25 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
 
         veriler.sort((a, b) => (a.isim || "").toLocaleLowerCase('tr').localeCompare((b.isim || "").toLocaleLowerCase('tr'), 'tr'));
 
-        let aHtml = ""; 
+        let aHtml = "";
         veriler.forEach(z => {
-            const aramaMetni = ((z.isim || "") + " " + (z.bilgi || "")).toLocaleLowerCase('tr');
+            const aramaMetni = escapeHtml(((z.isim || "") + " " + duzMetneCevir(z.bilgi)).toLocaleLowerCase('tr'));
             let dM = parseInt(z.d_miladi), vM = parseInt(z.v_miladi);
             let devirStr = z.devir || "Asr-ı Saadet";
             let devirRozet = `<span class="devir-tag">${escapeHtml(devirStr)}</span>`;
             let yasStr = (!isNaN(dM) && !isNaN(vM)) ? `<span class="yas-badge">${vM - dM} ${t('years_old')}</span>` : "";
-            
+
             let dH = (z.d_hicri && z.d_hicri !== "?") ? "H. " + z.d_hicri : ""; let dMil = (z.d_miladi && z.d_miladi !== "?") ? " (M. " + z.d_miladi + ")" : "";
             let vH = (z.v_hicri && z.v_hicri !== "?") ? "H. " + z.v_hicri : ""; let vMil = (z.v_miladi && z.v_miladi !== "?") ? " (M. " + z.v_miladi + ")" : "";
-            
-            let bilgiHTML = (z.bilgi && z.bilgi.trim() !== "" && z.bilgi.trim() !== "?") ? 
+
+            let bilgiHTML = (z.bilgi && z.bilgi.trim() !== "" && z.bilgi.trim() !== "?") ?
                 `<div class="buyuk-kutu">
                     ${bilgiyiGoster(z.bilgi)}
                     ${(z.kaynak && z.kaynak !== "?") ? `<div style="margin-top:15px; font-size:0.8rem; color: var(--text-placeholder); font-style:italic;">${t('source')} ${escapeHtml(z.kaynak)}</div>` : ""}
                 </div>` : "";
 
             let kucukKutular = `<div class="relation-grid">`;
-            
+
             if (dH || dMil || vH || vMil) {
                 kucukKutular += `<div class="rel-box rel-box-wide">
                      <strong style="color: var(--text-placeholder); margin:0; font-size:0.8rem;">${t('life_info')}</strong>
@@ -1786,14 +1806,14 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                      ${(vH||vMil) ? `<span style="color: var(--text-label);">${t('death')} ${escapeHtml(vH+vMil)}</span>` : ""}
                 </div>`;
             }
-            
+
             if (z.baba && z.baba !== "?") kucukKutular += `<div class="rel-box"><strong>${t('father')}</strong><span class="smart-link" onclick="arsiveGitVeBul('${z.baba.replace(/'/g, "\\'")}')">${escapeHtml(z.baba)}</span></div>`;
             if (z.anne && z.anne !== "?") kucukKutular += `<div class="rel-box"><strong>${t('mother')}</strong><span class="smart-link" onclick="arsiveGitVeBul('${z.anne.replace(/'/g, "\\'")}')">${escapeHtml(z.anne)}</span></div>`;
             if (z.es && z.es !== "?") kucukKutular += `<div class="rel-box" style="grid-column: span 2;"><strong>${t('spouses')}</strong>` + z.es.split(',').map(e => `<span class="smart-link" onclick="arsiveGitVeBul('${e.trim().replace(/'/g, "\\'")}')">${escapeHtml(e.trim())}</span>`).join(', ') + `</div>`;
             if (z.baglar && z.baglar !== "?") kucukKutular += `<div class="rel-box" style="grid-column: span 2;"><strong>${t('family_ties')}</strong>` + z.baglar.split(',').map(b => `<span class="smart-link" onclick="arsiveGitVeBul('${b.split('(')[0].trim().replace(/'/g, "\\'")}')">${escapeHtml(b.trim())}</span>`).join(' • ') + `</div>`;
-            
+
             kucukKutular += `</div>`;
-            
+
             let sistemButonu = `
             <div>
                 <button id="btn-bag-${z.id}" onclick="baglantilariYukle('${z.id}', 'btn-bag-${z.id}')" class="btn-sistem">${t('linked_history')}</button>
@@ -1803,7 +1823,7 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             let ilkHarf = z.isim.charAt(0).toLocaleUpperCase('tr');
 
             aHtml += `
-            <details class="arsiv-kart search-item arsiv-detay" data-search="${aramaMetni}" data-type="zat" data-devir="${devirStr}" ontoggle="if(this.open) yorumlariYukle('zat','${z.id}')">
+            <details class="arsiv-kart search-item arsiv-detay" data-search="${aramaMetni}" data-type="zat" data-devir="${escapeHtml(devirStr)}" ontoggle="if(this.open) yorumlariYukle('zat','${z.id}')">
                 <summary>
                     <div class="kart-baslik-isim">
                         <div class="kart-ikon">${escapeHtml(ilkHarf)}</div>
@@ -1820,23 +1840,23 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             </details>`;
         });
 
-        let aOlayHtml = ""; 
-        let hOlayHtml = ""; 
+        let aOlayHtml = "";
+        let hOlayHtml = "";
 
         let siraliOlaylar = [...olaylar].sort((a, b) => (b.eklenmeTarihi || 0) - (a.eklenmeTarihi || 0));
 
         siraliOlaylar.forEach((o, index) => {
-            const aramaMetniOlay = ((o.ad || "") + " " + (o.bilgi || "")).toLocaleLowerCase('tr');
+            const aramaMetniOlay = escapeHtml(((o.ad || "") + " " + duzMetneCevir(o.bilgi)).toLocaleLowerCase('tr'));
             let oH = (o.hicri && o.hicri !== "?") ? "H. " + o.hicri : "";
             let oM = (o.miladi && o.miladi !== "?") ? " M. " + o.miladi : "";
             let kisaBilgiDuz = duzMetneCevir(o.bilgi);
             let kisaBilgi = (kisaBilgiDuz.length > 200) ? kisaBilgiDuz.substring(0, 200) + "..." : (kisaBilgiDuz || t('no_content'));
-            
+
             let devirStr = o.devir || "Asr-ı Saadet";
             let devirRozet = `<span class="devir-tag">${escapeHtml(devirStr)}</span>`;
-            
+
             let kartHtml = `
-            <div class="article-card search-item" data-search="${aramaMetniOlay}" data-type="olay" data-devir="${devirStr}" onclick="olayOku('${o.id}')">
+            <div class="article-card search-item" data-search="${aramaMetniOlay}" data-type="olay" data-devir="${escapeHtml(devirStr)}" onclick="olayOku('${o.id}')">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <span class="category-tag">${t('hist_event')}</span>
                     <div style="display:flex; align-items:center; gap:8px;">${devirRozet}${favoriBtnHtml('olay', o.id, o.ad)}</div>
@@ -1851,12 +1871,12 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
                 </div>
             </div>`;
 
-            aOlayHtml += kartHtml; 
-            if (index < 3) hOlayHtml += kartHtml; 
+            aOlayHtml += kartHtml;
+            if (index < 3) hOlayHtml += kartHtml;
         });
 
-        arsiv.innerHTML = aHtml + aOlayHtml; 
-        
+        arsiv.innerHTML = aHtml + aOlayHtml;
+
         const homeOlaylarGrid = document.getElementById('home-olaylar-grid');
         if(homeOlaylarGrid) homeOlaylarGrid.innerHTML = hOlayHtml === "" ? `<p style="text-align: center; color: var(--text-muted); width: 100%;">${t('no_events')}</p>` : hOlayHtml;
 
@@ -1918,15 +1938,15 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         }
 
         const gruplar = {};
-        veriler.forEach(z => { 
-            let b = (z.baba && z.baba.trim() !== "" && z.baba.trim() !== "?") ? z.baba.trim() : t('unknown_father'); 
+        veriler.forEach(z => {
+            let b = (z.baba && z.baba.trim() !== "" && z.baba.trim() !== "?") ? z.baba.trim() : t('unknown_father');
             if (b !== t('unknown_father')) b = b.split(' ').map(k => k.charAt(0).toLocaleUpperCase('tr') + k.slice(1).toLocaleLowerCase('tr')).join(' ');
             if(b === "Abdülmuttalip" || b === "Abdulmuttalib" || b === "Abdülmuttalib") b = "Abdulmuttalip";
             if(b === "Ebu Talib" || b === "Ebutalip") b = "Ebu Talip";
-            if (!gruplar[b]) gruplar[b] = []; 
-            gruplar[b].push(z); 
+            if (!gruplar[b]) gruplar[b] = [];
+            gruplar[b].push(z);
         });
-        
+
         soy.innerHTML = Object.keys(gruplar).sort((a, b) => a.toLocaleLowerCase('tr').localeCompare(b.toLocaleLowerCase('tr'), 'tr')).map(baba => {
             let babaBaslik = baba === t('unknown_father') ? t('unknown_father') : `${t('father_prefix')} <span class="smart-link" onclick="event.stopPropagation(); arsiveGitVeBul('${baba.replace(/'/g, "\\'")}')">${escapeHtml(baba)}</span>`;
             const kisilerHtml = gruplar[baba].map(k => `<div class="soy-kart"><strong><span class="smart-link" onclick="arsiveGitVeBul('${k.isim.replace(/'/g, "\\'")}')">${escapeHtml(k.isim)}</span></strong><br>${k.anne && k.anne !== "?" ? `<small style="color: var(--text-secondary);">${t('mother_prefix')} <span class="smart-link" onclick="arsiveGitVeBul('${k.anne.replace(/'/g, "\\'")}')">${escapeHtml(k.anne)}</span></small>` : ""}${k.es && k.es !== "?" ? `<br><small style="color: var(--text-secondary);">${t('spouse_prefix')} ` + k.es.split(',').map(e => `<span class="smart-link" onclick="arsiveGitVeBul('${e.trim().replace(/'/g, "\\'")}')">${escapeHtml(e.trim())}</span>`).join(', ') + `</small>` : ""}${k.baglar && k.baglar !== "?" ? `<br><small style="color: var(--text-secondary);">${t('other_ties')} ` + k.baglar.split(',').map(b => `<span class="smart-link" onclick="arsiveGitVeBul('${b.split('(')[0].trim().replace(/'/g, "\\'")}')">${escapeHtml(b.trim())}</span>`).join(', ') + `</small>` : ""}</div>`).join('');
@@ -1939,7 +1959,10 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
     function girisliAdminMi() { return !!(auth.currentUser && auth.currentUser.email && auth.currentUser.email.toLocaleLowerCase('tr') === ADMIN_EMAIL.toLocaleLowerCase('tr')); }
 
     async function kaydet() {
-        if (!girisliAdminMi()) return;
+        if (!girisliAdminMi()) {
+            alert("Bu işlemi yapmak için ADMIN_EMAIL ile eşleşen bir hesapla giriş yapmış olmalısın. (Şu an giriş yapan hesap: " + (auth.currentUser ? auth.currentUser.email : "yok") + ")");
+            return;
+        }
         let ad = kelimeBaslariniBuyut(document.getElementById('in_ad').value.trim());
         if (!ad) { alert(t('need_name')); return; }
         if (document.getElementById('oto_ra').checked) { const kucukAd = ad.toLocaleLowerCase('tr'); if (!kucukAd.includes("(ra)") && !kucukAd.includes("(r.a.)") && !kucukAd.includes("(r.a)")) ad += " (ra)"; }
@@ -1953,24 +1976,36 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
             v_miladi: document.getElementById('in_v_miladi').value || "?", bilgi: document.getElementById('in_bilgi').innerHTML || "", 
             kaynak: document.getElementById('in_kaynak').value || "?", guncellemeTarihi: Date.now()
         };
-        if(id) await db.collection("zatlar").doc(id).update(obj); else await db.collection("zatlar").add(obj);
-        temizle();
+        try {
+            if(id) await db.collection("zatlar").doc(id).update(obj); else await db.collection("zatlar").add(obj);
+            temizle();
+        } catch (e) {
+            console.error("kaydet hatası:", e);
+            alert(t('save_error') + e.message + t('perm_error_hint'));
+        }
     }
 
     async function olayKaydet() {
-        if (!girisliAdminMi()) return;
+        if (!girisliAdminMi()) {
+            alert("Bu işlemi yapmak için ADMIN_EMAIL ile eşleşen bir hesapla giriş yapmış olmalısın. (Şu an giriş yapan hesap: " + (auth.currentUser ? auth.currentUser.email : "yok") + ")");
+            return;
+        }
         const ad = kelimeBaslariniBuyut(document.getElementById('ol_ad').value.trim());
         if (!ad) { alert(t('need_event')); return; }
         const id = document.getElementById('edit-olay-id').value;
         const obj = { ad: ad, devir: document.getElementById('ol_devir').value, hicri: document.getElementById('ol_hicri').value || "?", miladi: document.getElementById('ol_miladi').value || "?", bilgi: document.getElementById('ol_bilgi').innerHTML || "", kaynak: document.getElementById('ol_kaynak').value || "?", eklenmeTarihi: Date.now(), guncellemeTarihi: Date.now() };
         
-        if(id) {
-            const mevcutOlay = olaylar.find(v => v.id === id);
-            if (mevcutOlay && mevcutOlay.eklenmeTarihi) obj.eklenmeTarihi = mevcutOlay.eklenmeTarihi;
-            await db.collection("olaylar").doc(id).update(obj); 
-        } else await db.collection("olaylar").add(obj);
-        
-        temizleOlay();
+        try {
+            if(id) {
+                const mevcutOlay = olaylar.find(v => v.id === id);
+                if (mevcutOlay && mevcutOlay.eklenmeTarihi) obj.eklenmeTarihi = mevcutOlay.eklenmeTarihi;
+                await db.collection("olaylar").doc(id).update(obj); 
+            } else await db.collection("olaylar").add(obj);
+            temizleOlay();
+        } catch (e) {
+            console.error("olayKaydet hatası:", e);
+            alert(t('save_error') + e.message + t('perm_error_hint'));
+        }
     }
 
     function bagEkle() {
@@ -1992,7 +2027,20 @@ content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kir
         el.textContent = `${karakter} karakter · ${kelime} kelime`;
     }
 
-    async function sil(id, kol) { if (!girisliAdminMi()) return; if(confirm(t('confirm_del'))) await db.collection(kol).doc(id).delete(); }
+    async function sil(id, kol) {
+        if (!girisliAdminMi()) {
+            alert("Bu işlemi yapmak için ADMIN_EMAIL ile eşleşen bir hesapla giriş yapmış olmalısın.");
+            return;
+        }
+        if(confirm(t('confirm_del'))) {
+            try {
+                await db.collection(kol).doc(id).delete();
+            } catch (e) {
+                console.error("sil hatası:", e);
+                alert(t('save_error') + e.message + t('perm_error_hint'));
+            }
+        }
+    }
 
     function duzenle(id) {
         const z = veriler.find(v => v.id === id);
