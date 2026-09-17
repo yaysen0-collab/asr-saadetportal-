@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+content="Asr-ı Saadet Portalı; sahabeler, siyer, nesep bağları, kronolojik olaylar ve İslam tarihini modern bir arayüzle sunan dijital bilgi platformudur.">
+    <meta name="theme-color" content="#5d4037">
+    <meta name="author" content="Ayşen Yeşil">
+    <meta name="robots" content="index, follow">
+    <meta name="keywords"
+content="Asr-ı Saadet, Sahabe, Siyer, İslam Tarihi, Hz. Muhammed, Ashab-ı Kiram">
+    <title>Asr-ı Saadet Portalı | Sahabeler, Siyer ve İslam Tarihi</title>
+   <link rel="icon" href="images/favicon.ico?v=2" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png?v=2">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png?v=2">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<header id="main-header">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <img src="images/logo.png" alt="Asrı Saadet Portalı Logo" class="header-logo">
+        <div style="display: flex; flex-direction: column;">
+            <h1>ASRI SAADET PORTALI </h1>
+            <span data-i18n="tagline" style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-top: 4px; letter-spacing: 0.5px;">İslam tarihi ve Ashab-ı Kiram arşivi.</span>
+        </div>
+    </div>
+    <div class="header-nav-container">
+        <button class="nav-btn" onclick="sayfaDegistir('home')" data-i18n="nav_home">Ana Sayfa</button>
+        <button class="nav-btn" onclick="sayfaDegistir('arsiv')" data-i18n="nav_archive">Arşiv & Olaylar</button>
+        <button class="nav-btn" onclick="sayfaDegistir('cizelge')" data-i18n="nav_timeline">Çizelge</button>
+        <button class="nav-btn" onclick="sayfaDegistir('soy')" data-i18n="nav_tree">Soyağacı</button>
+        <button class="nav-btn" onclick="rastgeleSahsiyet()" style="border-color: rgba(255,255,255,0.4);" data-i18n="nav_random">Rastgele Şahsiyet</button>
+        <button class="nav-btn" id="nav-admin-btn" style="display:none; background:var(--header-text); color:var(--brand-text);" onclick="sayfaDegistir('admin')" data-i18n="nav_panel">Panel</button>
+    </div>
+    <div class="header-search">
+        <input type="text" id="global-search" data-i18n-placeholder="ph_global_search" placeholder="Portalda Ara..." oninput="globalArama()" autocomplete="off">
+        <div class="lang-switch">
+            <button class="lang-btn" data-lang="tr" onclick="dilDegistir('tr')">TR</button>
+            <button class="lang-btn" data-lang="en" onclick="dilDegistir('en')">EN</button>
+        </div>
+        <div class="theme-switch">
+            <button class="theme-btn" id="theme-toggle-btn" onclick="temaDegistir()" title="Koyu Mod"></button>
+        </div>
+        <button class="header-uye-pill" id="nav-uye-giris-btn" onclick="sayfaDegistir('uye-giris')">Giriş Yap</button>
+        <button class="header-avatar-btn" id="nav-uye-hesap-btn" style="display:none;" onclick="sayfaDegistir('hesabim')" title="Hesabım"><span id="header-avatar-harf">?</span></button>
+    </div>
+</header>
+
+<div class="container">
+    <div id="home" class="page active">
+        <div class="quote-box">
+            <p data-i18n="quote_text">"Ashabım, yıldızlar gibidir. Hangisine tabi olursanız hidayete erersiniz."</p>
+            <span data-i18n="quote_attr" style="color: var(--text-faint); font-size:0.95rem;">- Peygamber Efendimiz (s.a.v.)</span>
+        </div>
+
+        <div class="home-stats-container">
+            <div class="home-stat-box"><span class="home-stat-num" id="home-stat-zat">0</span><span class="home-stat-label" data-i18n="stat_person">Şahsiyet</span></div>
+            <div class="home-stat-box"><span class="home-stat-num" id="home-stat-olay">0</span><span class="home-stat-label" data-i18n="stat_event">Olay</span></div>
+            <div class="home-stat-box"><span class="home-stat-num" id="home-stat-bag">0</span><span class="home-stat-label" data-i18n="stat_link">Bağlantı</span></div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 60px;">
+            <button onclick="sayfaDegistir('arsiv')" data-i18n="btn_explore" style="background: var(--brand-bg); color: white; border:none; font-size: 1.1rem; padding: 14px 30px; border-radius: 30px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(93,64,55,0.2);">Tüm Arşivi Keşfet ➔</button>
+        </div>
+
+        <h2 data-i18n="h_featured_persons" style="text-align: center; color: var(--text-primary); font-weight: normal; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Öne Çıkan Şahsiyetler</h2>
+        <div class="on-cikan-container" id="home-one-cikan"></div>
+
+        <h2 data-i18n="h_latest_events" style="text-align: center; color: var(--text-primary); font-weight: normal; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Son Eklenen Tarihi Olaylar</h2>
+        <div class="article-grid" id="home-olaylar-grid"></div>
+
+        <h2 data-i18n="h_core_readings" style="text-align: center; color: var(--text-primary); font-weight: normal; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Temel Okumalar</h2>
+        <div class="article-grid">
+            <div class="article-card" onclick="sayfaDegistir('makale1')">
+                <div class="card-meta-top"><span class="category-tag" data-i18n="cat_itikad">İtikat</span></div>
+                <div><h3 data-i18n="art1_title">Ashab-ı Kiram'ın İzinde</h3><p data-i18n="art1_teaser">İslam’ın kuvvetli olduğu zamanlarda doğduk. Kuran-ı Kerim'i bize öğretenler oldu. Maalesef ki yeni nesil elimizden kayıp gidiyor...</p></div>
+                <div class="read-more" data-i18n="read_more">Devamını Oku ➔</div>
+            </div>
+            <div class="article-card" onclick="sayfaDegistir('makale2')">
+                <div class="card-meta-top"><span class="category-tag" data-i18n="cat_ilim">İlim</span></div>
+                <div><h3 data-i18n="art2_title">Neden Bu İlimleri Öğreniyoruz?</h3><p data-i18n="art2_teaser">İslam dini, okuyup ilim sahibi olmaya çok önem vermiştir. Hatta Peygamber Efendimize indirilen ilk ayeti kerime “Oku” emri ile başlar...</p></div>
+                <div class="read-more" data-i18n="read_more">Devamını Oku ➔</div>
+            </div>
+            <div class="article-card" onclick="sayfaDegistir('makale3')">
+                <div class="card-meta-top"><span class="category-tag" data-i18n="cat_siyer">Siyer</span></div>
+                <div><h3 data-i18n="art3_title">Rasulullah Sevgisi ve Kur'an Eğitimi</h3><p data-i18n="art3_teaser">Resulullah efendimiz bir hadisi şeriflerinde şöyle buyuruyor; "Evlatlarınızı üç haslet üzerine edeplendiriniz..."</p></div>
+                <div class="read-more" data-i18n="read_more">Devamını Oku ➔</div>
+            </div>
+        </div>
+
+        <h2 data-i18n="h_mini_timeline" style="text-align: center; color: var(--text-primary); font-weight: normal; font-size: 1.8rem; margin-top: 50px; margin-bottom: 30px;">Mini Zaman Çizelgesi</h2>
+        <div class="mini-timeline-container" id="home-mini-timeline"></div>
+        <div style="text-align: center; margin-bottom: 40px;">
+            <button onclick="sayfaDegistir('cizelge')" data-i18n="btn_full_timeline" style="background: transparent; color: var(--text-tertiary); border: 1px solid var(--border-input); padding: 10px 20px; border-radius: 20px; cursor:pointer; transition:0.2s;">Tüm Çizelgeyi Gör</button>
+        </div>
+    </div>
+
+    <div id="arsiv" class="page">
+        <div class="arsiv-layout">
+            <div class="arsiv-left">
+                <div class="right-panel-box">
+                    <h4 data-i18n="guide_title">Arşiv Rehberi</h4>
+                    <p data-i18n="guide_p1" style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; margin-top:0;">Asr-ı Saadet döneminden Endülüs'e uzanan bilgi bankasına hoş geldiniz.</p>
+                    <p data-i18n="guide_p2" style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; margin-bottom:0;">Geniş orta alanda tarihi detayları okuyabilir, sağ paneldeki filtrelerle zaman yolculuğunuzu daraltabilirsiniz.</p>
+                </div>
+            </div>
+
+            <div class="arsiv-center">
+                <div id="arsivList" style="display:flex; flex-direction:column; gap:15px; width:100%;"></div>
+            </div>
+
+            <div class="arsiv-right">
+                <div class="right-panel-box">
+                    <h4 data-i18n="search_archive_title">Arşivde Ara</h4>
+                    <div class="arsiv-arama-kutu">
+                        <span class="arama-ikon">🔍</span>
+                        <input type="text" id="ara" data-i18n-placeholder="ph_archive_search" placeholder="İsim veya içerik..." onkeyup="aramaYap()" oninput="gosterAramaOto(this)" onfocus="gosterAramaOto(this)" onblur="setTimeout(() => { const k = document.getElementById('arama-oto-kutu'); if(k) k.style.display='none'; }, 250)">
+                    </div>
+                    <div class="populer-aramalar">
+                        <button class="populer-btn" onclick="document.getElementById('ara').value='Ebu Bekir'; aramaYap();">Ebu Bekir</button>
+                        <button class="populer-btn" onclick="document.getElementById('ara').value='Ömer'; aramaYap();">Ömer</button>
+                        <button class="populer-btn" onclick="document.getElementById('ara').value='Bedir'; aramaYap();">Bedir</button>
+                    </div>
+                </div>
+
+                <div class="right-panel-box">
+                    <h4 data-i18n="type_filter">Tür Filtresi</h4>
+                    <div class="filter-col">
+                        <button class="filter-btn active-filter" onclick="filtreDegistir('tumu', this)" data-i18n="filter_all">Tümü (Karışık)</button>
+                        <button class="filter-btn" onclick="filtreDegistir('zat', this)" data-i18n="filter_persons">Tarihi Şahsiyetler</button>
+                        <button class="filter-btn" onclick="filtreDegistir('olay', this)" data-i18n="filter_events">Önemli Olaylar</button>
+                    </div>
+                </div>
+
+                <div class="right-panel-box">
+                    <h4 data-i18n="era_filter">Devir Filtresi</h4>
+                    <div class="filter-col">
+                        <button class="filter-btn devir-btn active-filter" onclick="devirFiltreDegistir('tumu', this)" data-i18n="era_all">Tüm Devirler</button>
+                        <button class="filter-btn devir-btn" onclick="devirFiltreDegistir('Asr-ı Saadet', this)" data-i18n="era_asri">Asr-ı Saadet</button>
+                        <button class="filter-btn devir-btn" onclick="devirFiltreDegistir('Hulefâ-yi Râşidîn', this)" data-i18n="era_rashidun">Hulefâ-yi Râşidîn</button>
+                        <button class="filter-btn devir-btn" onclick="devirFiltreDegistir('Emeviler', this)" data-i18n="era_umayyad">Emeviler Devri</button>
+                        <button class="filter-btn devir-btn" onclick="devirFiltreDegistir('Abbasiler', this)" data-i18n="era_abbasid">Abbasiler Devri</button>
+                        <button class="filter-btn devir-btn" onclick="devirFiltreDegistir('Endülüs', this)" data-i18n="era_andalus">Endülüs Dönemi</button>
+                        <button class="filter-btn devir-btn" onclick="devirFiltreDegistir('Diğer', this)" data-i18n="era_other">Diğer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="olay-okuma" class="page">
+        <div class="reading-page">
+            <button class="back-btn" onclick="sayfaDegistir('arsiv')" data-i18n="back_archive">← Arşive Dön</button>
+            <h2 id="okuma-baslik">Olay Başlığı</h2>
+            <div style="text-align: center; color: var(--text-faint); margin-bottom: 10px; font-size: 1.05rem;" id="okuma-tarih">Tarih Bilgisi</div>
+            <div id="okuma-favori-alan" style="text-align:center; margin-bottom: 25px;"></div>
+            <div id="okuma-icerik"></div>
+            <div id="okuma-not-yorum" style="margin-top:30px;"></div>
+        </div>
+    </div>
+
+    <div id="makale1" class="page"><div class="reading-page"><button class="back-btn" onclick="sayfaDegistir('home')" data-i18n="back_home">← Ana Sayfaya Dön</button><h2>Ashab-ı Kiram'ın İzinde</h2><p>İslam’ın kuvvetli olduğu zamanlarda doğduk. Kuran-ı Kerim'i bize öğretenler oldu. Maalesef ki yeni nesil elimizden kayıp gidiyor. Bunları nerede kaybettik? Hangi mezhebe ait olduğunu bilmeyen, peygamberimizi tanımayan birine nasıl namaz kıl diyebiliriz?</p><p>Hangi mezhepteniz, mezhep neden var, zorunda mıyız biz? <em>"El ilmü ferizatin ala küllü müslimin ve müslimetin"</em>. İlim öğrenmek her Müslüman erkek ve kadın üzerine farzdır. Burada kastedilen nasıl amel etmesi gerektiğini öğrenmektir. İtikadını bilmektir. Herkese tek tek vaciptir. Selam verse birisi, alsa diğerlerinden hüküm kalkar ama 5 vakit namaz herkese tek tek farzdır. İtikat konusunda da herkesin tek tek, fert fert kendisinin yapması lazımdır. İman ne demek? Hz. Allah’a, O'nun peygamberine, O'nun kulu ve resulü olduğuna iman etmektir.</p><p>Amel imandan bir cüz müdür? Günümüzde çok fazla var; Müslümanım diyor, namaz kılmıyor, zekât vermiyor. Peki, biz ona "Sen Müslüman değilsin" dersek ne olur? Dinden çıkmış oluruz. Amelinde eksik vardır evet ama Allah’a iman ettim diyordur; amelinde kusur vardır bizi alakadar etmez. İman asıldır, amel onu kuvvetlendirmek içindir. Rabbim bize kâmil iman versin.</p><p>Şimdi bir tane mumu yaksak onun sönmesi kolaydır ama biz iman ettik, <em>La ilahe illallah Muhammeden rasulullah</em> dedik. Namazla, rabıtayla, hatimle, zekât ve sadakayla o ateşi güçlendireceğiz. Zayıf olan muma bir kere üflesek söner ama kuvvetli olan ateşe üflesen de su atsan da sönmez. Kimisinin ki ampul gibi, kimisinin ki projektör gibidir. Evet, imanı biliyoruz ama güçlendirmek için çabalamamız gerek. Nasıl güçlendireceğiz? Ne ile? Amel-i Saliha ile.</p><p>Peygamber efendimiz de yıllar öncesinden ehlisünnete ve bu dört mezhepten birine uyulması hususunda şöyle buyurmuştur; <em>“Din, iman sahipleri yılanın deliğine, yuvasına çekilmesi gibi elbette Hicaz’a ve Medine-i Münevvere’ye çekilir, sığınır ve toplanır. İslam dini garip olarak başlayıp, yayıldığı gibi yakın zamanda da garip olarak döner. O zaman müjde ve saadet garip olanlar içindir.”</em> Buyurmuşlardır. Bunun üzerine <em>“Ya Rasulallah garip olanlar kimlerdir?”</em> diye soruldu. <em>“Benden sonra benim sünnetimden insanların bozduğu şeyleri düzeltenlerdir.“</em> cevabını verdi. Buradaki garipler kimlerdir? Yani ehlisünnet vel cemaat mezhebi üzerine olanlardır.</p><p>Peygamber efendimiz <em>“Yakında ümmetim 73 fırkaya ayrılacaktır. Onlardan biri hariç hepsi cehennemliktir.”</em> buyurdu. Ashab-ı Kiram <em>“Ya Rasulallah onlar kimlerdir?”</em> dedi. Peygamber efendimiz <em>“Onlar benim ve Ashabımın yolu üzerine olanlardır.”</em> buyurmuşlardır.</p><p style="text-align: center; margin-top: 30px; color: var(--brand-text);">Hazreti Allah bu yol üzerine bizleri daim etsin.</p></div></div>
+    <div id="makale2" class="page"><div class="reading-page"><button class="back-btn" onclick="sayfaDegistir('home')" data-i18n="back_home">← Ana Sayfaya Dön</button><h2>Neden Bu İlimleri Öğreniyoruz?</h2><p>İslam dini, okuyup ilim sahibi olmaya çok önem vermiştir. Hatta Peygamber Efendimize indirilen ilk ayeti kerime “Oku” emri ile başlar. Cenabı Hak Kuran-ı Keriminde; <em>“Ey Habibim! Yaratan Rabbinin adı ile oku”</em> buyurmuştur.</p><p>Kur’an-ı Kerim’e bakacak olursak, Allah lafzından sonra en çok geçen kelimelerden biri de ilim ve ilim manasını ifade eden kelimeler olduğunu görürüz. Yine Cenabı Hak Kuran-ı Keriminde: <em>“Habibim! De ki: Hiç bilenler ile bilmeyenler bir olur mu?"</em> buyurarak ilmin ve âlimin üstünlüğünü bildirmiştir.</p><p>Yine Hz. Allah bütün peygamberlerini âlim yapmıştır. Ümmetleri için öğretmen kılmıştır. Eğer ilimden daha yüce bir mertebe, daha güzel bir meslek olsaydı, Hz. Allah seçerek gönderdiği peygamberlerine o mesleği verirdi.</p><p style="margin-top: 25px; color: var(--text-primary);">Abdullah bin Mübarek Hazretleri’ne sordular:</p><p style="margin-left: 20px;">— “Eğer Cenabı-ı Hak, sana öleceğin anı bildirse idi ne ile meşgul olurdun?”<br>— “İlim ile meşgul olurdum." dedi.<br>— “İlimden daha üstün bir ibadet yok mu ki, onunla meşgul olsanız?”<br>— “Evet. İlimden daha üstün bir ibadet yoktur.” dedi. Yanındakiler:<br>— “İlme çalışmanın her türlü ibadetten üstün olduğunu ne ile ispat edersiniz?” deyince,</p><p style="margin-top: 20px; color: var(--text-primary);">Abdullah bin Mübarek Hazretleri şöyle cevap verdi:</p><p style="margin-left: 20px; font-style: italic; color: var(--text-secondary);">— “İlim her şeyden üstündür. Çünkü Cenabı-ı Hak (c.c.) Peygamber Efendimize (s.a.v.) her şeyi verdi. Fazlasını istemekle emir buyurmadı. İlim hakkında ise: ‘Ey Habibim! De ki: Rabbim benim ilmimi artır.’ Eğer ilimden daha üstün bir şey olsa idi, Rasulullah Efendimiz (s.a.v.), onun artmasını istemekle emrolunurdu. Bundan dolayı ben ilimden daha üstün bir amel göremiyorum.”</p><p style="margin-top: 25px;">İslam dini ilme o kadar değer ve kıymet vermiştir ki, Bedir harbi esirlerinin okuryazar olanlarına, Müslümanlardan on kişiye okuyup yazmayı öğrettikleri takdirde serbest bırakılacakları, Fahr-i Kâinat Efendimiz tarafından va’d edilmiş ve esirler denileni yaptıkları zaman serbest bırakılmışlardır.</p><p>Bir milletin en büyük düşmanı cehalettir. Onu imha etmeden diğer düşmanlara karşı zafer mümkün değildir.</p><p style="text-align: center; margin-top: 30px; color: var(--brand-text);">Hiç kimse hakikati anlayacak ilimle doğmamıştır. Bu yüzden bu ilimleri okumaya ve anlamaya önem göstermeliyiz.</p></div></div>
+    <div id="makale3" class="page"><div class="reading-page"><button class="back-btn" onclick="sayfaDegistir('home')" data-i18n="back_home">← Ana Sayfaya Dön</button><h2>Rasulullah Sevgisi ve Kur'an Eğitimi</h2><p>Resulullah efendimiz bir hadisi şeriflerinde şöyle buyuruyor;</p><p style="font-style: italic; color: var(--text-primary); font-size: 1.15rem;">”Evlatlarınızı üç haslet üzerine edeplendiriniz:</p><ul style="color: var(--text-label); line-height: 1.8; margin-bottom: 25px;"><li><strong>1. Rasulullah sevgisi</strong></li><li><strong>2. Rasulullah’ın ehlibeytinin sevgisi</strong></li><li><strong>3. Kur'an-ı Kerim okumak</strong></li></ul><p>Çünkü Kur'an-ı Kerim okuyan, okutan ve onun hizmetinde bulunanlar hiçbir gölgenin bulunmadığı o kıyamet gününde evliya ve esfiya ile beraber Allah’ımızın Arşının gölgesinde bulunacaklardır.</p><h3 style="color: var(--text-primary); margin-top: 40px; font-weight: normal; border-bottom: 1px solid var(--border-color-soft); padding-bottom: 10px;">Kur'an-ı Kerim ilk olarak nerede ve nasıl öğretilmeye başlandı?</h3><p>Peygamber Efendimiz (s.a.v.), nübüvvetin ilk yıllarında Müslümanlar ile Safa tepesi eteklerindeki Hazret-i Erkam’ın (r.a.) evinde gizlice toplanır, onlara İslâm’ın emir ve hükümlerini bildirir, Kur’an-ı Kerim'in nazil olan Ayet-i Kerimelerini okur ve öğretirlerdi. <strong>Dârü'l-Erkam</strong> ismi verilen bu hane, İslam tarihinde ilk eğitim-öğretim yapılan ilim müessesesi olarak kabul edilir.</p><p>Rasulullah Efendimiz (s.a.v.), Medine-i Münevvere‘ye hicretlerinin ardından Mescid-i Nebevi ve ona bitişik olarak da Hücre-i Saadet'i inşa ettirdiler. Mescidin kuzey tarafına, bir suffa (gölgelik) yaptırdılar. Sahabe-i Kiramdan burada ikamet edenlere <strong>Ashab-ı Suffe</strong> denilirdi. Onların ihtiyaçlarıyla bizzat Efendimiz (s.a.v.) ilgilenir, eğitimiyle de yine kendileri alakadar olurlardı. Ayrıca onlara yazı yazmayı ve Kur’an-ı Kerim okumayı öğretmek üzere Ubâde b. Sâmit, Mus'ab bin Umeyr (r.anhüma) gibi hocalar tayin etmişlerdi.</p></div></div>
+
+    <div id="proje-amaci" class="page">
+        <div class="admin-dashboard" style="text-align: justify; line-height: 1.8; font-size: 1.05rem; max-width: 900px; margin: auto;">
+            <h2 data-i18n="h_purpose" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Proje Amacı</h2>
+            <p>Asr-ı Saadet dönemi, İslam tarihinin temelini oluşturan ve sosyal, kültürel ve dini açıdan büyük önem taşıyan bir zaman dilimidir. Bu dönemde yaşamış olan Ashab-ı Kiram, İslam’ın yayılmasında ve temel ilkelerinin sonraki nesillere aktarılmasında belirleyici bir role sahiptir. Ancak Ashab-ı Kiram’ın sayıca fazla olması, tarihsel kaynakların dağınık yapısı ve bilgilerin farklı eserlerde yer alması nedeniyle, sahabelerin isimleri, biyografileri ve aralarındaki akrabalık ile sosyal ilişkiler günümüzde yeterince sistematik ve bütüncül bir şekilde ele alınamamaktadır.</p>
+            <p>Asr-ı Saadet Portalı projesinin temel amacı; Ashab-ı Kiram’a ait biyografik verileri, nesep bilgilerini ve sosyal ilişkileri güvenilir kaynaklara dayalı olarak bir araya getirmek ve bu bilgileri dijital bir platform aracılığıyla düzenli, erişilebilir ve analiz edilebilir hâle getirmektir. Bu kapsamda geliştirilecek sistem, sahabelerin yalnızca bireysel özelliklerini değil; aynı zamanda aile bağları, kabile ilişkileri, evlilikler ve toplumsal etkileşimler gibi çok boyutlu ilişkileri de görselleştirerek sunmayı hedeflemektedir.</p>
+            <p>Proje, kullanıcıların Asr-ı Saadet döneminin sosyal yapısını daha iyi kavrayabilmesine katkı sağlamayı, akademik çalışmalar için referans niteliğinde bir veri kaynağı oluşturmayı ve tarihsel bilginin dijital ortamda sürdürülebilir bir şekilde korunmasını amaçlamaktadır. Bu yönüyle Asr-ı Saadet Portalı, hem akademik araştırmacılara hem de konuya ilgi duyan genel kullanıcılara yönelik kapsamlı ve bilimsel bir bilgi sistemi sunmayı hedeflemektedir.</p>
+        </div>
+    </div>
+
+    <div id="sss" class="page">
+        <div class="admin-dashboard" style="line-height: 1.6; max-width: 900px; margin: auto;">
+            <h2 data-i18n="h_faq" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Sıkça Sorulan Sorular</h2>
+            <div style="margin-bottom: 15px;"><strong>Bu projenin temel amacı nedir?</strong><br>Bu projenin temel amacı, Asr-ı Saadet döneminde yaşamış olan Ashab-ı Kiram’a ait biyografik bilgileri, akrabalık ve sosyal ilişkileri sistemli bir yapıda sunarak tarihsel bilginin daha anlaşılır ve erişilebilir hâle getirilmesini sağlamaktır.</div>
+            <div style="margin-bottom: 15px;"><strong>Asr-ı Saadet Portalı hangi ihtiyaca cevap vermektedir?</strong><br>Ashab-ı Kiram’ın sayıca fazla olması ve bilgilerin farklı kaynaklara dağılmış olması nedeniyle oluşan bilgi karmaşasını gidermeyi amaçlamaktadır. Portal, bu bilgileri tek bir dijital platformda toplayarak düzenli ve bütüncül bir yapı sunmaktadır.</div>
+            <div style="margin-bottom: 15px;"><strong>Proje hangi tarihsel dönemi kapsamaktadır?</strong><br>Proje, Asr-ı Saadet olarak adlandırılan ve Peygamber Efendimiz Muhammed Mustafa (s.a.v.)’ in yaşadığı dönemi kapsayan tarihsel süreci esas almaktadır.</div>
+            <div style="margin-bottom: 15px;"><strong>Portalda yer alan bilgiler hangi kaynaklara dayanmaktadır?</strong><br>Portalda yer alan bilgiler, klasik İslam tarihi eserleri, siyer kaynakları ve güvenilir akademik çalışmalara dayanmaktadır. Kullanılan veriler titizlikle seçilmiş kaynaklardan derlenmiştir.</div>
+            <div style="margin-bottom: 15px;"><strong>Kullanılan bilgilerin doğruluğu nasıl sağlanmaktadır?</strong><br>Bilgilerin doğruluğu, birden fazla güvenilir kaynaktan karşılaştırmalı olarak incelenmesi yoluyla sağlanmaktadır. Şüpheli veya kesinlik içermeyen bilgiler, akademik yaklaşım gereği dikkatle ele alınmaktadır.</div>
+            <div style="margin-bottom: 15px;"><strong>Portal nasıl kullanılmaktadır?</strong><br>Kullanıcılar portal üzerinden sahabelerin isimlerine erişebilir, biyografik bilgilerini inceleyebilir ve aralarındaki akrabalık ya da sosyal ilişkileri görsel ve metinsel olarak görüntüleyebilir.</div>
+            <div style="margin-bottom: 15px;"><strong>Sahabeler arası akrabalık ve sosyal ilişkiler nasıl gösterilmektedir?</strong><br>Sistem, sahabeler arasındaki nesep bağları, evlilikler ve sosyal ilişkileri ilişkilendirilmiş bir veri yapısı aracılığıyla sunmaktadır. Bu sayede kullanıcılar tarihsel bağları daha net bir şekilde anlayabilmektedir.</div>
+            <div style="margin-bottom: 15px;"><strong>Portal akademik çalışmalarda kaynak olarak kullanılabilir mi?</strong><br>Portal, akademik çalışmalar için doğrudan birincil kaynak olma iddiası taşımamakla birlikte, araştırmacılar için yardımcı ve yönlendirici bir dijital referans kaynağı olarak kullanılabilir.</div>
+            <div style="margin-bottom: 15px;"><strong>Proje kimlere hitap etmektedir?</strong><br>Asr-ı Saadet Portalı; öğrenciler, akademisyenler, araştırmacılar ve İslam tarihiyle ilgilenen genel kullanıcı kitlesine hitap etmektedir.</div>
+            <div style="margin-bottom: 15px;"><strong>İçerik genel kullanıcılar için anlaşılır mıdır?</strong><br>Evet. İçerikler akademik temele dayanmakla birlikte sade ve anlaşılır bir dil kullanılarak hazırlanmıştır. Böylece hem akademik hem de genel kullanıcılar için erişilebilir bir yapı sunulmaktadır.</div>
+            <div style="margin-bottom: 15px;"><strong>Portalın gelecekte geliştirilmesi planlanmakta mıdır?</strong><br>Evet. Projenin ilerleyen aşamalarında içeriklerin genişletilmesi, yeni sahabelerin eklenmesi ve görselleştirme araçlarının geliştirilmesi planlanmaktadır.</div>
+            <div style="margin-bottom: 15px;"><strong>Portal eğitim amaçlı kullanılabilir mi?</strong><br>Portal, eğitim kurumlarında yardımcı bir kaynak olarak kullanılabilecek niteliktedir ve tarihsel bilginin dijital ortamda sunulmasına katkı sağlamayı hedeflemektedir.</div>
+        </div>
+    </div>
+
+    <div id="iletisim" class="page">
+        <div class="admin-dashboard" style="max-width: 600px; margin: auto;">
+            <h2 data-i18n="h_contact" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">İletişim</h2>
+            <p data-i18n="contact_intro" style="text-align: center; color: var(--text-secondary); margin-bottom: 25px;">Sorularınız, önerileriniz veya katkıda bulunmak istediğiniz konular için aşağıdaki formu kullanarak bize ulaşabilirsiniz.</p>
+            <form action="https://formspree.io/f/xaeygoey" method="POST">
+                <input type="text" name="isim" data-i18n-placeholder="ph_name" placeholder="Adınız Soyadınız" required>
+                <input type="email" name="email" data-i18n-placeholder="ph_email" placeholder="E-posta Adresiniz" required>
+                <input type="text" name="konu" data-i18n-placeholder="ph_subject" placeholder="Konu" required>
+                <textarea name="mesaj" data-i18n-placeholder="ph_message" placeholder="Mesajınız..." rows="5" required></textarea>
+                <button type="submit" class="btn-action" data-i18n="btn_send">MESAJI GÖNDER</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="katkida-bulun" class="page">
+        <div class="admin-dashboard" style="text-align: justify; line-height: 1.8; font-size: 1.05rem; max-width: 900px; margin: auto;">
+            <h2 data-i18n="h_contribute" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Katkıda Bulun</h2>
+            <p>Asr-ı Saadet Portalı, İslam tarihini, Ashab-ı Kiram'ın eşsiz hayatlarını ve bu döneme ait kıymetli bilgileri dijital ortamda herkes için erişilebilir kılmayı amaçlayan gönüllü bir projedir. Bu değerli arşivi büyütmek ve daha kapsamlı hale getirmek için sizlerin desteğine her zaman açığız.</p>
+            <h4 style="color: var(--text-primary); margin-bottom: 5px; font-weight: normal;">Nasıl Katkı Sağlayabilirsiniz?</h4>
+            <ul style="color: var(--text-label); margin-top: 0;">
+                <li><strong>Bilgi ve Belge Desteği:</strong> Arşivimizde eksik olduğunu düşündüğünüz tarihi şahsiyetler, soyağacı bilgileri veya önemli olaylar hakkında kaynak belirterek bize bilgi gönderebilirsiniz.</li>
+                <li><strong>Hata Bildirimi:</strong> Portalımızda karşılaştığınız yazım hatalarını, tarihsel uyuşmazlıkları veya teknik sorunları bize bildirerek sistemin kusursuzlaşmasına yardımcı olabilirsiniz.</li>
+                <li><strong>Akademik İnceleme:</strong> Eğer tarih alanında akademik çalışmalar yürütüyorsanız, mevcut verilerimizin doğruluğunu teyit etme konusunda gönüllü danışmanımız olabilirsiniz.</li>
+            </ul>
+            <p style="margin-top: 20px;">Destek olmak veya fikirlerinizi paylaşmak için <span class="smart-link" onclick="sayfaDegistir('iletisim')">İletişim Formu</span> üzerinden bizimle irtibata geçebilirsiniz. Katkılarınız, bu dijital mirasın gelecek nesillere aktarılmasında büyük bir rol oynayacaktır.</p>
+        </div>
+    </div>
+
+    <div id="gizlilik" class="page">
+        <div class="admin-dashboard" style="text-align: justify; line-height: 1.8; font-size: 1.05rem; max-width: 900px; margin: auto;">
+            <h2 data-i18n="h_privacy" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Gizlilik Politikası</h2>
+            <p>Asr-ı Saadet Portalı olarak, sitemizi ziyaret eden tüm kullanıcılarımızın gizliliğine ve kişisel verilerinin güvenliğine büyük önem vermekteyiz. Bu portal, temel olarak genel kullanıma açık tarihi bilgilerin sunulduğu bir eğitim ve araştırma platformudur.</p>
+            <ul style="color: var(--text-label); margin-top: 15px;">
+                <li><strong>Veri Toplama:</strong> Sitemiz, normal ziyaretleriniz sırasında sizi kişisel olarak tanımlayabilecek hiçbir veriyi (isim, adres, telefon vb.) otomatik olarak toplamaz. Yalnızca İletişim Formu'nu kullandığınızda, size geri dönüş yapabilmemiz için kendi isteğinizle paylaştığınız ad, soyad ve e-posta bilgileriniz alınır.</li>
+                <li><strong>Çerezler (Cookies):</strong> Sistemimiz, sadece sitedeki kullanıcı deneyimini iyileştirmek (örneğin son kalınan sayfayı hatırlamak) amacıyla tarayıcınızda geçici yerel veriler (localStorage) kullanabilir. Sitemiz üzerinden reklam veya izleme amaçlı üçüncü taraf çerezleri kullanılmamaktadır.</li>
+                <li><strong>Veri Paylaşımı:</strong> İletişim formu aracılığıyla bize ilettiğiniz hiçbir bilgi, üçüncü şahıslarla, kurumlarla veya reklam şirketleriyle kesinlikle paylaşılmaz.</li>
+                <li><strong>Yönetici Paneli Güvenliği:</strong> Veritabanına kayıt ekleme yetkisi bulunan yöneticilerin giriş işlemleri, Google Firebase'in üst düzey güvenlik altyapısı ile korunmaktadır. Şifreler sistemimizde açık metin olarak tutulmaz.</li>
+            </ul>
+            <p style="margin-top: 20px;">Gizlilik politikamız veya verilerinizle ilgili her türlü sorunuz için <span class="smart-link" onclick="sayfaDegistir('iletisim')">İletişim</span> bölümünden bizimle iletişime geçebilirsiniz.</p>
+        </div>
+    </div>
+
+    <div id="surum" class="page">
+        <div class="admin-dashboard" style="background: var(--bg-card-alt); max-width: 900px; margin: auto;">
+            <h2 data-i18n="h_changelog" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Sürüm Notları ve Güncellemeler</h2>
+            <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed var(--border-color);">
+                <div style="color: var(--text-faint); font-size: 0.85rem; margin-bottom: 5px;">Mayıs 2026</div>
+                <h3 style="margin-top: 0; color: var(--brand-text); font-weight: normal;">v2.5.0 - Büyük Arşiv Tasarımı (3 Sütunlu Grid)</h3>
+                <ul style="margin: 0; padding-left: 20px; color: var(--text-label); line-height: 1.6;">
+                    <li>Arşiv ekranı 3 sütunlu modern bir yapıya (Sol: Rehber, Orta: Ana İçerik, Sağ: Filtreler) kavuşturuldu.</li>
+                    <li>Şahsiyet kartlarında "Görsel Öncelik Sistemi" kullanıldı (Büyük kutularda ana metin, Grid çiplerde ilişkiler).</li>
+                </ul>
+            </div>
+            <div>
+                <div style="color: var(--text-faint); font-size: 0.85rem; margin-bottom: 5px;">Mayıs 2026</div>
+                <h3 style="margin-top: 0; color: var(--brand-text); font-weight: normal;">v2.0.0 - Devirler Sistemi ve Bağlantılı Tarih</h3>
+                <ul style="margin: 0; padding-left: 20px; color: var(--text-label); line-height: 1.6;">
+                    <li>Arşive Devirler Sistemi eklendi.</li>
+                    <li>Şahsiyet kartlarına yapay zeka mantığıyla çalışan "Bağlantılı Tarih Sistemi" entegre edildi.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="kaynakca" class="page">
+        <div class="admin-dashboard" style="max-width: 900px; margin: auto;">
+            <h2 data-i18n="h_sources" style="color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 0; text-align: center; font-weight: normal;">Kaynakça ve Temel Eserler</h2>
+            <p data-i18n="sources_intro" style="text-align: center; color: var(--text-secondary); margin-bottom: 25px;">Portalımızda yer alan bilgilerin doğrulanmasında ve derlenmesinde temel alınan başlıca eserler aşağıda sınıflandırılmıştır.</p>
+            <details class="soy-klasor">
+                <summary class="soy-baslik" data-i18n="src_sira">Siyer ve Peygamber Efendimiz'in (s.a.v.) Hayatı</summary>
+                <div class="soy-icerik">
+                    <ul style="color: var(--text-label); line-height: 1.8;">
+                        <li><span style="font-weight: 500; color: var(--text-primary);">Peygamber Efendimiz'in (Sav) Hayatı</span> - Ahmed Cevdet Paşa (Çamlıca Basım Yayın)</li>
+                        <li><span style="font-weight: 500; color: var(--text-primary);">Herkes İçin Peygamber Efendimizin Hayatı</span> - Ahmed Cevdet Paşa (Çamlıca Basım Yayın)</li>
+                        <li><span style="font-weight: 500; color: var(--text-primary);">Peygamberimiz ve Peygamberler (a.s.)</span> - Ahmed Cevdet Paşa (Çamlıca Basım Yayın)</li>
+                    </ul>
+                </div>
+            </details>
+            <details class="soy-klasor">
+                <summary class="soy-baslik" data-i18n="src_hadith">Şemail ve Hadis Kaynakları</summary>
+                <div class="soy-icerik">
+                    <ul style="color: var(--text-label); line-height: 1.8;">
+                        <li><span style="font-weight: 500; color: var(--text-primary);">Şemâil-i Şerife</span> - Muhammed bin İsa et-Tirmizî (r.a.) (Fazilet Neşriyat)</li>
+                        <li><span style="font-weight: 500; color: var(--text-primary);">500 Hadîs-i Şerîf</span> - Ömer Nasuhi Bilmen (Fazilet Neşriyat)</li>
+                    </ul>
+                </div>
+            </details>
+            <details class="soy-klasor">
+                <summary class="soy-baslik" data-i18n="src_companions">Ashâb-ı Kirâm ve İtikad</summary>
+                <div class="soy-icerik">
+                    <ul style="color: var(--text-label); line-height: 1.8;">
+                        <li><span style="font-weight: 500; color: var(--text-primary);">Ashâb-ı Kirâm Hakkında Müslümanların Nezih İtikâdları</span> - Ömer Nasuhi Bilmen (Fazilet Neşriyat)</li>
+                    </ul>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <div id="login" class="page">
+        <div class="admin-dashboard" style="max-width: 400px; margin: auto;">
+            <h2 data-i18n="h_login" style="text-align: center; color: var(--text-primary); font-weight: normal; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">Yönetici Girişi</h2>
+            <input type="email" id="login-email" data-i18n-placeholder="ph_login_email" placeholder="E-posta Adresiniz" onkeypress="if(event.key === 'Enter') girisYap();">
+            <input type="password" id="login-pass" data-i18n-placeholder="ph_login_pass" placeholder="Şifreniz" onkeypress="if(event.key === 'Enter') girisYap();">
+            <button class="btn-action" onclick="girisYap()" style="margin-top: 15px;" data-i18n="btn_login">Giriş Yap</button>
+        </div>
+    </div>
+
+    <div id="uye-giris" class="page">
+        <div class="admin-dashboard" style="max-width: 420px; margin: auto;">
+            <div class="uye-sekme-satir">
+                <button class="uye-sekme-btn uye-sekme-aktif" id="sekme-giris-btn" onclick="uyeSekmeDegistir('giris')">Giriş Yap</button>
+                <button class="uye-sekme-btn" id="sekme-kayit-btn" onclick="uyeSekmeDegistir('kayit')">Üye Ol</button>
+            </div>
+
+            <div id="uye-sekme-giris">
+                <input type="email" id="uye-giris-email" placeholder="E-posta Adresiniz" onkeypress="if(event.key==='Enter') uyeGirisYap();">
+                <input type="password" id="uye-giris-sifre" placeholder="Şifreniz" onkeypress="if(event.key==='Enter') uyeGirisYap();">
+                <div id="uye-giris-hata" class="canli-uyari"></div>
+                <button class="btn-action" onclick="uyeGirisYap()">Giriş Yap</button>
+            </div>
+
+            <div id="uye-sekme-kayit" style="display:none;">
+                <input type="text" id="uye-kayit-ad" placeholder="Adın Soyadın">
+                <input type="email" id="uye-kayit-email" placeholder="E-posta Adresin">
+                <input type="password" id="uye-kayit-sifre" placeholder="Şifre Belirle (en az 6 karakter)" onkeypress="if(event.key==='Enter') uyeKayitOl();">
+                <div id="uye-kayit-hata" class="canli-uyari"></div>
+                <button class="btn-action" onclick="uyeKayitOl()">Üye Ol</button>
+            </div>
+
+            <div class="uye-ayrac"><span>veya</span></div>
+            <button class="btn-google" onclick="googleIleGiris()"><span class="google-g">G</span> Google ile Devam Et</button>
+        </div>
+    </div>
+
+    <div id="hesabim" class="page">
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom: 1px solid var(--border-color); padding-bottom:15px; margin-bottom:25px;">
+                <div>
+                    <h2 style="margin:0; font-weight:normal;">👤 Hesabım</h2>
+                    <p id="hesap-bilgi" style="margin:5px 0 0 0; color:var(--text-secondary); font-size:0.9rem;"></p>
+                </div>
+                <button onclick="uyeCikisYap()" style="background: var(--bg-card-soft); color: var(--danger); border: 1px solid var(--danger-border); padding: 8px 15px; border-radius: 5px; cursor: pointer;">Çıkış Yap</button>
+            </div>
+
+            <h3 style="font-weight:normal;">⭐ Favorilerim</h3>
+            <div id="favorilerim-liste" style="margin-bottom:35px;"></div>
+
+            <h3 style="font-weight:normal;">📝 Notlarım</h3>
+            <div id="notlarim-liste"></div>
+        </div>
+    </div>
+
+    <div id="cizelge" class="page"><h2 data-i18n="h_timeline" style="text-align:center; font-weight:normal; margin-bottom: 30px;">Zaman Çizelgesi</h2><div id="cizelgeList" style="max-width: 800px; margin: auto;"></div></div>
+    <div id="soy" class="page"><h2 data-i18n="h_tree" style="text-align:center; font-weight:normal; margin-bottom: 30px;">Soyağacı Grupları</h2><div id="soyList" style="max-width: 800px; margin: auto;"></div></div>
+
+    <div id="admin" class="page">
+        <div class="admin-dashboard" style="max-width: 100%; margin: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;">
+                <h2 data-i18n="h_admin" style="margin: 0; font-weight: normal; display:flex; align-items:center; gap:10px;"><span style="font-size:1.3rem;">🛡️</span>Yönetici Kontrol Merkezi</h2>
+                <div>
+                    <button onclick="sayfaDegistir('home')" data-i18n="btn_view_site" style="background: var(--bg-card); border: 1px solid var(--border-input); padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Siteyi Gör</button>
+                    <button onclick="cikisYap()" data-i18n="btn_logout" style="background: var(--bg-card-soft); color: var(--danger); border: 1px solid var(--danger-border); padding: 8px 15px; border-radius: 5px; cursor: pointer;">Çıkış Yap</button>
+                </div>
+            </div>
+
+            <div class="admin-3col">
+            <aside class="admin-col-list">
+                <h4 class="admin-col-baslik"><span>📋</span> <span data-i18n="h_records">Mevcut Kayıtlar</span></h4>
+                <div id="admin-toplam-kayit" style="font-size: 0.8rem; color: var(--text-faint); margin: -8px 0 14px 2px;"></div>
+                <div id="adminList"></div>
+            </aside>
+
+            <main class="admin-col-form">
+            <div class="admin-forms-grid">
+            <div class="admin-section admin-section--olay">
+                <div class="admin-section-baslik">
+                    <span class="admin-section-ikon">🗓️</span>
+                    <h3 id="olay-form-baslik" data-i18n="h_event_form" style="margin:0; font-weight:normal; color: var(--brand-text);">Olay Ekle / Düzenle</h3>
+                </div>
+                <input type="hidden" id="edit-olay-id">
+                <input id="ol_ad" data-i18n-placeholder="ph_event_title" placeholder="Olay Başlığı" oninput="benzerOlayKontrol(); onizlemeGuncelle('olay')">
+                <div id="olay-uyari" class="canli-uyari"></div>
+
+                <select id="ol_devir" onchange="onizlemeGuncelle('olay')">
+                    <option value="Asr-ı Saadet" data-i18n="opt_era_asri_event">Dönem: Asr-ı Saadet</option>
+                    <option value="Hulefâ-yi Râşidîn" data-i18n="opt_era_rashidun_event">Dönem: Hulefâ-yi Râşidîn</option>
+                    <option value="Emeviler" data-i18n="opt_era_umayyad_event">Dönem: Emeviler</option>
+                    <option value="Abbasiler" data-i18n="opt_era_abbasid_event">Dönem: Abbasiler</option>
+                    <option value="Endülüs" data-i18n="opt_era_andalus_event">Dönem: Endülüs</option>
+                    <option value="Diğer" data-i18n="opt_era_other_event">Dönem: Diğer / Genel</option>
+                </select>
+
+                <div style="display: flex; gap: 10px;"><input id="ol_hicri" data-i18n-placeholder="ph_hijri" placeholder="Hicri (Örn: H. 2)"><input id="ol_miladi" data-i18n-placeholder="ph_ce" placeholder="Miladi (Örn: M. 624)"></div>
+                <div class="editor-sarmal">
+                    <div class="editor-toolbar" data-hedef="ol_bilgi">
+                        <button type="button" class="editor-btn" data-komut="bold" title="Kalın"><b>B</b></button>
+                        <button type="button" class="editor-btn" data-komut="italic" title="İtalik"><i>I</i></button>
+                        <button type="button" class="editor-btn" data-komut="underline" title="Altı çizili"><u>U</u></button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="insertUnorderedList" title="Madde işaretli liste">☰•</button>
+                        <button type="button" class="editor-btn" data-komut="insertOrderedList" title="Numaralı liste">☰1</button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="justifyLeft" title="Sola yasla">◧</button>
+                        <button type="button" class="editor-btn" data-komut="justifyCenter" title="Ortala">▤</button>
+                        <button type="button" class="editor-btn" data-komut="justifyRight" title="Sağa yasla">◨</button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="link" title="Bağlantı ekle">🔗</button>
+                        <select class="editor-format" data-hedef="ol_bilgi" title="Metin biçimi">
+                            <option value="p">Normal</option>
+                            <option value="h3">Başlık</option>
+                            <option value="blockquote">Alıntı</option>
+                        </select>
+                    </div>
+                    <div id="ol_bilgi" class="bilgi-alani bilgi-editor" contenteditable="true" data-placeholder="Olayın metni..." oninput="sayacGuncelle('ol_bilgi','ol_bilgi_sayac'); onizlemeGuncelle('olay')"></div>
+                </div>
+                <div id="ol_bilgi_sayac" class="bilgi-sayac">0 karakter</div>
+                <input id="ol_kaynak" data-i18n-placeholder="ph_source" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
+                <div class="form-satir-btn">
+                    <button class="btn-action" onclick="olayKaydet()" data-i18n="btn_save">KAYDET</button>
+                    <button class="btn-action" id="olay-cancel-btn" onclick="temizleOlay()" data-i18n="btn_cancel" style="background: var(--bg-hover-soft); color: var(--text-primary); display:none;">İPTAL</button>
+                </div>
+            </div>
+
+            <div class="admin-section admin-section--zat">
+                <div class="admin-section-baslik">
+                    <span class="admin-section-ikon">👤</span>
+                    <h3 id="form-baslik" data-i18n="h_person_form" style="margin:0; font-weight:normal; color: var(--brand-text);">Zat Ekle / Düzenle</h3>
+                </div>
+                <input type="hidden" id="edit-id">
+
+                <select id="in_devir" onchange="onizlemeGuncelle('zat')">
+                    <option value="Asr-ı Saadet" data-i18n="opt_era_asri_person">Yaşadığı Devir: Asr-ı Saadet</option>
+                    <option value="Hulefâ-yi Râşidîn" data-i18n="opt_era_rashidun_person">Yaşadığı Devir: Hulefâ-yi Râşidîn</option>
+                    <option value="Emeviler" data-i18n="opt_era_umayyad_person">Yaşadığı Devir: Emeviler</option>
+                    <option value="Abbasiler" data-i18n="opt_era_abbasid_person">Yaşadığı Devir: Abbasiler</option>
+                    <option value="Endülüs" data-i18n="opt_era_andalus_person">Yaşadığı Devir: Endülüs</option>
+                    <option value="Diğer" data-i18n="opt_era_other_person">Yaşadığı Devir: Diğer / Bilinmiyor</option>
+                </select>
+
+                <div class="oneri-sarmal">
+                    <input id="in_ad" data-i18n-placeholder="ph_name_person" placeholder="İsim" oninput="benzerZatKontrol(); oneriGoster('in_ad'); onizlemeGuncelle('zat')" onfocus="oneriGoster('in_ad')" onblur="oneriGizleGecikmeli('in_ad')" autocomplete="off">
+                    <div id="in_ad_oneri" class="oneri-liste"></div>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px; margin-left: 5px;">
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="oto_ra" checked style="width: auto; margin: 0;"> <span data-i18n="chk_ra">İsmin sonuna (ra) ekle</span>
+                    </label>
+                </div>
+                <div id="zat-uyari" class="canli-uyari"></div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="oneri-sarmal" style="flex:1;">
+                        <input id="in_anne" data-i18n-placeholder="ph_mother" placeholder="Anne" oninput="oneriGoster('in_anne')" onfocus="oneriGoster('in_anne')" onblur="oneriGizleGecikmeli('in_anne')" autocomplete="off">
+                        <div id="in_anne_oneri" class="oneri-liste"></div>
+                    </div>
+                    <div class="oneri-sarmal" style="flex:1;">
+                        <input id="in_baba" data-i18n-placeholder="ph_father" placeholder="Baba" oninput="oneriGoster('in_baba')" onfocus="oneriGoster('in_baba')" onblur="oneriGizleGecikmeli('in_baba')" autocomplete="off">
+                        <div id="in_baba_oneri" class="oneri-liste"></div>
+                    </div>
+                </div>
+                <input id="in_es" data-i18n-placeholder="ph_spouse" placeholder="Eşi / Eşleri">
+
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                    <input id="in_baglar_isim" data-i18n-placeholder="ph_link_name" placeholder="İsim Yaz">
+                    <select id="in_baglar_secenek">
+                        <option value="" data-i18n="opt_link_type">Bağlantı Türü...</option><option value="Çocuk" data-i18n="rel_child">Çocuk</option><option value="Kardeş" data-i18n="rel_sibling">Kardeş</option>
+                        <option value="Dede" data-i18n="rel_grandfather">Dede</option><option value="Nine" data-i18n="rel_grandmother">Nine</option><option value="Torun" data-i18n="rel_grandchild">Torun</option>
+                        <option value="Amca" data-i18n="rel_paternal_uncle">Amca</option><option value="Hala" data-i18n="rel_paternal_aunt">Hala</option><option value="Dayı" data-i18n="rel_maternal_uncle">Dayı</option>
+                        <option value="Teyze" data-i18n="rel_maternal_aunt">Teyze</option><option value="Yeğen" data-i18n="rel_nephew">Yeğen</option>
+                    </select>
+                    <button type="button" onclick="bagEkle()" data-i18n="btn_add" style="background: var(--bg-card); border: 1px solid var(--border-input); padding: 11px 15px; border-radius: 6px; cursor: pointer;">Ekle</button>
+                </div>
+                <textarea id="in_baglar_liste" data-i18n-placeholder="ph_links" placeholder="Eklenen Bağlar" rows="2"></textarea>
+
+                <div style="display: flex; gap: 10px;"><input id="in_d_hicri" data-i18n-placeholder="ph_birth_hijri" placeholder="Doğum Hicri"><input id="in_d_miladi" data-i18n-placeholder="ph_birth_ce" placeholder="Doğum Miladi"></div>
+                <div style="display: flex; gap: 10px;"><input id="in_v_hicri" data-i18n-placeholder="ph_death_hijri" placeholder="Vefat Hicri"><input id="in_v_miladi" data-i18n-placeholder="ph_death_ce" placeholder="Vefat Miladi"></div>
+                <div class="editor-sarmal">
+                    <div class="editor-toolbar" data-hedef="in_bilgi">
+                        <button type="button" class="editor-btn" data-komut="bold" title="Kalın"><b>B</b></button>
+                        <button type="button" class="editor-btn" data-komut="italic" title="İtalik"><i>I</i></button>
+                        <button type="button" class="editor-btn" data-komut="underline" title="Altı çizili"><u>U</u></button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="insertUnorderedList" title="Madde işaretli liste">☰•</button>
+                        <button type="button" class="editor-btn" data-komut="insertOrderedList" title="Numaralı liste">☰1</button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="justifyLeft" title="Sola yasla">◧</button>
+                        <button type="button" class="editor-btn" data-komut="justifyCenter" title="Ortala">▤</button>
+                        <button type="button" class="editor-btn" data-komut="justifyRight" title="Sağa yasla">◨</button>
+                        <span class="editor-ayrac"></span>
+                        <button type="button" class="editor-btn" data-komut="link" title="Bağlantı ekle">🔗</button>
+                        <select class="editor-format" data-hedef="in_bilgi" title="Metin biçimi">
+                            <option value="p">Normal</option>
+                            <option value="h3">Başlık</option>
+                            <option value="blockquote">Alıntı</option>
+                        </select>
+                    </div>
+                    <div id="in_bilgi" class="bilgi-alani bilgi-editor" contenteditable="true" data-placeholder="Bilgi" oninput="sayacGuncelle('in_bilgi','in_bilgi_sayac'); onizlemeGuncelle('zat')"></div>
+                </div>
+                <div id="in_bilgi_sayac" class="bilgi-sayac">0 karakter</div>
+                <input id="in_kaynak" data-i18n-placeholder="ph_source" placeholder="Kaynak / Sayfa No (Örn: Peygamberimizin Hayatı, s. 45)">
+                <div class="form-satir-btn">
+                    <button class="btn-action" onclick="kaydet()" data-i18n="btn_save">KAYDET</button>
+                    <button class="btn-action" id="cancel-btn" onclick="temizle()" data-i18n="btn_cancel" style="background: var(--bg-hover-soft); color: var(--text-primary); display:none;">İPTAL</button>
+                </div>
+            </div>
+            </div>
+            </main>
+
+            <aside class="admin-col-side">
+                <div class="admin-side-panel">
+                    <h4 class="admin-col-baslik"><span>🕒</span> Son Düzenlenenler</h4>
+                    <div id="sonDuzenlenenler"></div>
+                </div>
+
+                <div class="admin-side-panel">
+                    <h4 class="admin-col-baslik"><span>👁️</span> Canlı Önizleme</h4>
+                    <div id="canliOnizleme"></div>
+                </div>
+
+                <div class="admin-side-panel">
+                    <h4 class="admin-col-baslik"><span>⚡</span> Hızlı İşlemler</h4>
+                    <div class="admin-hizli-liste">
+                        <button class="admin-hizli-btn" onclick="odaklan('ol_ad')">🗓️ Yeni Olay Formuna Git</button>
+                        <button class="admin-hizli-btn" onclick="odaklan('in_ad')">👤 Yeni Zat Formuna Git</button>
+                        <button class="admin-hizli-btn" onclick="sayfaDegistir('arsiv')">📚 Arşivi Görüntüle</button>
+                        <button class="admin-hizli-btn" onclick="sayfaDegistir('cizelge')">📅 Zaman Çizelgesini Gör</button>
+                    </div>
+                </div>
+
+                <div class="admin-side-panel admin-ipucu">
+                    <h4 class="admin-col-baslik"><span>💡</span> İpucu</h4>
+                    <p id="admin-ipucu-metin" style="margin:0; font-size:0.85rem; color: var(--text-secondary); line-height:1.5;"></p>
+                </div>
+            </aside>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer id="main-footer">
+    <div class="footer-container">
+        <div class="footer-col">
+            <h4 data-i18n="foot_quick">HIZLI ERİŞİM</h4>
+            <ul>
+                <li><a onclick="sayfaDegistir('home')" data-i18n="nav_home">Ana Sayfa</a></li>
+                <li><a onclick="sayfaDegistir('arsiv'); filtreDegistir('zat', document.querySelector('.filter-btn'))" data-i18n="foot_archive">Tüm Arşiv</a></li>
+                <li><a onclick="sayfaDegistir('cizelge')" data-i18n="foot_timeline">Zaman Çizelgesi</a></li>
+                <li><a onclick="sayfaDegistir('soy')" data-i18n="foot_trees">Soyağaçları</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4 data-i18n="foot_about">HAKKINDA</h4>
+            <ul>
+                <li><a onclick="sayfaDegistir('proje-amaci')" data-i18n="h_purpose">Proje Amacı</a></li>
+                <li><a onclick="sayfaDegistir('sss')" data-i18n="h_faq">Sıkça Sorulan Sorular</a></li>
+                <li><a onclick="sayfaDegistir('kaynakca')" data-i18n="foot_sources">Kaynakça</a></li>
+                <li><a onclick="sayfaDegistir('iletisim')" data-i18n="h_contact">İletişim</a></li>
+                <li><a onclick="sayfaDegistir('katkida-bulun')" data-i18n="h_contribute">Katkıda Bulun</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4 data-i18n="foot_admin">YÖNETİM</h4>
+            <ul>
+                <li><a onclick="sayfaDegistir('login')" data-i18n="h_login">Yönetici Girişi</a></li>
+                <li><a onclick="sayfaDegistir('surum')" data-i18n="foot_changelog">Sürüm Notları</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <div>&copy; 2026 Asrı Saadet Portalı &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="sayfaDegistir('gizlilik')" data-i18n="h_privacy">Gizlilik Politikası</a></div>
+        <div style="display: flex; gap: 15px;">
+            <a href="https://wa.me/" target="_blank">WhatsApp</a>
+            <a href="https://x.com/" target="_blank">X (Twitter)</a>
+            <a href="https://instagram.com/" target="_blank">Instagram</a>
+        </div>
+    </div>
+</footer>
+
+<div id="oto-kutu" class="oto-liste"></div>
+<div id="arama-oto-kutu" class="oto-liste" style="z-index: 10000;"></div>
+<script src="script.js"></script>
+</body>
+</html>
