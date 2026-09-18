@@ -371,7 +371,7 @@ function timelinePage() {
         <div class="visual-content">
           <p class="eyebrow">Tarih Şeridi</p>
           <h1>Asr-ı Saadet<br>Kronolojisi</h1>
-          <p class="visual-copy">M. 610 yılından Veda Hutbesi'ne uzanan 22 yılın tarihî dönüm noktaları.</p>
+          <p class="visual-copy">Cahiliye Karanlığından Günümüze:İslam ve Medeniyet Tarihi</p>
         </div>
       </div>
       <div class="half content">
