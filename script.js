@@ -155,7 +155,7 @@ const plainText = (value) => {
 };
 
 const nameOf = (item) => field(item, "name", "isim", "ad");
-const titleOf = (item) => field(item, "title", "lakap", "unvan");
+const titleOf = (item) => field(item, "title", "unvan");
 const eraOf = (item) => field(item, "era", "donem", "devir");
 const hijriOf = (item) =>
   field(item, "hijri", "hicri", "d_hicri", "v_hicri");
@@ -297,7 +297,7 @@ function archivePage() {
       </div>
       <div class="half content">
         <div class="archive-tools">
-          <input class="search" id="archive-search" type="search" value="${escapeHtml(state.search)}" placeholder="İsim veya lakap ara…" aria-label="Arşivde ara">
+          <input class="search" id="archive-search" type="search" value="${escapeHtml(state.search)}" placeholder="İsim ara…" aria-label="Arşivde ara">
           <div class="filters" aria-label="Dönem filtreleri">
             ${eras
               .map(
@@ -467,7 +467,7 @@ function adminZatForm() {
       </div>
       <div class="form-row">
         <div class="form-field">
-          <label for="zat-title">Ünvan / Lakap</label>
+          <label for="zat-title">Ünvan</label>
           <input id="zat-title" type="text" value="${escapeHtml(editing ? titleOf(editing) : "")}">
         </div>
         <div class="form-field">
