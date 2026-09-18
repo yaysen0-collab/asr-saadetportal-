@@ -206,16 +206,16 @@ function homePage() {
       <div class="half visual">
         <img src="${PHOTOS.dome}" alt="Cami kubbesi iç mimarisi">
         <div class="visual-content">
-          <p class="eyebrow">Hicrî 7. Yüzyıl</p>
-          <h1>Yıldızlar gibi, hangisine uyarsanız doğru yolu bulursunuz.</h1>
-          <p class="quote-source">— Hz. Peygamber (s.a.v.)</p>
+          <p class="eyebrow">Hadisi Şerifte</p>
+          <h1>Ashabım, yıldızlar gibidir. Hangisine tabi olursanız hidayete erersiniz.</h1>
+          <p class="quote-source">— Peygamber Efendimiz (s.a.v.)</p>
           <div class="brass-rule"></div>
         </div>
       </div>
       <div class="half content">
         <p class="eyebrow">Dijital Siyer Arşivi</p>
-        <h2 class="content-title">Ashâb-ı Kirâm'ın hayatlarını, birbirleriyle ilişkilerini ve tarihî olayları belgeleyen kapsamlı dijital arşiv.</h2>
-        <p class="lead">Klasik kaynaklardan derlenen sahâbî kayıtları, tarihî olaylar, aile ağacı ve kronoloji görselleştirmeleriyle.</p>
+        <h2 class="content-title">Ashab-ı Kiram'ın hayatlarını, birbirleriyle ilişkilerini ve tarihî olayları belgeleyen kapsamlı dijital arşiv.</h2>
+        <p class="lead">Klasik kaynaklardan derlenen sahabî kayıtları, tarihî olaylar, aile ağacı ve kronoloji görselleştirmeleriyle.</p>
         <div class="stats">
           <div class="stat"><strong>${isLoading() ? "…" : figures.length}</strong><span>Sahâbî</span></div>
           <div class="stat"><strong>${isLoading() ? "…" : state.olaylar.length}</strong><span>Olay</span></div>
