@@ -286,7 +286,7 @@ function archivePage() {
         <div class="visual-content">
           <p class="eyebrow">Dijital Arşiv</p>
           <h1>Sahâbe<br>Kataloğu</h1>
-          <p class="visual-copy">İbn Hacer el-Askalânî ve İbn Sa'd başta olmak üzere klasik kaynaklardan derlenen kayıtlar.</p>
+          <p class="visual-copy">Ömer Nasuhi Bilmen, Ahmed Cevdet Paşa ve birçok tarihi isimlerin kitaplarından toplanan bilgiler ışığında...</p>
           <div class="mini-stats">
             <h3>İstatistikler</h3>
             <div class="mini-stat"><span>Toplam Kayıt</span><strong>${figures.length}</strong></div>
