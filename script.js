@@ -196,7 +196,37 @@ function recordMarkup(item, showEra = false) {
 
 function homePage() {
   const figures = allFigures();
-  const featured = figures.slice(0, 4);
+  const normalizeName = (value) =>
+  String(value || "")
+    .toLocaleLowerCase("tr")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9çğıöşü]+/g, " ")
+    .trim();
+
+const halifeAdlari = [
+  ["ebu bekir", "ebubekir"],
+  ["omer"],
+  ["osman"],
+  ["ali bin ebu talib", "ali bin ebi talib", "hz ali", "ali"]
+];
+
+const featured = halifeAdlari
+  .map((alternatifler) => {
+    const adlar = alternatifler.map(normalizeName);
+
+    return figures.find((item) => {
+      const isim = normalizeName(nameOf(item));
+
+      return adlar.some(
+        (aranan) =>
+          isim === aranan ||
+          isim.startsWith(aranan + " ") ||
+          isim.includes(" " + aranan + " ")
+      );
+    });
+  })
+  .filter(Boolean);
   const featuredMarkup = featured.length
     ? featured.map((item) => recordMarkup(item)).join("")
     : statusMarkup("Henüz kayıt yok.");
