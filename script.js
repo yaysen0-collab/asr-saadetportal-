@@ -69,24 +69,7 @@ const ARTICLES = [
 const FAQS = [
   [
     "Bu arşiv hangi kaynakları esas almaktadır?",
-    "Şemâil-i Şerife Yazar:	Muhammed bin İsa et-Tirmizî (R.a) Fazilet Neşriyat
-Ashâb-ı Kirâm Hakkında Müslümanların Nezih İtikâdları Fazilet Neşriyat Yazar:	Ömer Nasuhi Bilmen
-
-Peygamber Efendimiz'in (Sav) Hayatı
-Çamlıca Basım Yayın Yazar:	Ahmed Cevdet Paşa
-
-Herkes İçin Peygamber Efendimizin Hayatı
-Çamlıca Basım Yayın
-Yazar:	Ahmed Cevdet Paşa
- 
-Peygamberimiz ve Peygamberler (a.s.)
-Çamlıca Basım Yayın
-Yazar:	Ahmed Cevdet Paşa
-
-500 Hadîs-i Şerîf
-Fazilet Neşriyat
-Yazar:	Ömer Nasuhi Bilmen
-",
+    "Şemâil-i Şerife Yazar:	Muhammed bin İsa et-Tirmizî (R.a) Fazilet Neşriyat, Ashâb-ı Kirâm Hakkında Müslümanların Nezih İtikâdları Fazilet Neşriyat Yazar:	Ömer Nasuhi Bilmen, Peygamber Efendimiz'in (Sav) Hayatı Çamlıca Basım Yayın Yazar:	Ahmed Cevdet Paşa, Herkes İçin Peygamber Efendimizin Hayatı Çamlıca Basım Yayın Yazar:	Ahmed Cevdet Paşa  Peygamberimiz ve Peygamberler (a.s.) Çamlıca Basım Yayın Yazar:	Ahmed Cevdet Paşa,  500 Hadîs-i Şerîf Fazilet Neşriyat Yazar:Ömer Nasuhi Bilmen",
   ],
   [
     "Akademik çalışmalarımda bu siteye atıf yapabilir miyim?",
