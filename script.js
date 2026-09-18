@@ -219,7 +219,7 @@ function homePage() {
         <div class="stats">
           <div class="stat"><strong>${isLoading() ? "…" : figures.length}</strong><span>Sahâbî</span></div>
           <div class="stat"><strong>${isLoading() ? "…" : state.olaylar.length}</strong><span>Olay</span></div>
-          <div class="stat"><strong>3</strong><span>Koleksiyon</span></div>
+          <div class="stat"><strong>45</strong><span>Bağlantı</span></div>
         </div>
         <div class="actions">
           <a class="button primary" href="#archive">Arşivi Keşfet</a>
