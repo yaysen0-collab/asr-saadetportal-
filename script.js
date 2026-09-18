@@ -214,8 +214,8 @@ function homePage() {
       </div>
       <div class="half content">
         <p class="eyebrow">Dijital Siyer Arşivi</p>
-        <h2 class="content-title">Ashab-ı Kiram'ın hayatlarını, birbirleriyle ilişkilerini ve tarihî olayları belgeleyen kapsamlı dijital arşiv.</h2>
-        <p class="lead">Klasik kaynaklardan derlenen sahabî kayıtları, tarihî olaylar, aile ağacı ve kronoloji görselleştirmeleriyle.</p>
+        <h2 class="content-title">Ashab-ı Kiram'ın hayatlarını, birbirleriyle ilişkilerini ve tarihi olayları belgeleyen kapsamlı dijital arşiv.</h2>
+        <p class="lead">Klasik kaynaklardan derlenen sahabî kayıtları, tarihi olaylar, aile ağacı ve kronoloji görselleştirmeleriyle.</p>
         <div class="stats">
           <div class="stat"><strong>${isLoading() ? "…" : figures.length}</strong><span>Sahâbî</span></div>
           <div class="stat"><strong>${isLoading() ? "…" : state.olaylar.length}</strong><span>Olay</span></div>
