@@ -95,12 +95,6 @@ input:focus-visible {
   color: var(--brass);
 }
 
-.version {
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .split {
   min-height: calc(100vh - 56px);
   display: flex;
