@@ -49,8 +49,8 @@ const SSS = [
   ["Proje hangi tarihsel dönemi kapsamaktadır?", "Proje, Asr-ı Saadet olarak adlandırılan ve Peygamber Efendimiz Muhammed Mustafa (s.a.v.)'in yaşadığı dönemi esas alır. Arşivde Hulefâ-yi Râşidîn, Emeviler, Abbasiler ve Endülüs dönemlerine ait kayıtlar da yer alabilir."],
   ["Portalda yer alan bilgiler hangi kaynaklara dayanmaktadır?", "Klasik İslam tarihi eserleri, siyer kaynakları ve güvenilir akademik çalışmalara dayanır. Her kaydın altında, varsa kaynak bilgisi gösterilir."],
   ["Bilgilerin doğruluğu nasıl sağlanmaktadır?", "Bilgiler birden fazla güvenilir kaynaktan karşılaştırmalı olarak incelenir. Şüpheli veya kesinlik içermeyen bilgiler akademik yaklaşım gereği dikkatle ele alınır."],
-  ["Portal nasıl kullanılmaktadır?", "Arşiv sayfasından şahsiyet ve olayları arayabilir, dönemlere göre süzebilir ve kayıtları açarak okuyabilirsiniz. Soy Ağacı sayfasında bir isim seçerek anne, baba, eş ve diğer akrabalık bağlarını görebilirsiniz."],
-  ["Sahabeler arası akrabalık ve sosyal ilişkiler nasıl gösterilmektedir?", "Sistem; nesep bağlarını, evlilikleri ve diğer ilişkileri kayıtlar üzerinden ilişkilendirerek Soy Ağacı sayfasında gösterir."],
+  ["Portal nasıl kullanılmaktadır?", "Arşiv sayfasından şahsiyet ve olayları arayabilir, dönemlere göre süzebilir ve kayıtları açarak okuyabilirsiniz. Soyağacı sayfasında bir isim seçerek anne, baba, eş ve diğer akrabalık bağlarını görebilirsiniz."],
+  ["Sahabeler arası akrabalık ve sosyal ilişkiler nasıl gösterilmektedir?", "Sistem; nesep bağlarını, evlilikleri ve diğer ilişkileri kayıtlar üzerinden ilişkilendirerek Soyağacı sayfasında gösterir."],
   ["Portal akademik çalışmalarda kaynak olarak kullanılabilir mi?", "Portal doğrudan birincil kaynak olma iddiası taşımaz; ancak araştırmacılar için yardımcı ve yönlendirici bir dijital referans olarak kullanılabilir."],
   ["Proje kimlere hitap etmektedir?", "Öğrencilere, akademisyenlere, araştırmacılara ve İslam tarihiyle ilgilenen herkese."],
   ["İçerik genel kullanıcılar için anlaşılır mıdır?", "Evet. İçerikler akademik temele dayanmakla birlikte sade ve anlaşılır bir dille hazırlanmıştır."],
@@ -457,7 +457,7 @@ function kayitKarti(k, tur) {
       <div class="kayit-metin">${bilgiHtml(k.bilgi)}</div>
       ${satirlar.length ? `<dl class="kayit-bilgi">${satirlar.map(([a, v]) => `<div><dt>${a}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
       ${!bos(k.kaynak) ? `<small>Kaynak: ${esc(k.kaynak)}</small>` : ""}
-      ${tur === "zat" ? `<a class="text-link" href="#genealogy/${esc(k.id)}">Soy ağacında gör →</a>` : ""}
+      ${tur === "zat" ? `<a class="text-link" href="#genealogy/${esc(k.id)}">Soyağacında gör →</a>` : ""}
       ${kisiselAlan(tur, k)}
     </div>`;
   }
@@ -530,7 +530,7 @@ function sayfaCizelge() {
   </section>`;
 }
 
-/* ---------- SOY AĞACI ---------- */
+/* ---------- SOYAĞACI ---------- */
 function adIndeks() {
   const m = new Map();
   durum.zatlar.forEach((z) => { const a = adAnahtar(z.isim); if (a && !m.has(a)) m.set(a, z); });
@@ -1208,7 +1208,7 @@ const SAYFALAR = {
   random: sayfaRastgele, articles: sayfaMakaleler, faq: sayfaSss, login: sayfaGiris, admin: sayfaAdmin, account: sayfaHesap,
 };
 const BASLIKLAR = {
-  home: "Ana Sayfa", archive: "Arşiv", timeline: "Zaman Çizelgesi", genealogy: "Soy Ağacı",
+  home: "Ana Sayfa", archive: "Arşiv", timeline: "Zaman Çizelgesi", genealogy: "Soyağacı",
   random: "Rastgele Şahsiyet", articles: "Makaleler", faq: "Sıkça Sorulan Sorular", login: "Giriş", admin: "Yönetici Paneli", account: "Hesabım",
 };
 
