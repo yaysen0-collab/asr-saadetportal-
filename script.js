@@ -9,6 +9,7 @@
 const FIREBASE_SURUM = "10.8.0";
 const FB = (p) => `https://www.gstatic.com/firebasejs/${FIREBASE_SURUM}/${p}.js`;
 const yukle = (url) => import(url);
+const RECAPTCHA_ENTERPRISE_KEY = "6LdsjcQtAAAAAFp6f2q_EhytHJdhcrFClu9wBgSG";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCrrD1XRInE3Er47ZRl28rUo_Pk7FZAyss",
