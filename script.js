@@ -1795,7 +1795,6 @@ async function baslat() {
     db = FS.getFirestore(uygulama);
     auth = AU.getAuth(uygulama);
   } catch (e) {
-    ...
     console.error("Firebase yüklenemedi:", e);
     durum.hata = "Firebase yüklenemedi (" + ((e && e.message) || e) + ")";
     durum.yuklendi.zat = durum.yuklendi.olay = true;
