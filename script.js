@@ -115,7 +115,7 @@ const SURUMLER = [
     "Site içi arama eklendi: şahsiyet, olay, makale ve sorular tek yerde aranıyor. Menüdeki “Ara” bağlantısı veya klavyede “/” tuşu ile açılır.",
     "Favoriler ve kişisel notlar eklendi; yeni Hesabım sayfasından yönetilir. Notları yalnızca siz görürsünüz. Yorum özelliği bilerek eklenmedi.",
     "Google ile giriş düzeltildi; hatalar artık anlaşılır mesajlarla gösteriliyor.",
-    "Gizlilik Politikası, Kaynakça, Katkıda Bulun ve Sürüm Notları sayfaları eklendi.",
+    "Gizlilik Politikası, Kaynakça, Katkıda Bulun (iletişim formu burada) ve Sürüm Notları sayfaları eklendi. Sıkça Sorulan Sorular üst menüden alt bilgiye taşındı.",
     "Yönetici paneli: kayıt ekleme, düzenleme ve silme; birden fazla yönetici hesabı ve giriş sonrası karşılama penceresi.",
   ] },
   { ay: "Mayıs 2026", surum: "2.5.0", baslik: "Arşiv ve devirler", maddeler: [
@@ -750,7 +750,11 @@ function sayfaSss() {
       <p class="visual-copy">Arşivin kullanımı, kaynaklar ve içerik hakkında merak edilenler.</p>` })}
     <div class="half content ark-icerik">
       <div id="faq-alan">${faqListe()}</div>
-      ${iletisimFormu("Sorunuzu bulamadınız mı?", "Soru, öneri veya düzeltme bildirimlerinizi aşağıdaki formla iletebilirsiniz.", "")}
+      <div class="contact-box">
+        <h3>Sorunuzu bulamadınız mı?</h3>
+        <p>Aklınıza takılan başka bir şey varsa, önerilerinizle ve düzeltme bildirimlerinizle birlikte bize yazabilirsiniz.</p>
+        <a class="button primary" href="#contribute">Bize yazın</a>
+      </div>
     </div>
   </section>`;
 }
@@ -1188,7 +1192,7 @@ function iletisimFormu(baslik, aciklama, konu) {
     <p>${esc(aciklama)}</p>
     <div class="login-field"><label for="ilt-isim">Adınız</label><input id="ilt-isim" type="text" autocomplete="name"></div>
     <div class="login-field"><label for="ilt-eposta">E-posta</label><input id="ilt-eposta" type="email" autocomplete="email"></div>
-    <div class="login-field"><label for="ilt-konu">Konu</label><input id="ilt-konu" type="text" value="${esc(konu || "")}"></div>
+    <div class="login-field"><label for="ilt-konu">Konu</label><input id="ilt-konu" type="text" value="${esc(konu || "")}" placeholder="Örn. Soru, Hata bildirimi, Katkı önerisi"></div>
     <div class="login-field"><label for="ilt-mesaj">Mesajınız</label><textarea id="ilt-mesaj" rows="4"></textarea></div>
     <button type="button" class="button primary" data-action="iletisim">Mesajı gönder</button>
     <p class="login-message" id="iletisim-durum" role="status"></p>
@@ -1271,7 +1275,7 @@ function sayfaKatki() {
       <ul class="kaynak-liste uzun">${maddeler.map(([b, a]) => `<li><strong>${b}</strong><span>${a}</span></li>`).join("")}</ul>
       <p>Katkılarınız, bu dijital mirasın gelecek nesillere aktarılmasında büyük bir rol oynayacaktır.</p>
     </div>`,
-    ek: iletisimFormu("Bize yazın", "Eksik gördüğünüz kayıt, kaynak veya düzeltme önerilerinizi iletebilirsiniz.", "Katkı önerisi"),
+    ek: iletisimFormu("Bize yazın", "Sorularınızı, eksik gördüğünüz kayıt, kaynak veya düzeltme önerilerinizi iletebilirsiniz.", ""),
   });
 }
 
@@ -1291,6 +1295,8 @@ function sayfaSurum() {
    Menü ve alt bilgiyi genişlet (index.html'e dokunmadan)
    ========================================================================== */
 function arayuzuGenislet() {
+  /* S.S.S. üst menüden kalktı; alt bilgide yer alır */
+  document.querySelectorAll('.nav-links a[href="#faq"], .nav-links a[data-section="faq"]').forEach((a) => a.remove());
   const nav = $(".nav-links");
   if (nav && !$("#ara-nav-link")) {
     const a = document.createElement("a");
@@ -1317,7 +1323,9 @@ function arayuzuGenislet() {
     });
   };
   ekle(kolonlar[0], [["Portalda Ara", "#search"]], kolonlar[0] ? kolonlar[0].querySelector('a[href="#login"]') : null);
-  ekle(kolonlar[1], [["Kaynakça", "#sources"], ["Katkıda Bulun", "#contribute"], ["Gizlilik Politikası", "#privacy"], ["Sürüm Notları", "#changelog"]]);
+  const hakkinda = [["Kaynakça", "#sources"], ["Katkıda Bulun", "#contribute"], ["Gizlilik Politikası", "#privacy"], ["Sürüm Notları", "#changelog"]];
+  if (!document.querySelector('.footer-links a[href="#faq"]')) hakkinda.unshift(["Sıkça Sorulan Sorular", "#faq"]);
+  ekle(kolonlar[1], hakkinda);
 }
 
 /* ---------- Kimlik doğrulama işlemleri ---------- */
