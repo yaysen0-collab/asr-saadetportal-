@@ -1133,9 +1133,16 @@ p {
   .nav-links {
     width: 100%;
     order: 3;
-    justify-content: space-between;
-    gap: 0.5rem;
+    justify-content: flex-start;
+    gap: 1.1rem;
     overflow-x: auto;
+    padding: 0.3rem 1.2rem 0.3rem 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nav-links::-webkit-scrollbar {
+    display: none;
   }
 
   .family-tree {
@@ -1153,10 +1160,11 @@ p {
   }
 
   .nav-links a {
-    font-size: 0.62rem;
+    font-size: 0.66rem;
+    padding: 0.5rem 0;
     white-space: nowrap;
+    flex-shrink: 0;
   }
-
   .split,
   .site-footer {
     display: block;
