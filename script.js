@@ -190,8 +190,10 @@ function adminMi() {
   const u = durum.kullanici;
   return !!(u && u.email && ADMIN_EMAILS.some(function(email) {
     return email.toLocaleLowerCase("tr") === u.email.toLocaleLowerCase("tr");
-}));
-   function hosgeldinBildirimGoster(email) {
+  }));
+}
+
+function hosgeldinBildirimGoster(email) {
   const mesaj = HOSGELDIN_MESAJLARI[trKucuk(email)];
   if (!mesaj) return;
 
