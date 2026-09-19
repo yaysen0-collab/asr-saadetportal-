@@ -291,6 +291,7 @@ a.btn-small{display:inline-block;text-decoration:none}
 .welcome-toast-kapat{position:absolute;top:10px;right:14px;background:transparent;border:none;color:#fff;font-size:1.4rem;line-height:1;cursor:pointer;opacity:.8}
 .welcome-toast-kapat:hover{opacity:1}
 @media (max-width:600px){.welcome-toast{padding:28px 24px;font-size:.98rem}}
+`;
   document.head.appendChild(s);
 }
 
