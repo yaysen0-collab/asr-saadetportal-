@@ -133,21 +133,6 @@ function ozet(ham, n) {
   const m = duzMetin(ham);
   return m.length > n ? m.slice(0, n).trimEnd() + "…" : m;
 }
-function baslikBuyut(metin) {
-  if (!metin || metin === "?") return metin;
-  return metin.split(" ").map((k) => k.charAt(0).toLocaleUpperCase("tr") + k.slice(1)).join(" ");
-}
-function yilSayi(v) {
-  const m = String(v == null ? "" : v).match(/\d+/);
-  return m ? parseInt(m[0], 10) : NaN;
-}
-/* "Ebu Bekir (ra)" ve "Ebu Bekir" aynı kişi sayılsın */
-function adTemiz(ad) {
-  return String(ad || "").replace(/\((r\.?\s?a\.?|r\.?\s?anh[a-zü]*\.?|s\.a\.v\.?)\)/gi, "").replace(/\s+/g, " ").trim();
-}
-const adAnahtar = (ad) => trKucuk(adTemiz(ad));
-const birlestir = (...p) => p.filter((x) => !bos(x)).join(" / ");
-
 function agirlikliRastgele(liste, agirlikFn) {
   const agirliklar = liste.map(agirlikFn);
   const toplam = agirliklar.reduce((a, b) => a + b, 0);
@@ -162,6 +147,16 @@ function baslikBuyut(metin) {
   if (!metin || metin === "?") return metin;
   return metin.split(" ").map((k) => k.charAt(0).toLocaleUpperCase("tr") + k.slice(1)).join(" ");
 }
+function yilSayi(v) {
+  const m = String(v == null ? "" : v).match(/\d+/);
+  return m ? parseInt(m[0], 10) : NaN;
+}
+/* "Ebu Bekir (ra)" ve "Ebu Bekir" aynı kişi sayılsın */
+function adTemiz(ad) {
+  return String(ad || "").replace(/\((r\.?\s?a\.?|r\.?\s?anh[a-zü]*\.?|s\.a\.v\.?)\)/gi, "").replace(/\s+/g, " ").trim();
+}
+const adAnahtar = (ad) => trKucuk(adTemiz(ad));
+const birlestir = (...p) => p.filter((x) => !bos(x)).join(" / ");
 /* Firestore'dan gelen (yönetici tarafından yazılmış) HTML'i güvenli hâle getirir */
 const IZINLI = new Set(["P", "BR", "B", "STRONG", "I", "EM", "U", "UL", "OL", "LI", "H3", "H4", "BLOCKQUOTE", "A", "DIV", "SPAN"]);
 const SILINECEK = new Set(["SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "LINK", "META", "FORM", "INPUT", "BUTTON", "SVG"]);
