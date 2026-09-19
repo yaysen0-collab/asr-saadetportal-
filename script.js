@@ -191,12 +191,21 @@ function adminMi() {
   return !!(u && u.email && ADMIN_EMAILS.some(function(email) {
     return email.toLocaleLowerCase("tr") === u.email.toLocaleLowerCase("tr");
 }));
-   function adminMi() {
-  const u = durum.kullanici;
-  return !!(u && u.email && ADMIN_EMAILS.some(function(email) {
-    return email.toLocaleLowerCase("tr") === u.email.toLocaleLowerCase("tr");
-}));
-}
+   function hosgeldinBildirimGoster(email) {
+  const mesaj = HOSGELDIN_MESAJLARI[trKucuk(email)];
+  if (!mesaj) return;
+
+  const kutu = document.createElement("div");
+  kutu.className = "welcome-toast";
+  kutu.textContent = mesaj;
+  document.body.appendChild(kutu);
+
+  requestAnimationFrame(() => kutu.classList.add("goster"));
+
+  setTimeout(() => {
+    kutu.classList.remove("goster");
+    setTimeout(() => kutu.remove(), 500);
+  }, 5000);
 }
 
 /* ---------- Ek stiller (style.css'e dokunmadan) ---------- */
