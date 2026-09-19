@@ -1775,18 +1775,27 @@ function dinle(koleksiyon, tur) {
 
 async function baslat() {
   ekStilEkle();
-  arayuzuGenislet();
   rota = rotaOku();
   rotaHazirla({ sec: "" });
   render();
   olayBagla();
   try {
-    const [appM, fsM, auM] = await Promise.all([yukle(FB("firebase-app")), yukle(FB("firebase-firestore")), yukle(FB("firebase-auth"))]);
+    const [appM, fsM, auM, acM] = await Promise.all([
+      yukle(FB("firebase-app")),
+      yukle(FB("firebase-firestore")),
+      yukle(FB("firebase-auth")),
+      yukle(FB("firebase-app-check")),
+    ]);
     FS = fsM; AU = auM;
     const uygulama = appM.initializeApp(firebaseConfig);
+    acM.initializeAppCheck(uygulama, {
+      provider: new acM.ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_KEY),
+      isTokenAutoRefreshEnabled: true,
+    });
     db = FS.getFirestore(uygulama);
     auth = AU.getAuth(uygulama);
   } catch (e) {
+    ...
     console.error("Firebase yüklenemedi:", e);
     durum.hata = "Firebase yüklenemedi (" + ((e && e.message) || e) + ")";
     durum.yuklendi.zat = durum.yuklendi.olay = true;
