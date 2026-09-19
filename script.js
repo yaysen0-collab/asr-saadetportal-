@@ -272,6 +272,9 @@ a.btn-small{display:inline-block;text-decoration:none}
 .fav-satir > a,.fav-satir > div{flex:1;color:inherit;text-decoration:none}
 .not-metin{white-space:pre-wrap}
 .hesap-araclar{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.8rem}
+.welcome-toast{position:fixed;top:24px;right:24px;max-width:340px;background:var(--brand-bg, #5d4037);color:#fff;padding:18px 22px;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.25);font-size:.92rem;line-height:1.6;z-index:9999;opacity:0;transform:translateY(-12px);transition:opacity .35s ease, transform .35s ease}
+.welcome-toast.goster{opacity:1;transform:translateY(0)}
+@media (max-width:600px){.welcome-toast{left:16px;right:16px;max-width:none;top:16px}}
 `;
   document.head.appendChild(s);
 }
