@@ -1261,11 +1261,12 @@ function authDegisti(user) {
   durum.kullanici = user;
   kullaniciVerisiniBagla(user);
   navGuncelle();
-  if (user && durum.girisIstendi && rota.sec === "login") {
+ if (user && durum.girisIstendi && rota.sec === "login") {
     durum.girisIstendi = false;
+    if (adminMi()) hosgeldinBildirimGoster(user.email);
     location.hash = adminMi() ? "#admin" : "#account";
     return;
-  }
+}
   durum.girisIstendi = false;
   if (["login", "admin", "account", "random"].includes(rota.sec)) render({ scroll: false });
   else if (rota.sec === "archive") arsivGuncelle();
