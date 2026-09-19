@@ -197,17 +197,27 @@ function hosgeldinBildirimGoster(email) {
   const mesaj = HOSGELDIN_MESAJLARI[trKucuk(email)];
   if (!mesaj) return;
 
+  const ortu = document.createElement("div");
+  ortu.className = "welcome-toast-overlay";
+
   const kutu = document.createElement("div");
   kutu.className = "welcome-toast";
   kutu.textContent = mesaj;
-  document.body.appendChild(kutu);
 
-  requestAnimationFrame(() => kutu.classList.add("goster"));
+  const kapatBtn = document.createElement("button");
+  kapatBtn.className = "welcome-toast-kapat";
+  kapatBtn.setAttribute("aria-label", "Kapat");
+  kapatBtn.textContent = "×";
+  kapatBtn.addEventListener("click", () => {
+    ortu.classList.remove("goster");
+    setTimeout(() => ortu.remove(), 350);
+  });
 
-  setTimeout(() => {
-    kutu.classList.remove("goster");
-    setTimeout(() => kutu.remove(), 500);
-  }, 5000);
+  kutu.appendChild(kapatBtn);
+  ortu.appendChild(kutu);
+  document.body.appendChild(ortu);
+
+  requestAnimationFrame(() => ortu.classList.add("goster"));
 }
 
 /* ---------- Ek stiller (style.css'e dokunmadan) ---------- */
