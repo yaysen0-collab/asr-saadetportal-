@@ -107,6 +107,7 @@ const durum = {
   makaleAcik: new Set(),
   loginMod: "giris",
   admin: { sekme: "zat", duzenleId: null },
+  favoriler: {}, notlar: {}, notTaslak: {}, kullaniciDinleyici: [], kisiselHata: null,
 };
 
 /* ---------- Yardımcılar ---------- */
@@ -175,6 +176,11 @@ function temizHtml(ham) {
 }
 const bilgiHtml = (ham) => bos(ham) ? "<p>Bu kayıt için henüz bilgi girilmemiş.</p>" : temizHtml(ham);
 
+/* Favori / not anahtarı: "zat_ID" veya "olay_ID" (eski sitedekiyle aynı) */
+const favAnahtar = (tip, id) => tip + "_" + id;
+const kayitBul = (tip, id) => (tip === "zat" ? durum.zatlar : durum.olaylar).find((k) => k.id === id);
+const kayitAdi = (tip, k) => (k ? (tip === "zat" ? k.isim : k.ad) || "" : "");
+
 function adminMi() {
   const u = durum.kullanici;
   return !!(u && u.email && u.email.toLocaleLowerCase("tr") === ADMIN_EMAIL.toLocaleLowerCase("tr"));
@@ -225,6 +231,25 @@ a.button,button.button{display:inline-block}
 .login-panel .login-actions .button{flex:0 0 auto}
 .rich-editor:empty::before{content:attr(data-placeholder);color:var(--quiet)}
 .admin-page .admin-liste-bos{padding:1.2rem;color:var(--quiet);font-size:.8rem}
+.kisisel{margin-top:1.25rem;padding-top:1rem;border-top:1px dashed rgba(184,147,74,.3)}
+.kisisel-ust{margin-bottom:.9rem}
+.kisisel-etiket{display:block;margin-bottom:.4rem;color:var(--brass);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+.kisisel-etiket span{margin-left:.5rem;color:var(--quiet);letter-spacing:0;text-transform:none}
+.not-alani{width:100%;box-sizing:border-box;padding:.7rem .85rem;color:var(--ink);background:var(--bone);border:1px solid rgba(26,22,18,.2);font:inherit;font-size:.85rem;line-height:1.6;resize:vertical}
+.kisisel-alt{display:flex;align-items:center;gap:.9rem;margin-top:.6rem}
+.not-durum{color:#2f6b4f;font-size:.72rem}
+.not-durum.hata{color:#8c3d2f}
+.kayit-giris{margin:1.2rem 0 0;color:var(--muted);font-size:.78rem}
+.kayit-giris a{color:var(--brass)}
+.fav-dolu{border-color:var(--brass)!important;color:var(--brass)!important}
+.fav-isaret{margin-left:.35rem;color:var(--brass);font-size:.8em}
+a.btn-small{display:inline-block;text-decoration:none}
+.hesap-bolum{margin:0 0 .8rem;color:var(--forest);font-family:"Lora",Georgia,serif;font-size:1.25rem;font-weight:500}
+.hesap-bolum ~ .hesap-bolum{margin-top:2.2rem}
+.fav-satir{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
+.fav-satir > a,.fav-satir > div{flex:1;color:inherit;text-decoration:none}
+.not-metin{white-space:pre-wrap}
+.hesap-araclar{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.8rem}
 `;
   document.head.appendChild(s);
 }
@@ -354,6 +379,29 @@ function arsivFiltrele() {
   };
 }
 
+/* ---------- Favori + kişisel not alanı (kayıt detayında) ---------- */
+function kisiselAlan(tur, k) {
+  if (!durum.kullanici) {
+    return `<p class="kayit-giris">Favorilere eklemek ve kişisel not almak için <a href="#login">giriş yapın</a>.</p>`;
+  }
+  const key = favAnahtar(tur, k.id);
+  const fav = !!durum.favoriler[key];
+  const kayitli = durum.notlar[key] ? durum.notlar[key].metin : "";
+  const metin = key in durum.notTaslak ? durum.notTaslak[key] : kayitli;
+  return `<div class="kisisel">
+    ${durum.kisiselHata ? `<div class="error">Favori ve notlar okunamadı: ${esc(durum.kisiselHata)}</div>` : ""}
+    <div class="kisisel-ust">
+      <button type="button" class="btn-small${fav ? " fav-dolu" : ""}" data-action="fav" data-tip="${tur}" data-id="${esc(k.id)}" aria-pressed="${fav}">${fav ? "★ Favorilerde" : "☆ Favorilere ekle"}</button>
+    </div>
+    <label class="kisisel-etiket" for="not-${esc(key)}">Kişisel notum <span>yalnızca siz görürsünüz</span></label>
+    <textarea id="not-${esc(key)}" class="not-alani" rows="3" data-anahtar="${esc(key)}" placeholder="Bu kayıtla ilgili kendinize not alın…">${esc(metin)}</textarea>
+    <div class="kisisel-alt">
+      <button type="button" class="btn-small" data-action="not-kaydet" data-tip="${tur}" data-id="${esc(k.id)}">Notu kaydet</button>
+      <span class="not-durum" data-anahtar="${esc(key)}" role="status"></span>
+    </div>
+  </div>`;
+}
+
 function kayitKarti(k, tur) {
   const ad = tur === "zat" ? k.isim : k.ad;
   const anahtar = `${tur}-${k.id}`;
@@ -369,11 +417,12 @@ function kayitKarti(k, tur) {
       ${satirlar.length ? `<dl class="kayit-bilgi">${satirlar.map(([a, v]) => `<div><dt>${a}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
       ${!bos(k.kaynak) ? `<small>Kaynak: ${esc(k.kaynak)}</small>` : ""}
       ${tur === "zat" ? `<a class="text-link" href="#genealogy/${esc(k.id)}">Soy ağacında gör →</a>` : ""}
+      ${kisiselAlan(tur, k)}
     </div>`;
   }
   return `<article class="record" id="kayit-${esc(anahtar)}">
     <div class="kayit-ust" role="button" tabindex="0" aria-expanded="${acik}" data-action="kayit" data-anahtar="${esc(anahtar)}">
-      <div class="record-head"><h3>${esc(ad)}</h3><span class="era">${esc(devirOf(k))}</span></div>
+      <div class="record-head"><h3>${esc(ad)}${durum.favoriler[favAnahtar(tur, k.id)] ? ` <span class="fav-isaret" title="Favorilerinizde">★</span>` : ""}</h3><span class="era">${esc(devirOf(k))}</span></div>
       ${acik ? "" : `<p>${esc(bos(k.bilgi) ? "Bu kayıt için henüz bilgi girilmemiş." : ozet(k.bilgi, 150))}</p>`}
       ${tarih ? `<small>${esc(tarih)}</small>` : ""}
     </div>
@@ -557,6 +606,7 @@ function sayfaRastgele() {
         ${meta.length ? `<div class="random-meta">${meta.map((m) => `<span>${esc(m)}</span>`).join("")}</div>` : ""}
         <div class="actions">
           <a class="button primary" href="#archive/zat-${esc(k.id)}">Tam kaydı oku</a>
+          ${durum.kullanici ? `<button type="button" class="button${durum.favoriler[favAnahtar("zat", k.id)] ? " fav-dolu" : ""}" data-action="fav" data-tip="zat" data-id="${esc(k.id)}">${durum.favoriler[favAnahtar("zat", k.id)] ? "★ Favorilerde" : "☆ Favorilere ekle"}</button>` : ""}
           <button type="button" class="button" data-action="rastgele">Başka bir şahsiyet</button>
         </div>
       </div>` : `<div class="empty">Henüz bilgisi girilmiş bir şahsiyet yok.</div>`}
@@ -622,7 +672,8 @@ function sayfaGiris() {
       <p>Giriş yaptınız.</p>
       <div class="login-user">${esc(u.email || u.displayName || "")}${adminMi() ? "<br>Yönetici hesabı" : ""}</div>
       <div class="login-actions">
-        ${adminMi() ? `<a class="button primary" href="#admin">Yönetim paneli</a>` : ""}
+        <a class="button primary" href="#account">Favorilerim ve notlarım</a>
+        ${adminMi() ? `<a class="button" href="#admin">Yönetim paneli</a>` : ""}
         <button type="button" class="button" data-action="cikis">Çıkış yap</button>
       </div>`;
   } else {
@@ -850,6 +901,67 @@ async function adminSil(id) {
   }
 }
 
+/* ---------- HESABIM (favoriler + notlar) ---------- */
+function sayfaHesap() {
+  const u = durum.kullanici;
+  if (!u) {
+    return `<section class="split">
+      ${gorselYari({ f: "dome", alt: "Cami kubbesinin iç mimarisi", sticky: true, icerik: `<p class="eyebrow">Hesap</p><h1>Hesabım</h1>` })}
+      <div class="half content" style="align-items:flex-start"><div class="login-panel">
+        <h2>Giriş gerekli</h2>
+        <p>Favorilerinizi ve notlarınızı görmek için giriş yapın.</p>
+        <a class="button primary" href="#login">Giriş yap</a>
+      </div></div>
+    </section>`;
+  }
+  const yuk = durum.yuklendi.zat && durum.yuklendi.olay;
+  const favler = Object.values(durum.favoriler).sort((a, b) => (b.eklenmeTarihi || 0) - (a.eklenmeTarihi || 0));
+  const notlar = Object.values(durum.notlar).filter((n) => n.metin && n.metin.trim())
+    .sort((a, b) => (b.guncellemeTarihi || 0) - (a.guncellemeTarihi || 0));
+  const turAdi = (t) => (t === "zat" ? "Şahsiyet" : "Olay");
+
+  const favSatir = (f) => {
+    const k = kayitBul(f.tip, f.itemId);
+    const ad = kayitAdi(f.tip, k) || f.ad || "İsimsiz kayıt";
+    const var_ = !!k || !yuk;
+    const ic = `<div class="record-head"><h3>${esc(ad)}</h3><span class="era">${turAdi(f.tip)}</span></div>${var_ ? "" : "<small>Bu kayıt arşivden kaldırılmış.</small>"}`;
+    return `<article class="record fav-satir">
+      ${var_ ? `<a href="#archive/${f.tip}-${esc(f.itemId)}">${ic}</a>` : `<div>${ic}</div>`}
+      <button type="button" class="btn-small btn-danger" data-action="fav" data-tip="${f.tip}" data-id="${esc(f.itemId)}">Kaldır</button>
+    </article>`;
+  };
+  const notSatir = (n) => {
+    const k = kayitBul(n.tip, n.itemId);
+    const ad = kayitAdi(n.tip, k) || n.ad || "İsimsiz kayıt";
+    return `<article class="record">
+      <div class="record-head"><h3>${esc(ad)}</h3><span class="era">${turAdi(n.tip)}</span></div>
+      <p class="not-metin">${esc(n.metin)}</p>
+      <div class="hesap-araclar">
+        ${k || !yuk ? `<a class="btn-small" href="#archive/${n.tip}-${esc(n.itemId)}">Kayıtta düzenle</a>` : ""}
+        <button type="button" class="btn-small btn-danger" data-action="not-sil" data-tip="${n.tip}" data-id="${esc(n.itemId)}">Notu sil</button>
+      </div>
+    </article>`;
+  };
+
+  return `<section class="split">
+    ${gorselYari({ f: "dome", alt: "Cami kubbesinin iç mimarisi", sticky: true, icerik: `
+      <p class="eyebrow">Hesap</p>
+      <h1>Hesabım</h1>
+      <p class="visual-copy">${esc(u.displayName || u.email || "")}</p>` })}
+    <div class="half content ark-icerik">
+      ${durum.kisiselHata ? `<div class="error">Favori ve notlar okunamadı: ${esc(durum.kisiselHata)}<br>Firestore kurallarında "favoriler" ve "notlar" koleksiyonlarına giriş yapmış kullanıcı için izin verildiğinden emin olun.</div>` : ""}
+      <h3 class="hesap-bolum">Favorilerim (${favler.length})</h3>
+      ${favler.length ? `<div class="record-list">${favler.map(favSatir).join("")}</div>` : `<div class="empty">Henüz favori eklemediniz. Arşivde bir kaydı açıp “Favorilere ekle”ye basın.</div>`}
+      <h3 class="hesap-bolum">Notlarım (${notlar.length})</h3>
+      ${notlar.length ? `<div class="record-list">${notlar.map(notSatir).join("")}</div>` : `<div class="empty">Henüz not almadınız. Arşivde bir kaydı açıp “Kişisel notum” alanına yazabilirsiniz.</div>`}
+      <div class="hesap-araclar" style="margin-top:2rem">
+        ${adminMi() ? `<a class="button" href="#admin">Yönetim paneli</a>` : ""}
+        <button type="button" class="button" data-action="cikis">Çıkış yap</button>
+      </div>
+    </div>
+  </section>`;
+}
+
 /* ---------- Kimlik doğrulama işlemleri ---------- */
 function girisMesaji(m, ok) {
   const e = $("#giris-mesaj");
@@ -924,7 +1036,106 @@ async function googleGiris() {
 }
 async function cikisYap() {
   try { if (AU) await AU.signOut(auth); } catch (e) { console.error(e); }
-  if (rota.sec === "admin") location.hash = "#home";
+  if (rota.sec === "admin" || rota.sec === "account") location.hash = "#home";
+}
+
+/* ---------- Favoriler ve kişisel notlar (yorum özelliği bilerek yok) ---------- */
+function kisiselDurum(key, metin, hata) {
+  const el = document.querySelector('.not-durum[data-anahtar="' + String(key).replace(/"/g, "") + '"]');
+  if (!el) { if (hata) alert(metin); return; }
+  el.textContent = metin;
+  el.classList.toggle("hata", !!hata);
+  if (!hata) setTimeout(() => { if (el.textContent === metin) el.textContent = ""; }, 2200);
+}
+const hataYazi = (e) => (e && e.code === "permission-denied")
+  ? "İzin verilmedi. Firestore kurallarında bu koleksiyon için giriş yapmış kullanıcıya izin verin."
+  : ((e && e.message) || String(e));
+
+async function favToggle(tip, id) {
+  if (!durum.kullanici) { location.hash = "#login"; return; }
+  const key = favAnahtar(tip, id);
+  const mevcut = durum.favoriler[key];
+  try {
+    if (mevcut) {
+      await Promise.all(mevcut.docIds.map((d) => FS.deleteDoc(FS.doc(db, "favoriler", d))));
+    } else {
+      await FS.addDoc(FS.collection(db, "favoriler"), {
+        uid: durum.kullanici.uid, tip, itemId: id, ad: kayitAdi(tip, kayitBul(tip, id)), eklenmeTarihi: Date.now(),
+      });
+    }
+  } catch (e) {
+    console.error("favori hatası:", e);
+    kisiselDurum(key, "Favori güncellenemedi: " + hataYazi(e), true);
+  }
+}
+
+async function notKaydet(tip, id) {
+  if (!durum.kullanici) return;
+  const key = favAnahtar(tip, id);
+  const alan = document.getElementById("not-" + key);
+  if (!alan) return;
+  const metin = alan.value;
+  const mevcut = durum.notlar[key];
+  const docId = mevcut ? mevcut.docId : durum.kullanici.uid + "_" + tip + "_" + id;
+  const ad = kayitAdi(tip, kayitBul(tip, id));
+  try {
+    if (!metin.trim()) {
+      if (mevcut) await FS.deleteDoc(FS.doc(db, "notlar", docId));
+      delete durum.notlar[key]; delete durum.notTaslak[key]; alan.value = "";
+      kisiselDurum(key, "Not silindi.");
+    } else {
+      const zaman = Date.now();
+      await FS.setDoc(FS.doc(db, "notlar", docId), { uid: durum.kullanici.uid, tip, itemId: id, ad, metin, guncellemeTarihi: zaman });
+      durum.notlar[key] = { docId, ad, tip, itemId: id, metin, guncellemeTarihi: zaman };
+      delete durum.notTaslak[key];
+      kisiselDurum(key, "Kaydedildi ✓");
+    }
+  } catch (e) {
+    console.error("not hatası:", e);
+    kisiselDurum(key, "Not kaydedilemedi: " + hataYazi(e), true);
+  }
+}
+
+async function notSil(tip, id) {
+  const key = favAnahtar(tip, id);
+  const mevcut = durum.notlar[key];
+  if (!durum.kullanici || !mevcut) return;
+  if (!confirm("Bu not silinsin mi?")) return;
+  try { await FS.deleteDoc(FS.doc(db, "notlar", mevcut.docId)); }
+  catch (e) { console.error("not silme hatası:", e); alert("Not silinemedi: " + hataYazi(e)); }
+}
+
+/* Giriş yapan kullanıcının favori ve notlarını dinle (yalnızca kendi kayıtları) */
+function kullaniciVerisiniBagla(user) {
+  durum.kullaniciDinleyici.forEach((f) => { try { f(); } catch (e) { /* önemsiz */ } });
+  durum.kullaniciDinleyici = [];
+  durum.favoriler = {}; durum.notlar = {}; durum.notTaslak = {}; durum.kisiselHata = null;
+  if (!user || !FS) return;
+  const sorgu = (kol) => FS.query(FS.collection(db, kol), FS.where("uid", "==", user.uid));
+  const hata = (kol) => (err) => {
+    console.error(kol + " dinleme hatası:", err);
+    durum.kisiselHata = hataYazi(err);
+    planla();
+  };
+  durum.kullaniciDinleyici.push(FS.onSnapshot(sorgu("favoriler"), (snap) => {
+    const m = {};
+    snap.docs.forEach((d) => {
+      const v = d.data(), key = favAnahtar(v.tip, v.itemId);
+      if (!m[key]) m[key] = { docIds: [], ad: v.ad, tip: v.tip, itemId: v.itemId, eklenmeTarihi: v.eklenmeTarihi };
+      m[key].docIds.push(d.id);
+    });
+    durum.favoriler = m; durum.kisiselHata = null;
+    planla();
+  }, hata("favoriler")));
+  durum.kullaniciDinleyici.push(FS.onSnapshot(sorgu("notlar"), (snap) => {
+    const m = {};
+    snap.docs.forEach((d) => {
+      const v = d.data();
+      m[favAnahtar(v.tip, v.itemId)] = { docId: d.id, ad: v.ad, tip: v.tip, itemId: v.itemId, metin: v.metin, guncellemeTarihi: v.guncellemeTarihi };
+    });
+    durum.notlar = m;
+    if (rota.sec === "account") planla(); /* arşivde yazarken sayfayı yenileme */
+  }, hata("notlar")));
 }
 
 /* ---------- İletişim formu ---------- */
@@ -953,11 +1164,11 @@ async function iletisimGonder() {
 let rota = { sec: "home", param: "" };
 const SAYFALAR = {
   home: sayfaHome, archive: sayfaArsiv, timeline: sayfaCizelge, genealogy: sayfaSoy,
-  random: sayfaRastgele, articles: sayfaMakaleler, faq: sayfaSss, login: sayfaGiris, admin: sayfaAdmin,
+  random: sayfaRastgele, articles: sayfaMakaleler, faq: sayfaSss, login: sayfaGiris, admin: sayfaAdmin, account: sayfaHesap,
 };
 const BASLIKLAR = {
   home: "Ana Sayfa", archive: "Arşiv", timeline: "Zaman Çizelgesi", genealogy: "Soy Ağacı",
-  random: "Rastgele Şahsiyet", articles: "Makaleler", faq: "Sıkça Sorulan Sorular", login: "Giriş", admin: "Yönetici Paneli",
+  random: "Rastgele Şahsiyet", articles: "Makaleler", faq: "Sıkça Sorulan Sorular", login: "Giriş", admin: "Yönetici Paneli", account: "Hesabım",
 };
 
 function rotaOku() {
@@ -980,13 +1191,17 @@ function rotaHazirla(eski) {
 }
 
 function navGuncelle() {
+  const giris = $("#login-nav-link");
+  if (giris) {
+    giris.textContent = durum.kullanici ? "Hesabım" : "Giriş";
+    giris.setAttribute("href", durum.kullanici ? "#account" : "#login");
+    giris.dataset.section = durum.kullanici ? "account" : "login";
+  }
   document.querySelectorAll(".nav-links a").forEach((a) => {
     const aktif = a.dataset.section === rota.sec;
     a.classList.toggle("active", aktif);
     if (aktif) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
-  const giris = $("#login-nav-link");
-  if (giris) giris.textContent = durum.kullanici ? "Hesap" : "Giriş";
   const panel = $("#admin-nav-link");
   if (panel) panel.style.display = adminMi() ? "" : "none";
 }
@@ -1022,14 +1237,16 @@ function planla() {
 
 function authDegisti(user) {
   durum.kullanici = user;
+  kullaniciVerisiniBagla(user);
   navGuncelle();
-  if (user && adminMi() && durum.girisIstendi && rota.sec === "login") {
+  if (user && durum.girisIstendi && rota.sec === "login") {
     durum.girisIstendi = false;
-    location.hash = "#admin";
+    location.hash = adminMi() ? "#admin" : "#account";
     return;
   }
   durum.girisIstendi = false;
-  if (rota.sec === "login" || rota.sec === "admin") render({ scroll: false });
+  if (["login", "admin", "account", "random"].includes(rota.sec)) render({ scroll: false });
+  else if (rota.sec === "archive") arsivGuncelle();
 }
 
 /* ---------- Olaylar (tek yerden, olay delegasyonu) ---------- */
@@ -1064,6 +1281,9 @@ const islem = {
   google: googleGiris,
   cikis: cikisYap,
   iletisim: iletisimGonder,
+  fav(el) { favToggle(el.dataset.tip, el.dataset.id); },
+  "not-kaydet"(el) { notKaydet(el.dataset.tip, el.dataset.id); },
+  "not-sil"(el) { notSil(el.dataset.tip, el.dataset.id); },
   "admin-sekme"(el) { durum.admin.sekme = el.dataset.sekme; adminListeGuncelle(); adminFormuKur(); },
   "admin-duzenle"(el) {
     const liste = durum.admin.sekme === "zat" ? durum.zatlar : durum.olaylar;
@@ -1107,6 +1327,7 @@ function olayBagla() {
     if (e.target.closest && e.target.closest(".editor-toolbar button")) e.preventDefault(); /* seçim kaybolmasın */
   });
   document.addEventListener("input", (e) => {
+    if (e.target.classList && e.target.classList.contains("not-alani")) durum.notTaslak[e.target.dataset.anahtar] = e.target.value;
     if (e.target.id === "arama") { durum.arama = e.target.value; durum.limit = 50; arsivGuncelle(); }
   });
   document.addEventListener("change", (e) => {
