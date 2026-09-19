@@ -18,7 +18,7 @@ const firebaseConfig = {
   messagingSenderId: "930648787998",
   appId: "1:930648787998:web:db163d0f3811786610b20f",
 };
-const ADMIN_EMAIL = "yaysen0@gmail.com";
+const ADMIN_EMAILS = ["asrisaadetportali@gmail.com", "zeynepglfm@gmail.com"];
 const FORMSPREE_URL = "https://formspree.io/f/xaeygoey";
 
 /* Firebase nesneleri baslat() içinde doldurulur */
