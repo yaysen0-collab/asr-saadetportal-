@@ -645,7 +645,10 @@ function sayfaRastgele() {
   const dm = durumMesaji();
   const adaylar = durum.zatlar.filter((z) => !bos(z.bilgi));
   let k = adaylar.find((z) => z.id === durum.rastgeleId);
-  if (!k && adaylar.length) { k = adaylar[Math.floor(Math.random() * adaylar.length)]; durum.rastgeleId = k.id; }
+  if (!k && adaylar.length) {
+    k = agirlikliRastgele(adaylar, (z) => duzMetin(z.bilgi).length + 1);
+    durum.rastgeleId = k.id;
+  }
   const meta = k ? [
     !bos(k.anne) && `Anne: ${k.anne}`, !bos(k.baba) && `Baba: ${k.baba}`,
     birlestir(k.d_hicri, k.d_miladi) && `Doğum: ${birlestir(k.d_hicri, k.d_miladi)}`,
