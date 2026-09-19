@@ -274,10 +274,13 @@ a.btn-small{display:inline-block;text-decoration:none}
 .fav-satir > a,.fav-satir > div{flex:1;color:inherit;text-decoration:none}
 .not-metin{white-space:pre-wrap}
 .hesap-araclar{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.8rem}
-.welcome-toast{position:fixed;top:24px;right:24px;max-width:340px;background:var(--brand-bg, #5d4037);color:#fff;padding:18px 22px;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.25);font-size:.92rem;line-height:1.6;z-index:9999;opacity:0;transform:translateY(-12px);transition:opacity .35s ease, transform .35s ease}
-.welcome-toast.goster{opacity:1;transform:translateY(0)}
-@media (max-width:600px){.welcome-toast{left:16px;right:16px;max-width:none;top:16px}}
-`;
+.welcome-toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity .35s ease}
+.welcome-toast-overlay.goster{opacity:1}
+.welcome-toast{position:relative;max-width:440px;width:88%;background:var(--brand-bg, #5d4037);color:#fff;padding:36px 40px;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.35);font-size:1.05rem;line-height:1.7;text-align:center;transform:scale(.92);transition:transform .35s ease}
+.welcome-toast-overlay.goster .welcome-toast{transform:scale(1)}
+.welcome-toast-kapat{position:absolute;top:10px;right:14px;background:transparent;border:none;color:#fff;font-size:1.4rem;line-height:1;cursor:pointer;opacity:.8}
+.welcome-toast-kapat:hover{opacity:1}
+@media (max-width:600px){.welcome-toast{padding:28px 24px;font-size:.98rem}}
   document.head.appendChild(s);
 }
 
