@@ -148,6 +148,25 @@ function adTemiz(ad) {
 const adAnahtar = (ad) => trKucuk(adTemiz(ad));
 const birlestir = (...p) => p.filter((x) => !bos(x)).join(" / ");
 
+function ozet(ham, n) {
+  const m = duzMetin(ham);
+  return m.length > n ? m.slice(0, n).trimEnd() + "…" : m;
+}
+function agirlikliRastgele(liste, agirlikFn) {
+  const agirliklar = liste.map(agirlikFn);
+  const toplam = agirliklar.reduce((a, b) => a + b, 0);
+  let r = Math.random() * toplam;
+  for (let i = 0; i < liste.length; i++) {
+    r -= agirliklar[i];
+    if (r <= 0) return liste[i];
+  }
+  return liste[liste.length - 1];
+}
+function baslikBuyut(metin) {
+  if (!metin || metin === "?") return metin;
+  return metin.split(" ").map((k) => k.charAt(0).toLocaleUpperCase("tr") + k.slice(1)).join(" ");
+}
+
 /* Firestore'dan gelen (yönetici tarafından yazılmış) HTML'i güvenli hâle getirir */
 const IZINLI = new Set(["P", "BR", "B", "STRONG", "I", "EM", "U", "UL", "OL", "LI", "H3", "H4", "BLOCKQUOTE", "A", "DIV", "SPAN"]);
 const SILINECEK = new Set(["SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "LINK", "META", "FORM", "INPUT", "BUTTON", "SVG"]);
