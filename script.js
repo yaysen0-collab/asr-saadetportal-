@@ -20,6 +20,9 @@ const firebaseConfig = {
 };
 const ADMIN_EMAILS = ["asrisaadetportali@gmail.com", "zeynepglfm@gmail.com"];
 
+/* Hoş geldin penceresinin arka plan rengi. İstediğiniz rengi yazabilirsiniz: "#14261f", "#5d4037", "var(--forest)"… */
+const KARSILAMA_ARKAPLAN = "var(--forest, #14261f)";
+
 const HOSGELDIN_MESAJLARI = {
   "asrisaadetportali@gmail.com": "Hoşgeldin patron, koltuk hazır, ekip hazır, başarı zaten seninle geliyor. Her şeyin üstesinden gelebilirsin.",
   "zeynepglfm@gmail.com": "Hoş geldin ortak! Enerjini topladıysan sahne senin. Birlikte bu projeyi yukarılara taşıyalım. (Not: Seni çok seviyorum)"
@@ -100,6 +103,44 @@ const MAKALELER = [
   },
 ];
 
+/* ==========================================================================
+   SÜRÜM NOTLARI — her ay için tek, kısa bir kayıt.
+   Yeni ay eklemek için listenin BAŞINA yeni bir { ... } bloğu ekleyin.
+   Menüdeki ve alt bilgideki sürüm numarası otomatik olarak ilk kayıttan alınır.
+   ========================================================================== */
+const SURUMLER = [
+  { ay: "Eylül 2026", surum: "3.3.1", baslik: "Yeni tasarım, arama ve hesap özellikleri", maddeler: [
+    "Tüm sayfalar yeni tasarıma göre yeniden hazırlandı: bir yanda görsel, diğer yanda içerik.",
+    "Arşiv (arama, tür ve devir filtreleri), Zaman Çizelgesi, Soyağacı, Rastgele Şahsiyet, Makaleler, Sıkça Sorulan Sorular ve iletişim formu yenilendi.",
+    "Site içi arama eklendi: şahsiyet, olay, makale ve sorular tek yerde aranıyor. Menüdeki “Ara” bağlantısı veya klavyede “/” tuşu ile açılır.",
+    "Favoriler ve kişisel notlar eklendi; yeni Hesabım sayfasından yönetilir. Notları yalnızca siz görürsünüz. Yorum özelliği bilerek eklenmedi.",
+    "Google ile giriş düzeltildi; hatalar artık anlaşılır mesajlarla gösteriliyor.",
+    "Gizlilik Politikası, Kaynakça, Katkıda Bulun ve Sürüm Notları sayfaları eklendi.",
+    "Yönetici paneli: kayıt ekleme, düzenleme ve silme; birden fazla yönetici hesabı ve giriş sonrası karşılama penceresi.",
+  ] },
+  { ay: "Mayıs 2026", surum: "2.5.0", baslik: "Arşiv ve devirler", maddeler: [
+    "Arşiv ekranı 3 sütunlu yapıya kavuşturuldu: rehber, ana içerik ve filtreler.",
+    "Şahsiyet kartlarında “Görsel Öncelik Sistemi” kullanıldı.",
+    "Arşive Devirler Sistemi ve “Bağlantılı Tarih Sistemi” eklendi.",
+  ] },
+];
+const SURUM = SURUMLER[0].surum;
+
+const KAYNAKCA = [
+  { baslik: "Siyer ve Peygamber Efendimiz'in (s.a.v.) Hayatı", eserler: [
+    ["Peygamber Efendimiz'in (Sav) Hayatı", "Ahmed Cevdet Paşa", "Çamlıca Basım Yayın"],
+    ["Herkes İçin Peygamber Efendimizin Hayatı", "Ahmed Cevdet Paşa", "Çamlıca Basım Yayın"],
+    ["Peygamberimiz ve Peygamberler (a.s.)", "Ahmed Cevdet Paşa", "Çamlıca Basım Yayın"],
+  ] },
+  { baslik: "Şemail ve Hadis Kaynakları", eserler: [
+    ["Şemâil-i Şerife", "Muhammed bin İsa et-Tirmizî (r.a.)", "Fazilet Neşriyat"],
+    ["500 Hadîs-i Şerîf", "Ömer Nasuhi Bilmen", "Fazilet Neşriyat"],
+  ] },
+  { baslik: "Ashâb-ı Kirâm ve İtikad", eserler: [
+    ["Ashâb-ı Kirâm Hakkında Müslümanların Nezih İtikâdları", "Ömer Nasuhi Bilmen", "Fazilet Neşriyat"],
+  ] },
+];
+
 /* ---------- Durum ---------- */
 const durum = {
   zatlar: [], olaylar: [],
@@ -113,6 +154,7 @@ const durum = {
   loginMod: "giris",
   admin: { sekme: "zat", duzenleId: null },
   favoriler: {}, notlar: {}, notTaslak: {}, kullaniciDinleyici: [], kisiselHata: null,
+  genelArama: "", kaydirId: null,
 };
 
 /* ---------- Yardımcılar ---------- */
@@ -188,13 +230,14 @@ const kayitAdi = (tip, k) => (k ? (tip === "zat" ? k.isim : k.ad) || "" : "");
 
 function adminMi() {
   const u = durum.kullanici;
+  /* E-posta ASCII'dir: Türkçe kuralıyla değil düz küçük harfe çevirerek karşılaştır (I → ı sorunu olmasın) */
   return !!(u && u.email && ADMIN_EMAILS.some(function(email) {
-    return email.toLocaleLowerCase("tr") === u.email.toLocaleLowerCase("tr");
+    return email.toLowerCase() === u.email.toLowerCase();
   }));
 }
 
 function hosgeldinBildirimGoster(email) {
-  const mesaj = HOSGELDIN_MESAJLARI[trKucuk(email)];
+  const mesaj = HOSGELDIN_MESAJLARI[String(email).toLowerCase()];
   if (!mesaj) return;
 
   const ortu = document.createElement("div");
@@ -284,9 +327,26 @@ a.btn-small{display:inline-block;text-decoration:none}
 .fav-satir > a,.fav-satir > div{flex:1;color:inherit;text-decoration:none}
 .not-metin{white-space:pre-wrap}
 .hesap-araclar{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.8rem}
+.prose h3{margin:2rem 0 .6rem;color:var(--forest);font-family:"Lora",Georgia,serif;font-size:1.15rem;font-weight:500}
+.prose h3:first-child{margin-top:0}
+.prose p,.prose li{color:var(--muted);font-size:.9rem;line-height:1.8}
+.prose p{margin:0 0 1rem}
+.prose a{color:var(--brass)}
+.content .contact-box{margin-top:2rem}
+.kaynak-liste{margin:0 0 1rem;padding:0;list-style:none}
+.kaynak-liste li{padding:.85rem 0;border-bottom:1px solid rgba(184,147,74,.2)}
+.kaynak-liste li strong{display:block;color:var(--ink);font-size:.92rem;font-weight:500}
+.kaynak-liste li span{display:block;margin-top:.15rem;color:var(--quiet);font-size:.78rem}
+.kaynak-liste.uzun li span{color:var(--muted);font-size:.88rem;line-height:1.7}
+.surum-liste{margin:.6rem 0 0;padding-left:1.2rem;color:var(--muted);font-size:.85rem;line-height:1.75}
+mark{padding:0 .1em;color:inherit;background:rgba(184,147,74,.28)}
+.arama-ozet{margin:0 0 1rem;color:var(--quiet);font-size:.78rem}
+[id^="makale-"],[id^="sss-"]{scroll-margin-top:70px}
+.version[data-action]{cursor:pointer}
+.footer-links p + a{margin-top:1rem}
 .welcome-toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity .35s ease}
 .welcome-toast-overlay.goster{opacity:1}
-.welcome-toast{position:relative;max-width:440px;width:88%;background:var(--brand-bg, #5d4037);color:#fff;padding:36px 40px;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.35);font-size:1.05rem;line-height:1.7;text-align:center;transform:scale(.92);transition:transform .35s ease}
+.welcome-toast{position:relative;max-width:440px;width:88%;background:${KARSILAMA_ARKAPLAN};color:#fff;padding:36px 40px;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.35);font-size:1.05rem;line-height:1.7;text-align:center;transform:scale(.92);transition:transform .35s ease}
 .welcome-toast-overlay.goster .welcome-toast{transform:scale(1)}
 .welcome-toast-kapat{position:absolute;top:10px;right:14px;background:transparent;border:none;color:#fff;font-size:1.4rem;line-height:1;cursor:pointer;opacity:.8}
 .welcome-toast-kapat:hover{opacity:1}
@@ -609,7 +669,7 @@ function sayfaSoy(param) {
   <section class="split">
     ${gorselYari({ f: "ornate", alt: "Süslemeli bir el yazması sayfası", sticky: true, icerik: `
       <p class="eyebrow">Nesep ve Akrabalık</p>
-      <h1>Soy<br>Ağacı</h1>
+      <h1>Soyağacı</h1>
       <p class="visual-copy">Bir isim seçin; anne, baba, eş, çocuk ve kardeş bağlarını görün.</p>` })}
     <div class="half content ark-icerik">
       <div class="genealogy-tools">
@@ -664,7 +724,7 @@ function sayfaMakaleler() {
       ${acik ? `<div class="article-full">${m.govde}</div>` : `<p>${esc(m.ozet)}</p>`}
       <button type="button" class="text-link" data-action="makale" data-i="${i}">${acik ? "Daha az göster ↑" : "Devamını oku →"}</button>
     </div>`;
-    return `<section class="split article-section">${i % 2 === 0 ? gorsel + icerik : icerik + gorsel}</section>`;
+    return `<section class="split article-section" id="makale-${i}">${i % 2 === 0 ? gorsel + icerik : icerik + gorsel}</section>`;
   }).join("");
 }
 
@@ -672,7 +732,7 @@ function sayfaMakaleler() {
 function faqListe() {
   return `<div class="faq-list">${SSS.map(([q, a], i) => {
     const acik = durum.faqAcik === i;
-    return `<div class="faq-item">
+    return `<div class="faq-item" id="sss-${i}">
       <button type="button" class="faq-question" data-action="faq" data-i="${i}" aria-expanded="${acik}">
         <span>${esc(q)}</span><span class="faq-icon">${acik ? "−" : "+"}</span>
       </button>
@@ -690,16 +750,7 @@ function sayfaSss() {
       <p class="visual-copy">Arşivin kullanımı, kaynaklar ve içerik hakkında merak edilenler.</p>` })}
     <div class="half content ark-icerik">
       <div id="faq-alan">${faqListe()}</div>
-      <div class="contact-box">
-        <h3>Sorunuzu bulamadınız mı?</h3>
-        <p>Soru, öneri veya düzeltme bildirimlerinizi aşağıdaki formla iletebilirsiniz.</p>
-        <div class="login-field"><label for="ilt-isim">Adınız</label><input id="ilt-isim" type="text" autocomplete="name"></div>
-        <div class="login-field"><label for="ilt-eposta">E-posta</label><input id="ilt-eposta" type="email" autocomplete="email"></div>
-        <div class="login-field"><label for="ilt-konu">Konu</label><input id="ilt-konu" type="text"></div>
-        <div class="login-field"><label for="ilt-mesaj">Mesajınız</label><textarea id="ilt-mesaj" rows="4"></textarea></div>
-        <button type="button" class="button primary" data-action="iletisim">Mesajı gönder</button>
-        <p class="login-message" id="iletisim-durum" role="status"></p>
-      </div>
+      ${iletisimFormu("Sorunuzu bulamadınız mı?", "Soru, öneri veya düzeltme bildirimlerinizi aşağıdaki formla iletebilirsiniz.", "")}
     </div>
   </section>`;
 }
@@ -1003,6 +1054,272 @@ function sayfaHesap() {
   </section>`;
 }
 
+/* ==========================================================================
+   SİTE İÇİ ARAMA
+   ========================================================================== */
+const GRUP_ADI = { zat: "Şahsiyetler", olay: "Olaylar", makale: "Makaleler", sss: "Sıkça Sorulan Sorular" };
+const ARAMA_LIMIT = 8;
+
+const aramaTerimleri = (q) => trKucuk(q).split(/\s+/).filter(Boolean);
+
+/* Eşleşen kelimeleri <mark> ile işaretler (metin önce güvenli hâle getirilir) */
+function vurgula(metin, terimler) {
+  const t = String(metin || "");
+  const k = trKucuk(t);
+  if (k.length !== t.length || !terimler.length) return esc(t);
+  const aralik = [];
+  terimler.forEach((terim) => {
+    let i = k.indexOf(terim), n = 0;
+    while (i !== -1 && n < 20) { aralik.push([i, i + terim.length]); i = k.indexOf(terim, i + terim.length); n++; }
+  });
+  if (!aralik.length) return esc(t);
+  aralik.sort((a, b) => a[0] - b[0]);
+  const birlesik = [aralik[0].slice()];
+  aralik.slice(1).forEach(([b, s]) => {
+    const son = birlesik[birlesik.length - 1];
+    if (b <= son[1]) son[1] = Math.max(son[1], s); else birlesik.push([b, s]);
+  });
+  let cikti = "", imle = 0;
+  birlesik.forEach(([b, s]) => { cikti += esc(t.slice(imle, b)) + "<mark>" + esc(t.slice(b, s)) + "</mark>"; imle = s; });
+  return cikti + esc(t.slice(imle));
+}
+
+/* İlk eşleşmenin çevresinden kısa bir kesit alır */
+function kesit(metin, terimler, uzunluk, yedek) {
+  const t = String(metin || "");
+  const k = trKucuk(t);
+  let en = -1;
+  if (k.length === t.length) terimler.forEach((x) => { const i = k.indexOf(x); if (i !== -1 && (en === -1 || i < en)) en = i; });
+  if (en === -1) { const y = String(yedek || t); return y.length > uzunluk ? y.slice(0, uzunluk).trimEnd() + "…" : y; }
+  const bas = Math.max(0, en - 60), son = Math.min(t.length, bas + uzunluk);
+  return (bas > 0 ? "…" : "") + t.slice(bas, son).trim() + (son < t.length ? "…" : "");
+}
+
+/* Tüm kelimeler bulunmalı (VE). Başlıkta eşleşme, metinde eşleşmeden daha değerli. */
+function puanla(baslik, icerik, terimler) {
+  const b = trKucuk(baslik), m = trKucuk(icerik);
+  let toplam = 0;
+  for (const t of terimler) {
+    let p = 0;
+    if (b === t) p = 100; else if (b.startsWith(t)) p = 60; else if (b.includes(t)) p = 40; else if (m.includes(t)) p = 10;
+    if (!p) return 0;
+    toplam += p;
+  }
+  return toplam;
+}
+
+function aramaYap(q) {
+  const terimler = aramaTerimleri(q);
+  const grup = { zat: [], olay: [], makale: [], sss: [] };
+  durum.zatlar.forEach((z) => {
+    const duz = z._duz != null ? z._duz : duzMetin(z.bilgi);
+    const icerik = [duz, z.anne, z.baba, z.es, z.baglar].filter((x) => !bos(x)).join(" ");
+    const p = puanla(z.isim, icerik, terimler);
+    if (p) grup.zat.push({ p, ad: z.isim || "", icerik, ozet: duz, href: `#archive/zat-${z.id}`, etiket: devirOf(z) });
+  });
+  durum.olaylar.forEach((o) => {
+    const duz = o._duz != null ? o._duz : duzMetin(o.bilgi);
+    const icerik = [duz, o.hicri, o.miladi].filter((x) => !bos(x)).join(" ");
+    const p = puanla(o.ad, icerik, terimler);
+    if (p) grup.olay.push({ p, ad: o.ad || "", icerik, ozet: duz, href: `#archive/olay-${o.id}`, etiket: devirOf(o) });
+  });
+  MAKALELER.forEach((m, i) => {
+    const duz = duzMetin(m.govde);
+    const p = puanla(m.baslik, duz, terimler);
+    if (p) grup.makale.push({ p, ad: m.baslik, icerik: duz, ozet: m.ozet, href: `#articles/${i}`, etiket: m.etiket });
+  });
+  SSS.forEach(([soru, cevap], i) => {
+    const p = puanla(soru, cevap, terimler);
+    if (p) grup.sss.push({ p, ad: soru, icerik: cevap, ozet: cevap, href: `#faq/${i}`, etiket: "S.S.S." });
+  });
+  Object.values(grup).forEach((g) => g.sort((a, b) => b.p - a.p || a.ad.localeCompare(b.ad, "tr")));
+  return { terimler, grup };
+}
+
+function sonucKart(r, terimler) {
+  const parca = r.icerik || r.ozet ? kesit(r.icerik, terimler, 170, r.ozet) : "";
+  return `<a class="record" href="${esc(r.href)}">
+    <div class="record-head"><h3>${vurgula(r.ad, terimler)}</h3><span class="era">${esc(r.etiket)}</span></div>
+    ${parca ? `<p>${vurgula(parca, terimler)}</p>` : ""}
+  </a>`;
+}
+
+function aramaGuncelle() {
+  const alan = $("#arama-alan");
+  if (!alan) return;
+  const q = durum.genelArama.trim();
+  if (q.length < 2) {
+    alan.innerHTML = `<div class="empty">Aramaya başlamak için en az iki harf yazın. Şahsiyetler, olaylar, makaleler ve sıkça sorulan sorular birlikte aranır.</div>`;
+    return;
+  }
+  const { terimler, grup } = aramaYap(q);
+  const toplam = Object.values(grup).reduce((a, g) => a + g.length, 0);
+  const dm = durumMesaji();
+  if (!toplam) { alan.innerHTML = dm + `<div class="empty">“${esc(q)}” için sonuç bulunamadı. Farklı bir yazım deneyin.</div>`; return; }
+  alan.innerHTML = dm + `<p class="arama-ozet">${toplam} sonuç</p>` + ["zat", "olay", "makale", "sss"].filter((k) => grup[k].length).map((k) => {
+    const g = grup[k];
+    return `<h3 class="hesap-bolum">${GRUP_ADI[k]} (${g.length})</h3>
+      <div class="record-list">${g.slice(0, ARAMA_LIMIT).map((r) => sonucKart(r, terimler)).join("")}</div>
+      ${g.length > ARAMA_LIMIT && (k === "zat" || k === "olay") ? `<button type="button" class="text-link" data-action="arsivde-ara" data-tur="${k}">Arşivde tümünü gör (${g.length}) →</button>` : ""}`;
+  }).join("");
+}
+
+function sayfaAra() {
+  return `
+  <section class="split">
+    ${gorselYari({ f: "ornate", alt: "Süslemeli bir el yazması sayfası", sticky: true, icerik: `
+      <p class="eyebrow">Portal</p>
+      <h1>Portalda<br>Ara</h1>
+      <p class="visual-copy">Şahsiyetler, olaylar, makaleler ve sıkça sorulan sorularda birlikte arayın.</p>` })}
+    <div class="half content ark-icerik">
+      <input id="genel-arama" class="search" type="search" placeholder="Bir isim, olay veya kelime yazın…" value="${esc(durum.genelArama)}" autocomplete="off" aria-label="Portalda ara">
+      <div class="quick-tags" style="margin-top:.9rem">${HIZLI_ETIKETLER.map((t) => `<button type="button" class="quick-tag" data-action="ara-etiket" data-deger="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+      <div id="arama-alan" style="margin-top:1.5rem"></div>
+    </div>
+  </section>`;
+}
+
+/* ==========================================================================
+   İLETİŞİM FORMU (S.S.S. ve Katkıda Bulun sayfalarında ortak)
+   ========================================================================== */
+function iletisimFormu(baslik, aciklama, konu) {
+  return `<div class="contact-box">
+    <h3>${esc(baslik)}</h3>
+    <p>${esc(aciklama)}</p>
+    <div class="login-field"><label for="ilt-isim">Adınız</label><input id="ilt-isim" type="text" autocomplete="name"></div>
+    <div class="login-field"><label for="ilt-eposta">E-posta</label><input id="ilt-eposta" type="email" autocomplete="email"></div>
+    <div class="login-field"><label for="ilt-konu">Konu</label><input id="ilt-konu" type="text" value="${esc(konu || "")}"></div>
+    <div class="login-field"><label for="ilt-mesaj">Mesajınız</label><textarea id="ilt-mesaj" rows="4"></textarea></div>
+    <button type="button" class="button primary" data-action="iletisim">Mesajı gönder</button>
+    <p class="login-message" id="iletisim-durum" role="status"></p>
+  </div>`;
+}
+
+/* ==========================================================================
+   BİLGİ SAYFALARI: Gizlilik, Kaynakça, Katkıda Bulun, Sürüm Notları
+   ========================================================================== */
+function statikSayfa({ f, alt, eyebrow, baslik, kopya, govde, ek }) {
+  return `
+  <section class="split">
+    ${gorselYari({ f, alt, sticky: true, icerik: `
+      <p class="eyebrow">${esc(eyebrow)}</p>
+      <h1>${baslik}</h1>
+      <p class="visual-copy">${esc(kopya)}</p>` })}
+    <div class="half content ark-icerik">
+      ${govde}
+      ${ek || ""}
+    </div>
+  </section>`;
+}
+
+function sayfaGizlilik() {
+  return statikSayfa({
+    f: "manuscript", alt: "Eski bir el yazması", eyebrow: "Yasal", baslik: "Gizlilik<br>Politikası", kopya: "Son güncelleme: Eylül 2026",
+    govde: `<div class="prose">
+      <p>Asr-ı Saadet Portalı olarak ziyaretçilerimizin gizliliğine ve kişisel verilerinin güvenliğine önem veriyoruz. Portal, genel kullanıma açık tarihî bilgilerin sunulduğu bir eğitim ve araştırma platformudur. Bu sayfa, hangi bilgilerin hangi amaçla ve nerede tutulduğunu açıklar.</p>
+
+      <h3>Ziyaretiniz sırasında</h3>
+      <p>Arşivi, zaman çizelgesini, soyağacını ve makaleleri okumak için üye olmanız gerekmez. Bu sırada sizi kişisel olarak tanımlayan bir bilgi (ad, adres, telefon vb.) bizim tarafımızdan toplanmaz. Sitede reklam veya izleme amaçlı çerez kullanılmaz.</p>
+
+      <h3>İletişim formu</h3>
+      <p>İletişim formunu kullandığınızda yazdığınız ad, e-posta adresi, konu ve mesaj, size dönüş yapabilmemiz için Formspree hizmeti üzerinden bize iletilir. Bu bilgiler üçüncü kişilerle, kurumlarla veya reklam şirketleriyle paylaşılmaz.</p>
+
+      <h3>Üyelik</h3>
+      <p>İsterseniz e-posta ve şifrenizle ya da Google hesabınızla üye olabilirsiniz. Bu durumda Google Firebase Authentication hizmeti e-posta adresinizi ve Google ile girdiyseniz adınızı işler. Şifreniz açık metin olarak tutulmaz; Firebase tarafından korunur. Üyelik yalnızca favori ve not özelliklerini kullanmanız içindir.</p>
+
+      <h3>Favoriler ve kişisel notlar</h3>
+      <p>Favori olarak işaretlediğiniz kayıtlar ve yazdığınız kişisel notlar, hesabınızla ilişkilendirilerek Google Firestore veritabanında saklanır. Bunlar yalnızca siz giriş yaptığınızda gösterilir, diğer ziyaretçilere sunulmaz. İstediğiniz zaman Hesabım sayfasından silebilirsiniz.</p>
+
+      <h3>Çerezler ve yerel depolama</h3>
+      <p>Oturumunuzun açık kalması için Firebase, tarayıcınızın yerel depolama alanına oturum bilgisi yazabilir. Sitemizde reklam veya izleme amaçlı üçüncü taraf çerezi kullanılmaz.</p>
+
+      <h3>Üçüncü taraf hizmetler</h3>
+      <p>Sayfalar görüntülenirken tarayıcınız yazı tipleri için Google Fonts'a, görseller için Unsplash'a, veriler ve giriş için Google Firebase'e bağlanır. Bu hizmet sağlayıcılar, IP adresiniz gibi standart bağlantı bilgilerini görebilir. Portal Vercel üzerinde barındırılır; barındırma sağlayıcısı standart sunucu kayıtları tutabilir.</p>
+
+      <h3>Yönetici paneli güvenliği</h3>
+      <p>Veritabanına kayıt ekleme yetkisi bulunan yöneticilerin giriş işlemleri Google Firebase'in güvenlik altyapısı ile korunmaktadır.</p>
+
+      <h3>Haklarınız ve iletişim</h3>
+      <p>Hesabınızın ve verilerinizin silinmesi, verilerinize erişim veya düzeltme talepleri ile gizlilik politikamıza dair her türlü soru için <a href="#contribute">İletişim formunu</a> kullanabilirsiniz. Portalın işleyişi değiştikçe bu metin güncellenir.</p>
+    </div>`,
+  });
+}
+
+function sayfaKaynakca() {
+  return statikSayfa({
+    f: "calligraphy", alt: "Arap hattı örneği", eyebrow: "Referanslar", baslik: "Kaynakça ve<br>Temel Eserler", kopya: "Bilgilerin doğrulanmasında ve derlenmesinde temel alınan başlıca eserler.",
+    govde: `<div class="prose">
+      <p>Portalda yer alan bilgiler aşağıda sınıflandırılan eserlere dayanır. Kayda özel kaynak bilgisi varsa, kaydın altında “Kaynak” satırında ayrıca gösterilir.</p>
+      ${KAYNAKCA.map((g) => `<h3>${esc(g.baslik)}</h3>
+        <ul class="kaynak-liste">${g.eserler.map(([eser, yazar, yayin]) => `<li><strong>${esc(eser)}</strong><span>${esc(yazar)} · ${esc(yayin)}</span></li>`).join("")}</ul>`).join("")}
+      <p>Eksik gördüğünüz bir kaynağı <a href="#contribute">Katkıda Bulun</a> sayfasından bize iletebilirsiniz.</p>
+    </div>`,
+  });
+}
+
+function sayfaKatki() {
+  const maddeler = [
+    ["Bilgi ve belge desteği", "Arşivimizde eksik olduğunu düşündüğünüz tarihî şahsiyetler, soyağacı bilgileri veya önemli olaylar hakkında kaynak belirterek bize bilgi gönderebilirsiniz."],
+    ["Hata bildirimi", "Portalımızda karşılaştığınız yazım hatalarını, tarihsel uyuşmazlıkları veya teknik sorunları bize bildirerek sistemin kusursuzlaşmasına yardımcı olabilirsiniz."],
+    ["Akademik inceleme", "Tarih alanında akademik çalışmalar yürütüyorsanız, mevcut verilerimizin doğruluğunu teyit etme konusunda gönüllü danışmanımız olabilirsiniz."],
+  ];
+  return statikSayfa({
+    f: "tiles", alt: "İslam sanatında geometrik çini deseni", eyebrow: "Gönüllü Proje", baslik: "Katkıda<br>Bulun", kopya: "Bu arşivi birlikte büyütelim.",
+    govde: `<div class="prose">
+      <p>Asr-ı Saadet Portalı, İslam tarihini, Ashab-ı Kiram'ın hayatlarını ve bu döneme ait kıymetli bilgileri dijital ortamda herkes için erişilebilir kılmayı amaçlayan gönüllü bir projedir. Arşivi büyütmek ve daha kapsamlı hâle getirmek için desteğinize her zaman açığız.</p>
+      <h3>Nasıl katkı sağlayabilirsiniz?</h3>
+      <ul class="kaynak-liste uzun">${maddeler.map(([b, a]) => `<li><strong>${b}</strong><span>${a}</span></li>`).join("")}</ul>
+      <p>Katkılarınız, bu dijital mirasın gelecek nesillere aktarılmasında büyük bir rol oynayacaktır.</p>
+    </div>`,
+    ek: iletisimFormu("Bize yazın", "Eksik gördüğünüz kayıt, kaynak veya düzeltme önerilerinizi iletebilirsiniz.", "Katkı önerisi"),
+  });
+}
+
+function sayfaSurum() {
+  return statikSayfa({
+    f: "manuscript2", alt: "Eski bir Arapça el yazması", eyebrow: "Güncellemeler", baslik: "Sürüm<br>Notları", kopya: `Güncel sürüm: v${SURUM}`,
+    govde: `<div class="timeline">${SURUMLER.map((s) => `
+      <div class="event">
+        <time>${esc(s.ay)}</time>
+        <h3>v${esc(s.surum)} — ${esc(s.baslik)}</h3>
+        <ul class="surum-liste">${s.maddeler.map((m) => `<li>${esc(m)}</li>`).join("")}</ul>
+      </div>`).join("")}</div>`,
+  });
+}
+
+/* ==========================================================================
+   Menü ve alt bilgiyi genişlet (index.html'e dokunmadan)
+   ========================================================================== */
+function arayuzuGenislet() {
+  const nav = $(".nav-links");
+  if (nav && !$("#ara-nav-link")) {
+    const a = document.createElement("a");
+    a.id = "ara-nav-link"; a.href = "#search"; a.dataset.section = "search"; a.textContent = "Ara";
+    a.setAttribute("aria-label", "Portalda ara");
+    const giris = $("#login-nav-link");
+    if (giris) nav.insertBefore(a, giris); else nav.appendChild(a);
+  }
+  document.querySelectorAll(".version").forEach((v) => {
+    v.textContent = "v" + SURUM;
+    if (v.dataset.action) return;
+    v.dataset.action = "git"; v.dataset.hedef = "#changelog";
+    v.setAttribute("role", "link"); v.tabIndex = 0; v.title = "Sürüm notları";
+  });
+  const kucuk = $(".footer-intro small");
+  if (kucuk) kucuk.textContent = kucuk.textContent.replace(/v\d+\.\d+\.\d+/, "v" + SURUM);
+  const kolonlar = document.querySelectorAll(".footer-links > div");
+  const ekle = (kolon, liste, once) => {
+    if (!kolon || kolon.querySelector(".ek-link")) return;
+    liste.forEach(([ad, href]) => {
+      const a = document.createElement("a");
+      a.className = "ek-link"; a.href = href; a.textContent = ad;
+      if (once) kolon.insertBefore(a, once); else kolon.appendChild(a);
+    });
+  };
+  ekle(kolonlar[0], [["Portalda Ara", "#search"]], kolonlar[0] ? kolonlar[0].querySelector('a[href="#login"]') : null);
+  ekle(kolonlar[1], [["Kaynakça", "#sources"], ["Katkıda Bulun", "#contribute"], ["Gizlilik Politikası", "#privacy"], ["Sürüm Notları", "#changelog"]]);
+}
+
 /* ---------- Kimlik doğrulama işlemleri ---------- */
 function girisMesaji(m, ok) {
   const e = $("#giris-mesaj");
@@ -1206,10 +1523,12 @@ let rota = { sec: "home", param: "" };
 const SAYFALAR = {
   home: sayfaHome, archive: sayfaArsiv, timeline: sayfaCizelge, genealogy: sayfaSoy,
   random: sayfaRastgele, articles: sayfaMakaleler, faq: sayfaSss, login: sayfaGiris, admin: sayfaAdmin, account: sayfaHesap,
+  search: sayfaAra, privacy: sayfaGizlilik, sources: sayfaKaynakca, contribute: sayfaKatki, changelog: sayfaSurum,
 };
 const BASLIKLAR = {
   home: "Ana Sayfa", archive: "Arşiv", timeline: "Zaman Çizelgesi", genealogy: "Soyağacı",
   random: "Rastgele Şahsiyet", articles: "Makaleler", faq: "Sıkça Sorulan Sorular", login: "Giriş", admin: "Yönetici Paneli", account: "Hesabım",
+  search: "Ara", privacy: "Gizlilik Politikası", sources: "Kaynakça", contribute: "Katkıda Bulun", changelog: "Sürüm Notları",
 };
 
 function rotaOku() {
@@ -1222,6 +1541,18 @@ function rotaOku() {
 }
 
 function rotaHazirla(eski) {
+  if (rota.sec === "search") {
+    if (rota.param) durum.genelArama = rota.param;
+    else if (eski.sec !== "search") durum.genelArama = "";
+  }
+  if (rota.sec === "articles" && rota.param !== "") {
+    const i = Number(rota.param);
+    if (Number.isInteger(i) && MAKALELER[i]) { durum.makaleAcik.add(i); durum.kaydirId = "makale-" + i; }
+  }
+  if (rota.sec === "faq" && rota.param !== "") {
+    const i = Number(rota.param);
+    if (Number.isInteger(i) && SSS[i]) { durum.faqAcik = i; durum.kaydirId = "sss-" + i; }
+  }
   if (rota.sec === "random" && eski.sec !== "random") durum.rastgeleId = null;
   if (rota.sec === "archive") {
     if (rota.param) {
@@ -1256,6 +1587,16 @@ function render(secenek) {
   if (scroll) window.scrollTo(0, 0);
   if (sec === "archive") arsivGuncelle();
   if (sec === "admin" && adminMi()) { adminListeGuncelle(); adminFormuKur(); }
+  if (sec === "search") {
+    aramaGuncelle();
+    const g = $("#genel-arama");
+    if (g && scroll) { g.focus(); const n = g.value.length; if (g.setSelectionRange) g.setSelectionRange(n, n); }
+  }
+  if (durum.kaydirId) {
+    const el = document.getElementById(durum.kaydirId);
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: "start" });
+    durum.kaydirId = null;
+  }
   navGuncelle();
   document.title = `${BASLIKLAR[sec]} | Asr-ı Saadet Portalı`;
 }
@@ -1266,7 +1607,8 @@ function veriGuncelle() {
   switch (rota.sec) {
     case "archive": arsivGuncelle(); break;
     case "admin": if (adminMi()) adminListeGuncelle(); break;
-    case "faq": case "login": case "articles": break;
+    case "search": aramaGuncelle(); break;
+    case "faq": case "login": case "articles": case "privacy": case "sources": case "contribute": case "changelog": break;
     default: render({ scroll: false });
   }
 }
@@ -1280,12 +1622,12 @@ function authDegisti(user) {
   durum.kullanici = user;
   kullaniciVerisiniBagla(user);
   navGuncelle();
- if (user && durum.girisIstendi && rota.sec === "login") {
+  if (user && durum.girisIstendi && rota.sec === "login") {
     durum.girisIstendi = false;
     if (adminMi()) hosgeldinBildirimGoster(user.email);
     location.hash = adminMi() ? "#admin" : "#account";
     return;
-}
+  }
   durum.girisIstendi = false;
   if (["login", "admin", "account", "random"].includes(rota.sec)) render({ scroll: false });
   else if (rota.sec === "archive") arsivGuncelle();
@@ -1323,6 +1665,17 @@ const islem = {
   google: googleGiris,
   cikis: cikisYap,
   iletisim: iletisimGonder,
+  git(el) { location.hash = el.dataset.hedef; },
+  "ara-etiket"(el) {
+    durum.genelArama = el.dataset.deger;
+    const i = $("#genel-arama"); if (i) { i.value = durum.genelArama; i.focus(); }
+    aramaGuncelle();
+    history.replaceState(null, "", "#search/" + encodeURIComponent(durum.genelArama));
+  },
+  "arsivde-ara"(el) {
+    durum.arama = durum.genelArama.trim(); durum.tur = el.dataset.tur; durum.devir = "tumu"; durum.limit = 50;
+    location.hash = "#archive";
+  },
   fav(el) { favToggle(el.dataset.tip, el.dataset.id); },
   "not-kaydet"(el) { notKaydet(el.dataset.tip, el.dataset.id); },
   "not-sil"(el) { notSil(el.dataset.tip, el.dataset.id); },
@@ -1357,7 +1710,12 @@ function olayBagla() {
   });
   document.addEventListener("keydown", (e) => {
     const hedef = e.target;
-    if ((e.key === "Enter" || e.key === " ") && hedef.matches && hedef.matches('[role="button"][data-action]')) {
+    if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey && hedef.tagName && !/^(INPUT|TEXTAREA|SELECT)$/.test(hedef.tagName) && !hedef.isContentEditable) {
+      e.preventDefault();
+      if (rota.sec === "search") { const g = $("#genel-arama"); if (g) g.focus(); } else location.hash = "#search";
+      return;
+    }
+    if ((e.key === "Enter" || e.key === " ") && hedef.matches && hedef.matches('[role="button"][data-action], [role="link"][data-action]')) {
       e.preventDefault(); hedef.click(); return;
     }
     if (e.key === "Enter" && hedef.id && (hedef.id === "giris-eposta" || hedef.id === "giris-sifre")) {
@@ -1370,6 +1728,12 @@ function olayBagla() {
   });
   document.addEventListener("input", (e) => {
     if (e.target.classList && e.target.classList.contains("not-alani")) durum.notTaslak[e.target.dataset.anahtar] = e.target.value;
+    if (e.target.id === "genel-arama") {
+      durum.genelArama = e.target.value;
+      aramaGuncelle();
+      const q = durum.genelArama.trim();
+      history.replaceState(null, "", q ? "#search/" + encodeURIComponent(q) : "#search");
+    }
     if (e.target.id === "arama") { durum.arama = e.target.value; durum.limit = 50; arsivGuncelle(); }
   });
   document.addEventListener("change", (e) => {
@@ -1387,7 +1751,7 @@ function olayBagla() {
 function dinle(koleksiyon, tur) {
   FS.onSnapshot(FS.collection(db, koleksiyon), (snap) => {
     const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    liste.forEach((k) => { k._ara = trKucuk((k.isim || k.ad || "") + " " + duzMetin(k.bilgi)); });
+    liste.forEach((k) => { k._duz = duzMetin(k.bilgi); k._ara = trKucuk((k.isim || k.ad || "") + " " + k._duz); });
     liste.sort(adSirala);
     if (tur === "zat") durum.zatlar = liste; else durum.olaylar = liste;
     durum.yuklendi[tur] = true;
@@ -1402,6 +1766,7 @@ function dinle(koleksiyon, tur) {
 
 async function baslat() {
   ekStilEkle();
+  arayuzuGenislet();
   rota = rotaOku();
   rotaHazirla({ sec: "" });
   render();
