@@ -857,14 +857,31 @@ function girisMesaji(m, ok) {
 }
 function hataMetni(err) {
   const kod = (err && err.code) || "";
-  if (["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-login-credentials"].includes(kod)) return "E-posta veya şifre hatalı.";
-  if (kod === "auth/email-already-in-use") return "Bu e-posta ile zaten bir hesap var. Giriş yapmayı deneyin.";
-  if (kod === "auth/weak-password") return "Şifre en az 6 karakter olmalı.";
-  if (kod === "auth/invalid-email") return "Geçerli bir e-posta adresi girin.";
-  if (kod === "auth/too-many-requests") return "Çok fazla deneme yapıldı. Biraz bekleyip tekrar deneyin.";
-  if (kod === "auth/popup-closed-by-user" || kod === "auth/cancelled-popup-request") return "";
-  if (kod === "auth/network-request-failed") return "Bağlantı hatası. İnternetinizi kontrol edin.";
-  return (err && err.message) || "Bir hata oluştu.";
+  const alan = (typeof location !== "undefined" && location.hostname) || "bu adres";
+  switch (kod) {
+    case "auth/invalid-credential": case "auth/wrong-password": case "auth/user-not-found": case "auth/invalid-login-credentials":
+      return "E-posta veya şifre hatalı.";
+    case "auth/email-already-in-use": return "Bu e-posta ile zaten bir hesap var. Giriş yapmayı deneyin.";
+    case "auth/weak-password": return "Şifre en az 6 karakter olmalı.";
+    case "auth/invalid-email": return "Geçerli bir e-posta adresi girin.";
+    case "auth/too-many-requests": return "Çok fazla deneme yapıldı. Biraz bekleyip tekrar deneyin.";
+    case "auth/network-request-failed": return "Bağlantı hatası. İnternetinizi kontrol edin.";
+    case "auth/unauthorized-domain":
+      return `Bu site adresi ("${alan}") Firebase'te yetkili alan adları arasında değil. Firebase Console → Authentication → Settings → Authorized domains bölümüne "${alan}" ekleyin. (${kod})`;
+    case "auth/operation-not-allowed":
+      return `Google ile giriş Firebase'te etkin değil. Firebase Console → Authentication → Sign-in method bölümünde Google'ı etkinleştirin. (${kod})`;
+    case "auth/popup-blocked":
+      return "Tarayıcı Google penceresini engelledi. Adres çubuğundaki engel simgesinden bu site için açılır pencerelere izin verip tekrar deneyin.";
+    case "auth/popup-closed-by-user":
+      return "Giriş penceresi kapatıldı. Tekrar deneyebilirsiniz.";
+    case "auth/cancelled-popup-request": return "";
+    case "auth/operation-not-supported-in-this-environment": case "auth/web-storage-unsupported":
+      return `Bu ortamda Google girişi çalışmıyor (dosyadan açılmış sayfa, uygulama içi tarayıcı veya çerezleri kapalı tarayıcı olabilir). Siteyi Chrome ya da Safari'de https adresinden açın. (${kod})`;
+    case "auth/internal-error": case "auth/invalid-api-key": case "auth/app-not-authorized":
+      return `Firebase yapılandırma hatası. (${kod})`;
+    default:
+      return ((err && err.message) || "Bir hata oluştu.") + (kod ? ` (${kod})` : "");
+  }
 }
 function girisAlanlari() {
   const e = $("#giris-eposta"), s = $("#giris-sifre");
@@ -877,7 +894,7 @@ async function girisYap() {
   girisMesaji("Giriş yapılıyor…", true);
   durum.girisIstendi = true;
   try { await AU.signInWithEmailAndPassword(auth, eposta, sifre); }
-  catch (err) { durum.girisIstendi = false; girisMesaji(hataMetni(err)); }
+  catch (err) { durum.girisIstendi = false; console.error("Giriş hatası:", err && err.code, err); girisMesaji(hataMetni(err)); }
 }
 async function kayitOl() {
   if (!AU) return girisMesaji("Kimlik doğrulama servisi yüklenemedi. Sayfayı yenileyin.");
@@ -890,10 +907,20 @@ async function kayitOl() {
   catch (err) { durum.girisIstendi = false; girisMesaji(hataMetni(err)); }
 }
 async function googleGiris() {
+  if (typeof location !== "undefined" && location.protocol === "file:")
+    return girisMesaji("Google girişi dosyadan açılan sayfada çalışmaz. Siteyi https adresinden açın.");
   if (!AU) return girisMesaji("Kimlik doğrulama servisi yüklenemedi. Sayfayı yenileyin.");
+  girisMesaji("Google penceresi açılıyor…", true);
   durum.girisIstendi = true;
-  try { await AU.signInWithPopup(auth, new AU.GoogleAuthProvider()); }
-  catch (err) { durum.girisIstendi = false; girisMesaji(hataMetni(err)); }
+  try {
+    const saglayici = new AU.GoogleAuthProvider();
+    saglayici.setCustomParameters({ prompt: "select_account" });
+    await AU.signInWithPopup(auth, saglayici);
+  } catch (err) {
+    durum.girisIstendi = false;
+    console.error("Google giriş hatası:", err && err.code, err);
+    girisMesaji(hataMetni(err));
+  }
 }
 async function cikisYap() {
   try { if (AU) await AU.signOut(auth); } catch (e) { console.error(e); }
