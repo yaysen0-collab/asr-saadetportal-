@@ -191,6 +191,12 @@ function adminMi() {
   return !!(u && u.email && ADMIN_EMAILS.some(function(email) {
     return email.toLocaleLowerCase("tr") === u.email.toLocaleLowerCase("tr");
 }));
+   function adminMi() {
+  const u = durum.kullanici;
+  return !!(u && u.email && ADMIN_EMAILS.some(function(email) {
+    return email.toLocaleLowerCase("tr") === u.email.toLocaleLowerCase("tr");
+}));
+}
 }
 
 /* ---------- Ek stiller (style.css'e dokunmadan) ---------- */
