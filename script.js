@@ -19,6 +19,11 @@ const firebaseConfig = {
   appId: "1:930648787998:web:db163d0f3811786610b20f",
 };
 const ADMIN_EMAILS = ["asrisaadetportali@gmail.com", "zeynepglfm@gmail.com"];
+
+const HOSGELDIN_MESAJLARI = {
+  "asrisaadetportali@gmail.com": "Hoşgeldin patron, koltuk hazır, ekip hazır, başarı zaten seninle geliyor. Her şeyin üstesinden gelebilirsin.",
+  "zeynepglfm@gmail.com": "Hoş geldin ortak! Enerjini topladıysan sahne senin. Birlikte bu projeyi yukarılara taşıyalım. (Not: Seni çok seviyorum)"
+};
 const FORMSPREE_URL = "https://formspree.io/f/xaeygoey";
 
 /* Firebase nesneleri baslat() içinde doldurulur */
