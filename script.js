@@ -1775,6 +1775,7 @@ function dinle(koleksiyon, tur) {
 
 async function baslat() {
   ekStilEkle();
+  arayuzuGenislet();
   rota = rotaOku();
   rotaHazirla({ sec: "" });
   render();
