@@ -183,7 +183,9 @@ const kayitAdi = (tip, k) => (k ? (tip === "zat" ? k.isim : k.ad) || "" : "");
 
 function adminMi() {
   const u = durum.kullanici;
-  return !!(u && u.email && u.email.toLocaleLowerCase("tr") === ADMIN_EMAIL.toLocaleLowerCase("tr"));
+  return !!(u && u.email && ADMIN_EMAILS.some(function(email) {
+    return email.toLocaleLowerCase("tr") === u.email.toLocaleLowerCase("tr");
+}));
 }
 
 /* ---------- Ek stiller (style.css'e dokunmadan) ---------- */
