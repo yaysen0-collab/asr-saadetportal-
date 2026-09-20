@@ -848,7 +848,8 @@ p {
 
 .footer-links a {
   display: block;
-  margin-bottom: 0.5rem;
+  padding: 0.35rem 0;
+  margin-bottom: 0.15rem;
   color: rgba(232, 226, 217, 0.7);
   font-size: 0.78rem;
   text-decoration: none;
