@@ -29,6 +29,13 @@ const HOSGELDIN_MESAJLARI = {
 };
 const FORMSPREE_URL = "https://formspree.io/f/xaeygoey";
 
+/* ==========================================================================
+   APP CHECK — Firebase Console'da App Check "Enforce" (zorunlu) ise BURAYI DOLDURUN.
+   ...
+   ========================================================================== */
+const APPCHECK_SITE_KEY = "";
+const APPCHECK_SAGLAYICI = "v3";
+
 /* Firebase nesneleri baslat() içinde doldurulur */
 let FS = null, AU = null, db = null, auth = null;
 
