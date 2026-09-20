@@ -357,7 +357,12 @@ mark{padding:0 .1em;color:inherit;background:rgba(184,147,74,.28)}
 
 /* ---------- Ortak parçalar ---------- */
 function durumMesaji() {
-  if (durum.hata) return `<div class="error">Kayıtlar yüklenemedi: ${esc(durum.hata)}<br>İnternet bağlantınızı ve Firestore kurallarını kontrol edin.</div>`;
+  if (durum.hata) {
+    const ipucu = durum.hataKod === "permission-denied"
+      ? `Firestore bu koleksiyonu okumaya izin vermiyor. Kontrol edin: (1) Firebase Console → Firestore Database → Rules sekmesindeki kurallar "Publish" ile yayınlandı mı? (2) Doğru projedesiniz ve "(default)" veritabanındasınız (bu site "${esc(firebaseConfig.projectId)}" projesini kullanıyor). (3) Console → App Check → Cloud Firestore için "Enforce" açık değil.`
+      : `İnternet bağlantınızı ve Firestore kurallarını kontrol edin.`;
+    return `<div class="error">Kayıtlar yüklenemedi: ${esc(durum.hata)}<br>${ipucu}</div>`;
+  }
   if (!(durum.yuklendi.zat && durum.yuklendi.olay)) {
     return durum.yavas
       ? `<div class="loading">Kayıtlar beklenenden geç yükleniyor… İnternet bağlantınızı kontrol edin (VPN veya güvenlik duvarı bağlantıyı yavaşlatabilir). Gerekirse sayfayı yenileyin.</div>`
@@ -1770,7 +1775,8 @@ function dinle(koleksiyon, tur) {
     planla();
   }, (err) => {
     console.error(koleksiyon + " dinleme hatası:", err);
-    durum.hata = (err && err.message) || String(err);
+    durum.hataKod = (err && err.code) || "";
+    durum.hata = koleksiyon + " koleksiyonu: " + ((err && err.message) || String(err));
     durum.yuklendi[tur] = true;
     planla();
   });
