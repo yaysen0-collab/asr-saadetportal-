@@ -10,11 +10,13 @@
     <title>Asr-ı Saadet Portalı</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <meta name="theme-color" content="#0d211b" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./premium.css" />
     <script>
   window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
 </script>
@@ -26,8 +28,14 @@
   <body>
     <nav class="site-nav" aria-label="Ana menü">
       <div class="nav-row">
-        <a class="brand" href="#home">Asr-ı Saadet <span>Portalı</span></a>
-        <div class="nav-links">
+        <a class="brand" href="#home" aria-label="Asr-ı Saadet Portalı ana sayfa">
+          <span class="brand-mark" aria-hidden="true"><i></i></span>
+          <span class="brand-copy"><strong>Asr-ı Saadet</strong><small>Dijital Miras Portalı</small></span>
+        </a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+          <span></span><span></span><span></span><b>Menü</b>
+        </button>
+        <div class="nav-links" id="primary-navigation">
           <a href="#home" data-section="home">Ana Sayfa</a>
           <a href="#archive" data-section="archive">Arşiv</a>
           <a href="#timeline" data-section="timeline">Zaman Çizelgesi</a>
@@ -49,8 +57,8 @@
     <footer class="site-footer">
       <div class="footer-half footer-intro">
         <div>
-          <p class="brand">Asr-ı Saadet <span>Portalı</span></p>
-          <p>Ashâb-ı Kirâm'ın mirasını belgeleyen kapsamlı dijital arşiv.</p>
+          <p class="brand"><span class="brand-mark" aria-hidden="true"><i></i></span><span class="brand-copy"><strong>Asr-ı Saadet</strong><small>Dijital Miras Portalı</small></span></p>
+          <p>Ashâb-ı Kirâm'ın hayatlarını, nesep bağlarını ve çağın izlerini belgeleyen bağımsız dijital arşiv.</p>
         </div>
         <small>© 2026 · v2.5.0 · Tüm hakları saklıdır</small>
       </div>
@@ -73,6 +81,7 @@
       </div>
     </footer>
 
+    <script src="./ui.js" defer></script>
     <script type="module" src="./script.js"></script>
   </body>
 </html>
