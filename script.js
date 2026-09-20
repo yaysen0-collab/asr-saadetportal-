@@ -37,7 +37,7 @@ const FORMSPREE_URL = "https://formspree.io/f/xaeygoey";
      veya "v3" (reCAPTCHA v3).
    - Anahtardaki izinli alan adları listesinde bu sitenin adresi (asrisaadetportali.vercel.app) olmalı.
    ========================================================================== */
-const APPCHECK_SITE_KEY = "6LfSyMUtAAAAAPDwQv9ef6NnGtUGchxwwJp1mfrq";
+const APPCHECK_SITE_KEY = "6LdsjcQtAAAAAFp6f2q_EhytHJdhcrFClu9wBgSG";
 const APPCHECK_SAGLAYICI = "enterprise";
 
 /* Firebase nesneleri baslat() içinde doldurulur */
@@ -377,7 +377,10 @@ function durumMesaji() {
         acBilgi = `Firebase'te App Check zorunluysa bu site App Check belgesi göndermediği için reddedilir. script.js başındaki APPCHECK_SITE_KEY satırına reCAPTCHA site anahtarınızı yazın.`;
       } else if (ac && typeof ac === "object") {
         const recaptcha = /recaptcha/i.test(ac.kod + " " + ac.mesaj);
-        acBilgi = `App Check belgesi ALINAMADI (${esc(ac.kod || ac.mesaj)}). ` + (recaptcha
+        const kisitli = /throttled/i.test(ac.kod + " " + ac.mesaj);
+        acBilgi = kisitli
+          ? `App Check istekleri, önceki başarısız denemeler yüzünden tarayıcıda geçici olarak durduruldu (${esc(ac.kod)}). Asıl sorun giderildikten sonra siteyi gizli pencerede açın veya tarayıcı verilerini temizleyin (F12 → Application → Storage → Clear site data). Gizli pencerede gerçek hata nedeni görünür.`
+          : `App Check belgesi ALINAMADI (${esc(ac.kod || ac.mesaj)}). ` + (recaptcha
           ? `reCAPTCHA çalışmadı: anahtardaki izinli alan adının bu sitenin adresi olduğunu, anahtar kimliğinin doğru yazıldığını ve reklam engelleyicinin kapalı olduğunu kontrol edin.`
           : `Firebase belgeyi vermedi: Firebase Console → App Check → Apps sekmesinde uygulama kimliği "${esc(firebaseConfig.appId)}" olan web uygulamasının, "${esc(APPCHECK_SAGLAYICI)}" sağlayıcısıyla ve bu sitedeki anahtarla kayıtlı olduğunu kontrol edin.`);
       } else if (ac === "ok") {
