@@ -435,7 +435,7 @@ function sayfaHome() {
 
   return `
   <section class="split">
-    ${gorselYari({ f: "dome", alt: "Cami kubbesinin iç mimarisi", icerik: `
+    ${gorselYari({ f: "dome", alt: "Cami kubbesinin iç mimarisi", oncelik: true, icerik: `
       <h1>“Ashabım, yıldızlar gibidir. Hangisine tabi olursanız hidayete erersiniz.”</h1>
       <p class="quote-source">— Peygamber Efendimiz (s.a.v.)</p>
       <div class="brass-rule"></div>` })}
