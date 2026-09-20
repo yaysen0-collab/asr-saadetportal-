@@ -90,6 +90,8 @@ input:focus-visible {
 }
 
 .nav-links a {
+  padding: 0.65rem 0.15rem;
+  display: inline-block;
   color: var(--quiet);
   font-size: 0.68rem;
   letter-spacing: 0.08em;
