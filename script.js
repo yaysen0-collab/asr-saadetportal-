@@ -9,7 +9,6 @@
 const FIREBASE_SURUM = "10.8.0";
 const FB = (p) => `https://www.gstatic.com/firebasejs/${FIREBASE_SURUM}/${p}.js`;
 const yukle = (url) => import(url);
-const RECAPTCHA_ENTERPRISE_KEY = "6LdsjcQtAAAAAFp6f2q_EhytHJdhcrFClu9wBgSG";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCrrD1XRInE3Er47ZRl28rUo_Pk7FZAyss",
@@ -155,7 +154,7 @@ const durum = {
   loginMod: "giris",
   admin: { sekme: "zat", duzenleId: null },
   favoriler: {}, notlar: {}, notTaslak: {}, kullaniciDinleyici: [], kisiselHata: null,
-  genelArama: "", kaydirId: null,
+  genelArama: "", kaydirId: null, yavas: false,
 };
 
 /* ---------- Yardımcılar ---------- */
@@ -359,7 +358,11 @@ mark{padding:0 .1em;color:inherit;background:rgba(184,147,74,.28)}
 /* ---------- Ortak parçalar ---------- */
 function durumMesaji() {
   if (durum.hata) return `<div class="error">Kayıtlar yüklenemedi: ${esc(durum.hata)}<br>İnternet bağlantınızı ve Firestore kurallarını kontrol edin.</div>`;
-  if (!(durum.yuklendi.zat && durum.yuklendi.olay)) return `<div class="loading">Kayıtlar yükleniyor…</div>`;
+  if (!(durum.yuklendi.zat && durum.yuklendi.olay)) {
+    return durum.yavas
+      ? `<div class="loading">Kayıtlar beklenenden geç yükleniyor… İnternet bağlantınızı kontrol edin (VPN veya güvenlik duvarı bağlantıyı yavaşlatabilir). Gerekirse sayfayı yenileyin.</div>`
+      : `<div class="loading">Kayıtlar yükleniyor…</div>`;
+  }
   return "";
 }
 const zatTarih = (k) => {
@@ -1781,19 +1784,18 @@ async function baslat() {
   render();
   olayBagla();
   try {
-    const [appM, fsM, auM, acM] = await Promise.all([
-      yukle(FB("firebase-app")),
-      yukle(FB("firebase-firestore")),
-      yukle(FB("firebase-auth")),
-      yukle(FB("firebase-app-check")),
-    ]);
+    const [appM, fsM, auM] = await Promise.all([yukle(FB("firebase-app")), yukle(FB("firebase-firestore")), yukle(FB("firebase-auth"))]);
     FS = fsM; AU = auM;
     const uygulama = appM.initializeApp(firebaseConfig);
-    acM.initializeAppCheck(uygulama, {
-      provider: new acM.ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_KEY),
-      isTokenAutoRefreshEnabled: true,
-    });
-    db = FS.getFirestore(uygulama);
+    try {
+      /* Bazı ağlarda (VPN, güvenlik duvarı, antivirüs, reklam engelleyici, zayıf bağlantı) Firestore'un canlı
+         bağlantısı zaman aşımına uğrar (ERR_TIMED_OUT). Otomatik algılama: bağlantı kurulamazsa uyumlu
+         "long polling" yöntemine geçer; kurulabiliyorsa hızlı yöntem kullanılmaya devam eder. */
+      db = FS.initializeFirestore(uygulama, { experimentalAutoDetectLongPolling: true });
+    } catch (e) {
+      console.warn("Firestore özel ayarla başlatılamadı, varsayılan ayar kullanılıyor:", e);
+      db = FS.getFirestore(uygulama);
+    }
     auth = AU.getAuth(uygulama);
   } catch (e) {
     console.error("Firebase yüklenemedi:", e);
@@ -1805,6 +1807,10 @@ async function baslat() {
   AU.onAuthStateChanged(auth, authDegisti);
   dinle("zatlar", "zat");
   dinle("olaylar", "olay");
+  /* Kayıtlar 12 saniyede gelmezse kullanıcıya bilgi ver (sayfa sessizce takılı kalmasın) */
+  setTimeout(() => {
+    if (!(durum.yuklendi.zat && durum.yuklendi.olay)) { durum.yavas = true; planla(); }
+  }, 12000);
 }
 
 baslat();
