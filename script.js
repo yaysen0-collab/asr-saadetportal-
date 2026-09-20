@@ -52,7 +52,7 @@ const FOTO = {
   manuscript2: "1720701575003-51dafcf39cb4",
   ornate: "1720700955600-a21cd215d1a3",
 };
-const foto = (k) => `https://images.unsplash.com/photo-${FOTO[k]}?w=1400&q=70&auto=format&fit=crop`;
+const foto = (k) => `https://images.unsplash.com/photo-${FOTO[k]}?w=1100&q=62&auto=format&fit=crop`;
 
 const DEVIRLER = ["Asr-ı Saadet", "Hulefâ-yi Râşidîn", "Emeviler", "Abbasiler", "Endülüs", "Diğer"];
 const HIZLI_ETIKETLER = ["Ebu Bekir", "Ömer", "Osman", "Ali", "Bedir", "Hamza"];
