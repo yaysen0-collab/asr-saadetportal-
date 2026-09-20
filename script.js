@@ -29,6 +29,17 @@ const HOSGELDIN_MESAJLARI = {
 };
 const FORMSPREE_URL = "https://formspree.io/f/xaeygoey";
 
+/* ==========================================================================
+   APP CHECK — Firebase Console'da App Check "Enforce" (zorunlu) ise BURAYI DOLDURUN.
+   Aksi hâlde site kayıtları okuyamaz ("Missing or insufficient permissions").
+   - APPCHECK_SITE_KEY: reCAPTCHA SİTE anahtarı (herkese açık olandır; gizli anahtar DEĞİL).
+   - APPCHECK_SAGLAYICI: Firebase'de hangisini kaydettiyseniz: "enterprise" (reCAPTCHA Enterprise, önerilen)
+     veya "v3" (reCAPTCHA v3).
+   - Anahtardaki izinli alan adları listesinde bu sitenin adresi (asrisaadetportali.vercel.app) olmalı.
+   ========================================================================== */
+const APPCHECK_SITE_KEY = "6LfSyMUtAAAAAPDwQv9ef6NnGtUGchxwwJp1mfrq";
+const APPCHECK_SAGLAYICI = "enterprise";
+
 /* Firebase nesneleri baslat() içinde doldurulur */
 let FS = null, AU = null, db = null, auth = null;
 
@@ -115,7 +126,7 @@ const SURUMLER = [
     "Site içi arama eklendi: şahsiyet, olay, makale ve sorular tek yerde aranıyor. Menüdeki “Ara” bağlantısı veya klavyede “/” tuşu ile açılır.",
     "Favoriler ve kişisel notlar eklendi; yeni Hesabım sayfasından yönetilir. Notları yalnızca siz görürsünüz. Yorum özelliği bilerek eklenmedi.",
     "Google ile giriş düzeltildi; hatalar artık anlaşılır mesajlarla gösteriliyor.",
-    "Gizlilik Politikası, Kaynakça, Katkıda Bulun ve Sürüm Notları sayfaları eklendi.",
+    "Gizlilik Politikası, Kaynakça, Katkıda Bulun (iletişim formu burada) ve Sürüm Notları sayfaları eklendi. Sıkça Sorulan Sorular üst menüden alt bilgiye taşındı.",
     "Yönetici paneli: kayıt ekleme, düzenleme ve silme; birden fazla yönetici hesabı ve giriş sonrası karşılama penceresi.",
   ] },
   { ay: "Mayıs 2026", surum: "2.5.0", baslik: "Arşiv ve devirler", maddeler: [
@@ -154,7 +165,7 @@ const durum = {
   loginMod: "giris",
   admin: { sekme: "zat", duzenleId: null },
   favoriler: {}, notlar: {}, notTaslak: {}, kullaniciDinleyici: [], kisiselHata: null,
-  genelArama: "", kaydirId: null,
+  genelArama: "", kaydirId: null, yavas: false,
 };
 
 /* ---------- Yardımcılar ---------- */
@@ -357,8 +368,20 @@ mark{padding:0 .1em;color:inherit;background:rgba(184,147,74,.28)}
 
 /* ---------- Ortak parçalar ---------- */
 function durumMesaji() {
-  if (durum.hata) return `<div class="error">Kayıtlar yüklenemedi: ${esc(durum.hata)}<br>İnternet bağlantınızı ve Firestore kurallarını kontrol edin.</div>`;
-  if (!(durum.yuklendi.zat && durum.yuklendi.olay)) return `<div class="loading">Kayıtlar yükleniyor…</div>`;
+  if (durum.hata) {
+    const ipucu = durum.hataKod === "permission-denied"
+      ? (!APPCHECK_SITE_KEY
+          ? `Firebase'te App Check zorunluysa bu site App Check belgesi göndermediği için reddedilir. script.js başındaki APPCHECK_SITE_KEY satırına reCAPTCHA site anahtarınızı yazın. `
+          : `App Check anahtarı girilmiş; reCAPTCHA anahtarında bu sitenin adresinin izinli olduğunu ve Firebase'de aynı sağlayıcının (${esc(APPCHECK_SAGLAYICI)}) kayıtlı olduğunu kontrol edin. `)
+        + `Ayrıca Rules sekmesindeki kuralların "Publish" ile yayınlandığını ve doğru projede ("${esc(firebaseConfig.projectId)}", "(default)" veritabanı) olduğunuzu doğrulayın.`
+      : `İnternet bağlantınızı ve Firestore kurallarını kontrol edin.`;
+    return `<div class="error">Kayıtlar yüklenemedi: ${esc(durum.hata)}<br>${ipucu}</div>`;
+  }
+  if (!(durum.yuklendi.zat && durum.yuklendi.olay)) {
+    return durum.yavas
+      ? `<div class="loading">Kayıtlar beklenenden geç yükleniyor… İnternet bağlantınızı kontrol edin (VPN veya güvenlik duvarı bağlantıyı yavaşlatabilir). Gerekirse sayfayı yenileyin.</div>`
+      : `<div class="loading">Kayıtlar yükleniyor…</div>`;
+  }
   return "";
 }
 const zatTarih = (k) => {
@@ -750,7 +773,11 @@ function sayfaSss() {
       <p class="visual-copy">Arşivin kullanımı, kaynaklar ve içerik hakkında merak edilenler.</p>` })}
     <div class="half content ark-icerik">
       <div id="faq-alan">${faqListe()}</div>
-      ${iletisimFormu("Sorunuzu bulamadınız mı?", "Soru, öneri veya düzeltme bildirimlerinizi aşağıdaki formla iletebilirsiniz.", "")}
+      <div class="contact-box">
+        <h3>Sorunuzu bulamadınız mı?</h3>
+        <p>Aklınıza takılan başka bir şey varsa, önerilerinizle ve düzeltme bildirimlerinizle birlikte bize yazabilirsiniz.</p>
+        <a class="button primary" href="#contribute">Bize yazın</a>
+      </div>
     </div>
   </section>`;
 }
@@ -1188,7 +1215,7 @@ function iletisimFormu(baslik, aciklama, konu) {
     <p>${esc(aciklama)}</p>
     <div class="login-field"><label for="ilt-isim">Adınız</label><input id="ilt-isim" type="text" autocomplete="name"></div>
     <div class="login-field"><label for="ilt-eposta">E-posta</label><input id="ilt-eposta" type="email" autocomplete="email"></div>
-    <div class="login-field"><label for="ilt-konu">Konu</label><input id="ilt-konu" type="text" value="${esc(konu || "")}"></div>
+    <div class="login-field"><label for="ilt-konu">Konu</label><input id="ilt-konu" type="text" value="${esc(konu || "")}" placeholder="Örn. Soru, Hata bildirimi, Katkı önerisi"></div>
     <div class="login-field"><label for="ilt-mesaj">Mesajınız</label><textarea id="ilt-mesaj" rows="4"></textarea></div>
     <button type="button" class="button primary" data-action="iletisim">Mesajı gönder</button>
     <p class="login-message" id="iletisim-durum" role="status"></p>
@@ -1271,7 +1298,7 @@ function sayfaKatki() {
       <ul class="kaynak-liste uzun">${maddeler.map(([b, a]) => `<li><strong>${b}</strong><span>${a}</span></li>`).join("")}</ul>
       <p>Katkılarınız, bu dijital mirasın gelecek nesillere aktarılmasında büyük bir rol oynayacaktır.</p>
     </div>`,
-    ek: iletisimFormu("Bize yazın", "Eksik gördüğünüz kayıt, kaynak veya düzeltme önerilerinizi iletebilirsiniz.", "Katkı önerisi"),
+    ek: iletisimFormu("Bize yazın", "Sorularınızı, eksik gördüğünüz kayıt, kaynak veya düzeltme önerilerinizi iletebilirsiniz.", ""),
   });
 }
 
@@ -1291,6 +1318,8 @@ function sayfaSurum() {
    Menü ve alt bilgiyi genişlet (index.html'e dokunmadan)
    ========================================================================== */
 function arayuzuGenislet() {
+  /* S.S.S. üst menüden kalktı; alt bilgide yer alır */
+  document.querySelectorAll('.nav-links a[href="#faq"], .nav-links a[data-section="faq"]').forEach((a) => a.remove());
   const nav = $(".nav-links");
   if (nav && !$("#ara-nav-link")) {
     const a = document.createElement("a");
@@ -1317,7 +1346,9 @@ function arayuzuGenislet() {
     });
   };
   ekle(kolonlar[0], [["Portalda Ara", "#search"]], kolonlar[0] ? kolonlar[0].querySelector('a[href="#login"]') : null);
-  ekle(kolonlar[1], [["Kaynakça", "#sources"], ["Katkıda Bulun", "#contribute"], ["Gizlilik Politikası", "#privacy"], ["Sürüm Notları", "#changelog"]]);
+  const hakkinda = [["Kaynakça", "#sources"], ["Katkıda Bulun", "#contribute"], ["Gizlilik Politikası", "#privacy"], ["Sürüm Notları", "#changelog"]];
+  if (!document.querySelector('.footer-links a[href="#faq"]')) hakkinda.unshift(["Sıkça Sorulan Sorular", "#faq"]);
+  ekle(kolonlar[1], hakkinda);
 }
 
 /* ---------- Kimlik doğrulama işlemleri ---------- */
@@ -1758,10 +1789,30 @@ function dinle(koleksiyon, tur) {
     planla();
   }, (err) => {
     console.error(koleksiyon + " dinleme hatası:", err);
-    durum.hata = (err && err.message) || String(err);
+    durum.hataKod = (err && err.code) || "";
+    durum.hata = koleksiyon + " koleksiyonu: " + ((err && err.message) || String(err));
     durum.yuklendi[tur] = true;
     planla();
   });
+}
+
+/* App Check: Firestore/Auth kullanılmadan ÖNCE başlatılmalıdır */
+async function appCheckBaslat(uygulama) {
+  if (!APPCHECK_SITE_KEY) {
+    console.warn("App Check anahtarı girilmemiş (APPCHECK_SITE_KEY). Firebase'te App Check zorunluysa kayıtlar yüklenmez.");
+    return;
+  }
+  try {
+    const AC = await yukle(FB("firebase-app-check"));
+    /* Yerelde (localhost) test için hata ayıklama belgesi; canlı sitede etkisizdir */
+    if (typeof location !== "undefined" && location.hostname === "localhost") self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    const saglayici = APPCHECK_SAGLAYICI === "enterprise"
+      ? new AC.ReCaptchaEnterpriseProvider(APPCHECK_SITE_KEY)
+      : new AC.ReCaptchaV3Provider(APPCHECK_SITE_KEY);
+    AC.initializeAppCheck(uygulama, { provider: saglayici, isTokenAutoRefreshEnabled: true });
+  } catch (e) {
+    console.error("App Check başlatılamadı:", e);
+  }
 }
 
 async function baslat() {
@@ -1775,7 +1826,16 @@ async function baslat() {
     const [appM, fsM, auM] = await Promise.all([yukle(FB("firebase-app")), yukle(FB("firebase-firestore")), yukle(FB("firebase-auth"))]);
     FS = fsM; AU = auM;
     const uygulama = appM.initializeApp(firebaseConfig);
-    db = FS.getFirestore(uygulama);
+    await appCheckBaslat(uygulama);
+    try {
+      /* Bazı ağlarda (VPN, güvenlik duvarı, antivirüs, reklam engelleyici, zayıf bağlantı) Firestore'un canlı
+         bağlantısı zaman aşımına uğrar (ERR_TIMED_OUT). Otomatik algılama: bağlantı kurulamazsa uyumlu
+         "long polling" yöntemine geçer; kurulabiliyorsa hızlı yöntem kullanılmaya devam eder. */
+      db = FS.initializeFirestore(uygulama, { experimentalAutoDetectLongPolling: true });
+    } catch (e) {
+      console.warn("Firestore özel ayarla başlatılamadı, varsayılan ayar kullanılıyor:", e);
+      db = FS.getFirestore(uygulama);
+    }
     auth = AU.getAuth(uygulama);
   } catch (e) {
     console.error("Firebase yüklenemedi:", e);
@@ -1787,6 +1847,10 @@ async function baslat() {
   AU.onAuthStateChanged(auth, authDegisti);
   dinle("zatlar", "zat");
   dinle("olaylar", "olay");
+  /* Kayıtlar 12 saniyede gelmezse kullanıcıya bilgi ver (sayfa sessizce takılı kalmasın) */
+  setTimeout(() => {
+    if (!(durum.yuklendi.zat && durum.yuklendi.olay)) { durum.yavas = true; planla(); }
+  }, 12000);
 }
 
 baslat();
