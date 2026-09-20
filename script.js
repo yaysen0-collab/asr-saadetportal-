@@ -165,7 +165,7 @@ const durum = {
   loginMod: "giris",
   admin: { sekme: "zat", duzenleId: null },
   favoriler: {}, notlar: {}, notTaslak: {}, kullaniciDinleyici: [], kisiselHata: null,
-  genelArama: "", kaydirId: null, yavas: false,
+  genelArama: "", kaydirId: null, yavas: false, appCheck: null,
 };
 
 /* ---------- Yardımcılar ---------- */
@@ -369,12 +369,24 @@ mark{padding:0 .1em;color:inherit;background:rgba(184,147,74,.28)}
 /* ---------- Ortak parçalar ---------- */
 function durumMesaji() {
   if (durum.hata) {
-    const ipucu = durum.hataKod === "permission-denied"
-      ? (!APPCHECK_SITE_KEY
-          ? `Firebase'te App Check zorunluysa bu site App Check belgesi göndermediği için reddedilir. script.js başındaki APPCHECK_SITE_KEY satırına reCAPTCHA site anahtarınızı yazın. `
-          : `App Check anahtarı girilmiş; reCAPTCHA anahtarında bu sitenin adresinin izinli olduğunu ve Firebase'de aynı sağlayıcının (${esc(APPCHECK_SAGLAYICI)}) kayıtlı olduğunu kontrol edin. `)
-        + `Ayrıca Rules sekmesindeki kuralların "Publish" ile yayınlandığını ve doğru projede ("${esc(firebaseConfig.projectId)}", "(default)" veritabanı) olduğunuzu doğrulayın.`
-      : `İnternet bağlantınızı ve Firestore kurallarını kontrol edin.`;
+    let ipucu = `İnternet bağlantınızı ve Firestore kurallarını kontrol edin.`;
+    if (durum.hataKod === "permission-denied") {
+      const ac = durum.appCheck;
+      let acBilgi;
+      if (!APPCHECK_SITE_KEY) {
+        acBilgi = `Firebase'te App Check zorunluysa bu site App Check belgesi göndermediği için reddedilir. script.js başındaki APPCHECK_SITE_KEY satırına reCAPTCHA site anahtarınızı yazın.`;
+      } else if (ac && typeof ac === "object") {
+        const recaptcha = /recaptcha/i.test(ac.kod + " " + ac.mesaj);
+        acBilgi = `App Check belgesi ALINAMADI (${esc(ac.kod || ac.mesaj)}). ` + (recaptcha
+          ? `reCAPTCHA çalışmadı: anahtardaki izinli alan adının bu sitenin adresi olduğunu, anahtar kimliğinin doğru yazıldığını ve reklam engelleyicinin kapalı olduğunu kontrol edin.`
+          : `Firebase belgeyi vermedi: Firebase Console → App Check → Apps sekmesinde uygulama kimliği "${esc(firebaseConfig.appId)}" olan web uygulamasının, "${esc(APPCHECK_SAGLAYICI)}" sağlayıcısıyla ve bu sitedeki anahtarla kayıtlı olduğunu kontrol edin.`);
+      } else if (ac === "ok") {
+        acBilgi = `App Check belgesi alındı (kayıt ve anahtar tamam). Buna rağmen reddediliyorsa Firestore'daki App Check ayarı, Rules sekmesi ya da veritabanı seçimi sorunludur.`;
+      } else {
+        acBilgi = `App Check belgesi kontrol ediliyor…`;
+      }
+      ipucu = acBilgi + ` Ayrıca Rules'ın "Publish" ile yayınlandığını ve doğru projede ("${esc(firebaseConfig.projectId)}", "(default)" veritabanı) olduğunuzu doğrulayın.`;
+    }
     return `<div class="error">Kayıtlar yüklenemedi: ${esc(durum.hata)}<br>${ipucu}</div>`;
   }
   if (!(durum.yuklendi.zat && durum.yuklendi.olay)) {
@@ -1809,7 +1821,18 @@ async function appCheckBaslat(uygulama) {
     const saglayici = APPCHECK_SAGLAYICI === "enterprise"
       ? new AC.ReCaptchaEnterpriseProvider(APPCHECK_SITE_KEY)
       : new AC.ReCaptchaV3Provider(APPCHECK_SITE_KEY);
-    AC.initializeAppCheck(uygulama, { provider: saglayici, isTokenAutoRefreshEnabled: true });
+    const ac = AC.initializeAppCheck(uygulama, { provider: saglayici, isTokenAutoRefreshEnabled: true });
+    /* Belgeyi gerçekten alabildiğimizi doğrula; alamazsak nedenini ekranda göster */
+    durum.appCheck = "bekliyor";
+    Promise.resolve(AC.getToken(ac, false)).then((r) => {
+      if (r && r.error) throw r.error;
+      durum.appCheck = "ok";
+      planla();
+    }).catch((e) => {
+      durum.appCheck = { kod: (e && e.code) || "", mesaj: (e && e.message) || String(e) };
+      console.error("App Check belgesi alınamadı:", e);
+      planla();
+    });
   } catch (e) {
     console.error("App Check başlatılamadı:", e);
   }
