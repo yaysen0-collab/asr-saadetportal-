@@ -405,9 +405,10 @@ const zatTarih = (k) => {
 };
 const olayTarih = (o) => birlestir(o.hicri, o.miladi);
 
-function gorselYari({ f, alt, sticky = false, ortada = false, icerik }) {
+function gorselYari({ f, alt, sticky = false, ortada = false, icerik, oncelik = false }) {
+  const imgOzellik = oncelik ? `fetchpriority="high"` : `loading="lazy"`;
   return `<div class="half visual${sticky ? " sticky" : ""}${ortada ? " middle" : ""}">
-    <img src="${foto(f)}" alt="${esc(alt)}" loading="lazy">
+    <img src="${foto(f)}" alt="${esc(alt)}" ${imgOzellik}>
     <div class="visual-content">${icerik}</div>
   </div>`;
 }
