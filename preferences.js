@@ -265,7 +265,67 @@
     "Alıntı": "Quote",
     "Bağlantı ekle": "Add link",
     "Görünüm ve dil ayarları": "Appearance and language settings",
-    "Dil seçimi": "Language selection"
+    "Dil seçimi": "Language selection",
+    "Kişisel çalışma alanı": "Personal workspace",
+    "Verilerimi dışa aktar": "Export my data",
+    "Hesap özeti": "Account summary",
+    "Favoriler": "Favorites",
+    "Kaydedilmiş içerik": "Saved content",
+    "Kişisel notlar": "Private notes",
+    "Size özel not": "Private note",
+    "Favori şahsiyet": "Favourite figure",
+    "Favori tarihî olay": "Favourite historical event",
+    "Arşiv nabzı": "Archive pulse",
+    "Kişisel seçkiniz": "Your personal selection",
+    "Son hareket": "Latest activity",
+    "Arşiv masam": "My archive desk",
+    "Favoriler ve notlar": "Favorites and notes",
+    "Tüm hareketler": "All activity",
+    "Notlar": "Notes",
+    "Çalışma alanında ara": "Search workspace",
+    "İsim veya not içinde ara…": "Search names or notes…",
+    "Kayıt türü": "Record type",
+    "Tüm kayıt türleri": "All record types",
+    "Eşleşen kayıt bulunamadı": "No matching records",
+    "Arama ifadenizi veya filtreleri değiştirin.": "Change your search or filters.",
+    "Filtreleri temizle": "Clear filters",
+    "Çalışma alanınız hazır": "Your workspace is ready",
+    "Arşivi keşfet": "Explore the archive",
+    "Okumaya devam edin": "Continue reading",
+    "Arşivin farklı görünümlerinden yeni bağlantılar ve tarihî kayıtlar keşfedin.": "Discover new connections and historical records through different archive views.",
+    "Arşivde ara": "Search the archive",
+    "Zaman çizelgesini aç": "Open the timeline",
+    "Soyağacını incele": "Explore genealogy",
+    "Rastgele bir şahsiyet": "A random figure",
+    "Yalnızca size özel": "Private to you",
+    "Notlarınız ve favorileriniz hesabınızla ilişkilidir; diğer ziyaretçilere gösterilmez.": "Your notes and favorites are linked to your account and are not shown to other visitors.",
+    "Gizlilik politikasını okuyun →": "Read the privacy policy →",
+    "Favori": "Favorite",
+    "Kişisel not": "Private note",
+    "Notu düzenle": "Edit note",
+    "Kaydı aç": "Open record",
+    "Favoriden çıkar": "Remove favorite",
+    "Okumak veya not eklemek için kaydı açın.": "Open the record to read or add a note.",
+    "Bu kayıt arşivden kaldırılmış.": "This record has been removed from the archive.",
+    "Arşiv yönetimi": "Archive management",
+    "Şahsiyetleri ve tarihî olayları tek merkezden ekleyin, düzenleyin ve denetleyin.": "Add, edit, and review figures and historical events from one place.",
+    "Yeni olay ekle": "Add new event",
+    "Hızlı kayıt": "Quick entry",
+    "Arşive yeni bir içerik ekleyin": "Add new archive content",
+    "Olaylar için tarih, dönem, açıklama ve kaynak; şahsiyetler için nesep ve hayat bilgilerini kaydedebilirsiniz.": "Record dates, periods, descriptions, and sources for events; lineage and life details for figures.",
+    "Olay ekleme formunu aç": "Open event form",
+    "Şahsiyet kayıtları": "Figure records",
+    "Olay kayıtları": "Event records",
+    "Olay kaydı": "Event record",
+    "Olayı zaman çizelgesinde doğru konumlandırmak için en az bir tarih ve doğrulanabilir kaynak ekleyin.": "Add at least one date and a verifiable source to place the event correctly on the timeline.",
+    "Zorunlu": "Required",
+    "Tarihî dönem": "Historical period",
+    "Hicri tarih": "Hijri date",
+    "Miladi tarih": "Gregorian date",
+    "Eser adı, cilt ve sayfa": "Work, volume, and page",
+    "Olayı kaydet": "Save event",
+    "Formu temizle": "Clear form",
+    "Kişisel çalışma alanı ve hızlı olay ekleme": "Personal workspace and quick event entry"
   };
 
   Object.assign(EN, {
@@ -349,6 +409,10 @@
         .replace(/^Sıkça Sorulan Sorular \((\d+)\)$/u, "Frequently Asked Questions ($1)")
         .replace(/^Favorilerim \((\d+)\)$/u, "My favorites ($1)")
         .replace(/^Notlarım \((\d+)\)$/u, "My notes ($1)")
+        .replace(/^(\d+) öğe gösteriliyor$/u, "$1 items shown")
+        .replace(/^Hoş geldiniz, (.+)$/u, "Welcome, $1")
+        .replace(/^Üyelik: (.+)$/u, "Member since: $1")
+        .replace(/^(\d+) arşiv kaydından (\d+) tanesini favorilerinize eklediniz\.$/u, "You have added $2 of $1 archive records to your favorites.")
         .replace(/^Güncel sürüm:/u, "Current version:")
         .replace(/^Doğum:/u, "Birth:")
         .replace(/^Vefat:/u, "Death:")
