@@ -1,115 +1,66 @@
-<!doctype html>
-<html lang="tr" data-theme="light">
- <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Asr-ı Saadet döneminin önemli olaylarını kronolojik olarak inceleyin."
-    />
-    <title>Zaman Çizelgesi | Asr-ı Saadet Portalı</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <meta name="theme-color" content="#f3efe5" />
-    <meta name="color-scheme" content="light dark" />
-    <link rel="icon" href="./images/favicon.ico" sizes="any" />
-    <link rel="icon" href="./images/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="./images/apple-touch-icon.png" />
-    <link rel="manifest" href="./site.webmanifest" />
-    <script>
-      (function () {
-        try {
-          var savedTheme = localStorage.getItem("asr-theme");
-          var savedLanguage = localStorage.getItem("asr-language");
-          var theme = savedTheme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-          var language = savedLanguage || "tr";
-          document.documentElement.dataset.theme = theme;
-          document.documentElement.lang = language;
-        } catch (e) { /* Preferences are optional when storage is unavailable. */ }
-      }());
-    </script>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./style.css" />
-    <link rel="stylesheet" href="./premium.css" />
-    <script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
-    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1776893761976-03f46ce701df?w=1400&q=70&auto=format&fit=crop" fetchpriority="high">
-    <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://tarihizatlar.firebaseapp.com" />
-  </head>
-  <body data-page="timeline">
-    <nav class="site-nav" aria-label="Ana menü">
-      <div class="nav-row">
-        <a class="brand" href="./index.html" aria-label="Asr-ı Saadet Portalı ana sayfa">
-          <span class="brand-mark" aria-hidden="true"><img src="./images/logo-mark.svg" alt="" /></span>
-          <span class="brand-copy"><strong>Asr-ı Saadet</strong><small>Dijital Miras Portalı</small></span>
-        </a>
-        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
-          <span></span><span></span><span></span><b>Menü</b>
-        </button>
-        <div class="nav-links" id="primary-navigation">
-          <a href="./index.html" data-section="home">Ana Sayfa</a>
-          <a href="./archive.html" data-section="archive">Arşiv</a>
-          <a href="./timeline.html" data-section="timeline">Zaman Çizelgesi</a>
-          <a href="./genealogy.html" data-section="genealogy">Soyağacı</a>
-          <a href="./random.html" data-section="random">Rastgele Şahsiyet</a>
-          <a href="./articles.html" data-section="articles">Makaleler</a>
-          <a href="./faq.html" data-section="faq">S.S.S.</a>
-          <a href="./login.html" data-section="login" id="login-nav-link">Giriş</a>
-          <a href="./admin.html" data-section="admin" id="admin-nav-link" style="display:none">Panel</a>
-        </div>
-        <div class="preference-controls" aria-label="Görünüm ve dil ayarları">
-          <div class="language-switch" role="group" aria-label="Dil seçimi">
-            <button type="button" data-language="tr" aria-pressed="true">TR</button>
-            <button type="button" data-language="en" aria-pressed="false">EN</button>
-          </div>
-          <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Gece moduna geç" title="Gece moduna geç">
-            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path></svg>
-            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 15.2A8.5 8.5 0 0 1 8.8 3.7 8.5 8.5 0 1 0 20.3 15.2Z"></path></svg>
-          </button>
-        </div>
-        <span class="version">© 2026 Ayşen Yeşil</span>
-      </div>
-    </nav>
+(function () {
+  "use strict";
 
-    <main id="app" aria-live="polite">
-      <div class="page-loading">Arşiv yükleniyor…</div>
-    </main>
+  function closeMenu(nav, toggle, links) {
+    nav.classList.remove("menu-open");
+    toggle.setAttribute("aria-expanded", "false");
+    links.querySelectorAll("a").forEach(function (link) {
+      link.removeAttribute("tabindex");
+    });
+  }
 
-    <footer class="site-footer">
-      <div class="footer-half footer-intro">
-        <div>
-          <p class="brand"><span class="brand-mark" aria-hidden="true"><img src="./images/logo-mark.svg" alt="" /></span><span class="brand-copy"><strong>Asr-ı Saadet</strong><small>Dijital Miras Portalı</small></span></p>
-          <p>Ashâb-ı Kirâm'ın hayatlarını, nesep bağlarını ve çağın izlerini belgeleyen bağımsız dijital arşiv.</p>
-        </div>
-        <small>© 2026 · v2.5.0 · Tüm hakları saklıdır</small>
-      </div>
-      <div class="footer-half footer-links">
-        <div>
-          <h3>Hızlı Erişim</h3>
-          <a href="./index.html">Ana Sayfa</a>
-          <a href="./archive.html">Arşiv</a>
-          <a href="./timeline.html">Zaman Çizelgesi</a>
-          <a href="./genealogy.html">Soyağacı</a>
-          <a href="./random.html">Rastgele Şahsiyet</a>
-          <a href="./articles.html">Makaleler</a>
-          <a href="./faq.html">S.S.S.</a>
-          <a href="./login.html">Giriş</a>
-        </div>
-        <div>
-          <h3>Hakkında</h3>
-          <p>Klasik İslâm kaynaklarından<br />derlenen açık erişimli arşiv.</p>
-        </div>
-      </div>
-    </footer>
+  function openMenu(nav, toggle, links) {
+    nav.classList.add("menu-open");
+    toggle.setAttribute("aria-expanded", "true");
+    links.querySelectorAll("a").forEach(function (link) {
+      link.removeAttribute("tabindex");
+    });
+  }
 
-    <script src="./preferences.js" defer></script>
-    <script src="./ui.js" defer></script>
-    <script type="module" src="./script.js"></script>
-  </body>
-</html>
+  function initMobileMenu() {
+    var nav = document.querySelector(".site-nav");
+    var toggle = nav && nav.querySelector(".menu-toggle");
+    var links = nav && nav.querySelector("#primary-navigation");
+
+    if (!nav || !toggle || !links) return;
+
+    toggle.addEventListener("click", function () {
+      var isOpen = nav.classList.contains("menu-open");
+      if (isOpen) {
+        closeMenu(nav, toggle, links);
+      } else {
+        openMenu(nav, toggle, links);
+      }
+    });
+
+    links.addEventListener("click", function (event) {
+      if (event.target.closest("a")) {
+        closeMenu(nav, toggle, links);
+      }
+    });
+
+    document.addEventListener("click", function (event) {
+      if (!nav.classList.contains("menu-open") || nav.contains(event.target)) return;
+      closeMenu(nav, toggle, links);
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && nav.classList.contains("menu-open")) {
+        closeMenu(nav, toggle, links);
+        toggle.focus();
+      }
+    });
+
+    window.addEventListener("resize", function () {
+      if (window.matchMedia("(min-width: 941px)").matches) {
+        closeMenu(nav, toggle, links);
+      }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initMobileMenu);
+  } else {
+    initMobileMenu();
+  }
+}());
