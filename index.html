@@ -12,6 +12,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <meta name="theme-color" content="#f3efe5" />
     <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="./images/favicon.ico" sizes="any" />
+    <link rel="icon" href="./images/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./images/apple-touch-icon.png" />
+    <link rel="manifest" href="./site.webmanifest" />
     <script>
       (function () {
         try {
@@ -38,26 +42,26 @@
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://tarihizatlar.firebaseapp.com" />
   </head>
-  <body>
+  <body data-page="home">
     <nav class="site-nav" aria-label="Ana menü">
       <div class="nav-row">
-        <a class="brand" href="#home" aria-label="Asr-ı Saadet Portalı ana sayfa">
-          <span class="brand-mark" aria-hidden="true"><i></i></span>
+        <a class="brand" href="./index.html" aria-label="Asr-ı Saadet Portalı ana sayfa">
+          <span class="brand-mark" aria-hidden="true"><img src="./images/logo-mark.svg" alt="" /></span>
           <span class="brand-copy"><strong>Asr-ı Saadet</strong><small>Dijital Miras Portalı</small></span>
         </a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
           <span></span><span></span><span></span><b>Menü</b>
         </button>
         <div class="nav-links" id="primary-navigation">
-          <a href="#home" data-section="home">Ana Sayfa</a>
-          <a href="#archive" data-section="archive">Arşiv</a>
-          <a href="#timeline" data-section="timeline">Zaman Çizelgesi</a>
-          <a href="#genealogy" data-section="genealogy">Soyağacı</a>
-          <a href="#random" data-section="random">Rastgele Şahsiyet</a>
-          <a href="#articles" data-section="articles">Makaleler</a>
-          <a href="#faq" data-section="faq">S.S.S.</a>
-          <a href="#login" data-section="login" id="login-nav-link">Giriş</a>
-          <a href="#admin" data-section="admin" id="admin-nav-link" style="display:none">Panel</a>
+          <a href="./index.html" data-section="home">Ana Sayfa</a>
+          <a href="./archive.html" data-section="archive">Arşiv</a>
+          <a href="./timeline.html" data-section="timeline">Zaman Çizelgesi</a>
+          <a href="./genealogy.html" data-section="genealogy">Soyağacı</a>
+          <a href="./random.html" data-section="random">Rastgele Şahsiyet</a>
+          <a href="./articles.html" data-section="articles">Makaleler</a>
+          <a href="./faq.html" data-section="faq">S.S.S.</a>
+          <a href="./login.html" data-section="login" id="login-nav-link">Giriş</a>
+          <a href="./admin.html" data-section="admin" id="admin-nav-link" style="display:none">Panel</a>
         </div>
         <div class="preference-controls" aria-label="Görünüm ve dil ayarları">
           <div class="language-switch" role="group" aria-label="Dil seçimi">
@@ -80,7 +84,7 @@
     <footer class="site-footer">
       <div class="footer-half footer-intro">
         <div>
-          <p class="brand"><span class="brand-mark" aria-hidden="true"><i></i></span><span class="brand-copy"><strong>Asr-ı Saadet</strong><small>Dijital Miras Portalı</small></span></p>
+          <p class="brand"><span class="brand-mark" aria-hidden="true"><img src="./images/logo-mark.svg" alt="" /></span><span class="brand-copy"><strong>Asr-ı Saadet</strong><small>Dijital Miras Portalı</small></span></p>
           <p>Ashâb-ı Kirâm'ın hayatlarını, nesep bağlarını ve çağın izlerini belgeleyen bağımsız dijital arşiv.</p>
         </div>
         <small>© 2026 · v2.5.0 · Tüm hakları saklıdır</small>
@@ -88,14 +92,14 @@
       <div class="footer-half footer-links">
         <div>
           <h3>Hızlı Erişim</h3>
-          <a href="#home">Ana Sayfa</a>
-          <a href="#archive">Arşiv</a>
-          <a href="#timeline">Zaman Çizelgesi</a>
-          <a href="#genealogy">Soyağacı</a>
-          <a href="#random">Rastgele Şahsiyet</a>
-          <a href="#articles">Makaleler</a>
-          <a href="#faq">S.S.S.</a>
-          <a href="#login">Giriş</a>
+          <a href="./index.html">Ana Sayfa</a>
+          <a href="./archive.html">Arşiv</a>
+          <a href="./timeline.html">Zaman Çizelgesi</a>
+          <a href="./genealogy.html">Soyağacı</a>
+          <a href="./random.html">Rastgele Şahsiyet</a>
+          <a href="./articles.html">Makaleler</a>
+          <a href="./faq.html">S.S.S.</a>
+          <a href="./login.html">Giriş</a>
         </div>
         <div>
           <h3>Hakkında</h3>
