@@ -120,7 +120,7 @@ const MAKALELER = [
    Menüdeki ve alt bilgideki sürüm numarası otomatik olarak ilk kayıttan alınır.
    ========================================================================== */
 const SURUMLER = [
-  { ay: "Eylül 2026", surum: "3.3.1", baslik: "Yeni tasarım, arama ve hesap özellikleri", maddeler: [
+  { ay: "Eylül 2026", surum: "3.4.0", baslik: "Yeni tasarım, arama ve hesap özellikleri", maddeler: [
     "Tüm sayfalar yeni tasarıma göre yeniden hazırlandı: bir yanda görsel, diğer yanda içerik.",
     "Arşiv (arama, tür ve devir filtreleri), Zaman Çizelgesi, Soyağacı, Rastgele Şahsiyet, Makaleler, Sıkça Sorulan Sorular ve iletişim formu yenilendi.",
     "Site içi arama eklendi: şahsiyet, olay, makale ve sorular tek yerde aranıyor. Menüdeki “Ara” bağlantısı veya klavyede “/” tuşu ile açılır.",
@@ -128,6 +128,10 @@ const SURUMLER = [
     "Google ile giriş düzeltildi; hatalar artık anlaşılır mesajlarla gösteriliyor.",
     "Gizlilik Politikası, Kaynakça, Katkıda Bulun (iletişim formu burada) ve Sürüm Notları sayfaları eklendi. Sıkça Sorulan Sorular üst menüden alt bilgiye taşındı.",
     "Yönetici paneli: kayıt ekleme, düzenleme ve silme; birden fazla yönetici hesabı ve giriş sonrası karşılama penceresi.",
+    "Yönetici panelinde mükerrer şahsiyet uyarısı yeniden etkinleştirildi.",
+    "Anne ve baba alanlarına mevcut şahsiyetlerden arama yaparak seçim desteği eklendi.",
+    "Yönetici paneline özet göstergeleri, kayıt arama/sıralama, eksik kayıt filtresi ve JSON yedek indirme eklendi.",
+    "Giriş ekranına şifre gösterme ve şifre sıfırlama seçenekleri eklendi.",
   ] },
   { ay: "Mayıs 2026", surum: "2.5.0", baslik: "Arşiv ve devirler", maddeler: [
     "Arşiv ekranı 3 sütunlu yapıya kavuşturuldu: rehber, ana içerik ve filtreler.",
@@ -163,7 +167,7 @@ const durum = {
   faqAcik: null,
   makaleAcik: new Set(),
   loginMod: "giris",
-  admin: { sekme: "zat", duzenleId: null },
+  admin: { sekme: "zat", duzenleId: null, arama: "", siralama: "ad", sadeceEksik: false, kirli: false },
   favoriler: {}, notlar: {}, notTaslak: {}, kullaniciDinleyici: [], kisiselHata: null,
   genelArama: "", kaydirId: null, yavas: false, appCheck: null,
 };
@@ -238,6 +242,7 @@ const bilgiHtml = (ham) => bos(ham) ? "<p>Bu kayıt için henüz bilgi girilmemi
 const favAnahtar = (tip, id) => tip + "_" + id;
 const kayitBul = (tip, id) => (tip === "zat" ? durum.zatlar : durum.olaylar).find((k) => k.id === id);
 const kayitAdi = (tip, k) => (k ? (tip === "zat" ? k.isim : k.ad) || "" : "");
+const kirmiziKartMi = (k) => !!(k && k.kirmiziKart === true);
 
 function adminMi() {
   const u = durum.kullanici;
@@ -560,7 +565,7 @@ function kayitKarti(k, tur) {
       ${kisiselAlan(tur, k)}
     </div>`;
   }
-  return `<article class="record" id="kayit-${esc(anahtar)}">
+  return `<article class="record${tur === "zat" && kirmiziKartMi(k) ? " record-red" : ""}" id="kayit-${esc(anahtar)}">
     <div class="kayit-ust" role="button" tabindex="0" aria-expanded="${acik}" data-action="kayit" data-anahtar="${esc(anahtar)}">
       <div class="record-head"><h3>${esc(ad)}${durum.favoriler[favAnahtar(tur, k.id)] ? ` <span class="fav-isaret" title="Favorilerinizde">★</span>` : ""}</h3><span class="era">${esc(devirOf(k))}</span></div>
       ${acik ? "" : `<p>${esc(bos(k.bilgi) ? "Bu kayıt için henüz bilgi girilmemiş." : ozet(k.bilgi, 150))}</p>`}
@@ -739,7 +744,7 @@ function sayfaRastgele() {
       <p class="visual-copy">Arşivden bilgisi girilmiş bir isim seçilir.</p>` })}
     <div class="half content">
       ${dm && !k ? dm : k ? `
-      <div class="random-card">
+      <div class="random-card${kirmiziKartMi(k) ? " record-red" : ""}">
         <h2>${esc(k.isim)}</h2>
         <p class="person-title">${esc(devirOf(k))}</p>
         <p>${esc(ozet(k.bilgi, 700))}</p>
@@ -816,12 +821,13 @@ function sayfaGiris() {
     govde = `<h2>${kayit ? "Üye ol" : "Giriş yap"}</h2>
       <p>${kayit ? "E-posta ve şifrenizle hesap oluşturun." : "Hesabınızla giriş yapın. Yönetim paneli yalnızca yönetici hesabına açıktır."}</p>
       <div class="login-field"><label for="giris-eposta">E-posta</label><input id="giris-eposta" type="email" autocomplete="email"></div>
-      <div class="login-field"><label for="giris-sifre">Şifre</label><input id="giris-sifre" type="password" autocomplete="${kayit ? "new-password" : "current-password"}"></div>
+      <div class="login-field"><label for="giris-sifre">Şifre</label><div class="password-input"><input id="giris-sifre" type="password" autocomplete="${kayit ? "new-password" : "current-password"}"><button type="button" data-action="sifre-goster" aria-label="Şifreyi göster" aria-pressed="false">Göster</button></div></div>
       <p class="login-message" id="giris-mesaj" role="alert"></p>
       <div class="login-actions">
         <button type="button" class="button primary" data-action="${kayit ? "kayit-ol" : "giris"}">${kayit ? "Üye ol" : "Giriş yap"}</button>
         <button type="button" class="button" data-action="google">Google ile devam et</button>
       </div>
+      ${kayit ? "" : `<p class="login-helper"><button type="button" class="text-link" data-action="sifre-sifirla">Şifremi unuttum</button></p>`}
       <p style="margin:1.25rem 0 0"><button type="button" class="text-link" data-action="login-mod" data-mod="${kayit ? "giris" : "kayit"}">${kayit ? "Zaten hesabım var" : "Hesabım yok, üye olmak istiyorum"}</button></p>`;
   }
   return `
@@ -847,10 +853,12 @@ function sayfaAdmin() {
     <div class="admin-top">
       <h1>Yönetici Paneli</h1>
       <div class="admin-top-actions">
+        <button type="button" class="button" data-action="admin-yedek">JSON yedeği indir</button>
         <a class="button" href="#home">Siteyi gör</a>
         <button type="button" class="button" data-action="cikis">Çıkış yap</button>
       </div>
     </div>
+    <div class="admin-overview" id="admin-ozet"></div>
     <div class="admin-tabs" id="admin-sekmeler"></div>
     <div class="admin-grid">
       <div class="admin-col-list" id="admin-liste"></div>
@@ -867,21 +875,78 @@ function adminSekmeleriGuncelle() {
     <button type="button" class="tab-btn${s === "olay" ? " active" : ""}" data-action="admin-sekme" data-sekme="olay">Olaylar (${durum.olaylar.length})</button>`;
 }
 
-function adminListeGuncelle() {
-  const el = $("#admin-liste");
+function adminOzetGuncelle() {
+  const el = $("#admin-ozet");
   if (!el) return;
-  adminSekmeleriGuncelle();
-  if (durum.hata) { el.innerHTML = `<div class="admin-liste-bos">Kayıtlar yüklenemedi: ${esc(durum.hata)}</div>`; return; }
-  const yuk = durum.admin.sekme === "zat" ? durum.yuklendi.zat : durum.yuklendi.olay;
-  const liste = durum.admin.sekme === "zat" ? durum.zatlar : durum.olaylar;
-  if (!yuk) { el.innerHTML = `<div class="admin-liste-bos">Yükleniyor…</div>`; return; }
-  el.innerHTML = liste.length ? liste.map((k) => `<div class="admin-list-item">
-      <div><h4>${esc(k.isim || k.ad)}</h4><span>${esc(devirOf(k))}</span></div>
+  const hazir = durum.yuklendi.zat && durum.yuklendi.olay && !durum.hata;
+  const tumu = [...durum.zatlar, ...durum.olaylar];
+  const eksik = tumu.filter((k) => bos(k.bilgi) || bos(k.kaynak)).length;
+  const baglantili = durum.zatlar.filter((z) => !bos(z.anne) || !bos(z.baba) || !bos(z.es) || !bos(z.baglar)).length;
+  const n = (deger) => hazir ? deger : "…";
+  el.innerHTML = `
+    <div class="admin-stat"><span>Şahsiyet</span><strong>${n(durum.zatlar.length)}</strong></div>
+    <div class="admin-stat"><span>Olay</span><strong>${n(durum.olaylar.length)}</strong></div>
+    <div class="admin-stat"><span>Bağlantılı kayıt</span><strong>${n(baglantili)}</strong></div>
+    <div class="admin-stat${hazir && eksik ? " needs-attention" : ""}"><span>Eksik içerik/kaynak</span><strong>${n(eksik)}</strong></div>`;
+  const yedek = document.querySelector('[data-action="admin-yedek"]');
+  if (yedek) {
+    yedek.disabled = !hazir;
+    yedek.title = hazir ? "Arşiv verilerini JSON olarak indir" : "Yedek için kayıtların yüklenmesini bekleyin";
+  }
+}
+
+function adminFiltrelenmisListe() {
+  const kaynak = durum.admin.sekme === "zat" ? durum.zatlar : durum.olaylar;
+  const q = trKucuk(durum.admin.arama.trim());
+  const liste = kaynak.filter((k) => {
+    const eksik = bos(k.bilgi) || bos(k.kaynak);
+    const metin = trKucuk(`${k.isim || k.ad || ""} ${devirOf(k)} ${duzMetin(k.bilgi)}`);
+    return (!q || metin.includes(q)) && (!durum.admin.sadeceEksik || eksik);
+  }).slice();
+  if (durum.admin.siralama === "yeni") {
+    liste.sort((a, b) => (b.guncellemeTarihi || b.eklenmeTarihi || 0) - (a.guncellemeTarihi || a.eklenmeTarihi || 0));
+  } else liste.sort(adSirala);
+  return liste;
+}
+
+function adminListeGovdesiGuncelle() {
+  const el = $("#admin-liste-kayitlar");
+  if (!el) return;
+  const liste = adminFiltrelenmisListe();
+  el.innerHTML = liste.length ? liste.map((k) => {
+    const eksik = bos(k.bilgi) || bos(k.kaynak);
+    return `<div class="admin-list-item">
+      <div><h4>${esc(k.isim || k.ad)}</h4><span>${esc(devirOf(k))}</span>${eksik ? `<span class="admin-record-status">Eksik</span>` : ""}</div>
       <div class="admin-list-actions">
         <button type="button" class="btn-small" data-action="admin-duzenle" data-id="${esc(k.id)}">Düzenle</button>
         <button type="button" class="btn-small btn-danger" data-action="admin-sil" data-id="${esc(k.id)}">Sil</button>
       </div>
-    </div>`).join("") : `<div class="admin-liste-bos">Henüz kayıt yok.</div>`;
+    </div>`;
+  }).join("") : `<div class="admin-liste-bos">Filtrelerle eşleşen kayıt yok.</div>`;
+  const sayi = $("#admin-sonuc-sayisi");
+  if (sayi) sayi.textContent = `${liste.length} kayıt`;
+}
+
+function adminListeGuncelle() {
+  const el = $("#admin-liste");
+  if (!el) return;
+  adminSekmeleriGuncelle();
+  adminOzetGuncelle();
+  adminKisiListesiniGuncelle();
+  adminKopyaUyarisiGuncelle();
+  if (durum.hata) { el.innerHTML = `<div class="admin-liste-bos">Kayıtlar yüklenemedi: ${esc(durum.hata)}</div>`; return; }
+  const yuk = durum.admin.sekme === "zat" ? durum.yuklendi.zat : durum.yuklendi.olay;
+  if (!yuk) { el.innerHTML = `<div class="admin-liste-bos">Yükleniyor…</div>`; return; }
+  el.innerHTML = `<div class="admin-list-toolbar">
+      <input id="admin-arama" type="search" value="${esc(durum.admin.arama)}" placeholder="Kayıtlarda ara…" aria-label="Yönetici kayıtlarında ara">
+      <select id="admin-sirala" aria-label="Kayıtları sırala">
+        <option value="ad"${durum.admin.siralama === "ad" ? " selected" : ""}>Ada göre</option>
+        <option value="yeni"${durum.admin.siralama === "yeni" ? " selected" : ""}>Son güncellenen</option>
+      </select>
+      <label class="admin-filter-check"><input id="admin-eksik" type="checkbox"${durum.admin.sadeceEksik ? " checked" : ""}> Yalnızca eksikler</label>
+      <small id="admin-sonuc-sayisi"></small>
+    </div><div id="admin-liste-kayitlar"></div>`;
+  adminListeGovdesiGuncelle();
 }
 
 const EDITOR_HTML = `<div class="form-field"><label>Bilgi</label>
@@ -899,6 +964,47 @@ const EDITOR_HTML = `<div class="form-field"><label>Bilgi</label>
     <div id="f-bilgi" class="rich-editor" contenteditable="true" data-placeholder="Metni buraya yazın…"></div>
   </div></div>`;
 
+function adminAyniKisiBul(ad) {
+  const anahtar = adAnahtar(ad);
+  if (!anahtar) return null;
+  return durum.zatlar.find((z) => z.id !== durum.admin.duzenleId && adAnahtar(z.isim) === anahtar) || null;
+}
+
+function adminKisiListesiniGuncelle() {
+  const liste = $("#admin-kisi-listesi");
+  if (!liste) return;
+  liste.innerHTML = durum.zatlar
+    .filter((z) => z.id !== durum.admin.duzenleId && !bos(z.isim))
+    .map((z) => `<option value="${esc(adTemiz(z.isim))}">${esc(devirOf(z))}</option>`)
+    .join("");
+}
+
+function adminKopyaUyarisiGuncelle() {
+  const alan = $("#f-isim"), uyari = $("#f-kopya-uyari");
+  if (!alan || !uyari) return null;
+  const ayni = adminAyniKisiBul(alan.value);
+  alan.toggleAttribute("aria-invalid", !!ayni);
+  uyari.innerHTML = ayni
+    ? `<strong>Bu şahsiyet sistemde zaten kayıtlı:</strong> ${esc(ayni.isim)}
+       <button type="button" class="btn-small" data-action="admin-duzenle" data-id="${esc(ayni.id)}">Mevcut kaydı aç</button>`
+    : "";
+  uyari.hidden = !ayni;
+  return ayni;
+}
+
+function adminKirliAyarla(kirli) {
+  durum.admin.kirli = !!kirli;
+  const el = $("#f-kirli");
+  if (el) el.hidden = !durum.admin.kirli;
+}
+
+function adminDegisikligiBirakabilir() {
+  const mesaj = document.documentElement.lang === "en"
+    ? "There are unsaved changes. Continue anyway?"
+    : "Kaydedilmemiş değişiklikler var. Yine de devam edilsin mi?";
+  return !durum.admin.kirli || confirm(mesaj);
+}
+
 function adminFormuKur() {
   const el = $("#admin-form");
   if (!el) return;
@@ -908,13 +1014,16 @@ function adminFormuKur() {
     el.innerHTML = `<div class="admin-form">
       <h3 id="f-baslik">Yeni şahsiyet</h3>
       <div id="f-mesaj"></div>
-      <div class="form-field"><label for="f-isim">İsim</label><input id="f-isim" type="text" autocomplete="off"></div>
+      <div class="form-field"><label for="f-isim">İsim</label><input id="f-isim" type="text" autocomplete="off" aria-describedby="f-kopya-uyari"></div>
+      <div id="f-kopya-uyari" class="form-duplicate" role="alert" aria-live="polite" hidden></div>
       <div class="check-satir"><input type="checkbox" id="f-ra" checked><label for="f-ra">İsmin sonuna (ra) ekle</label></div>
+      <p class="form-hint checkbox-hint">İşaret kaldırılırsa bu şahsiyetin kartı arşivde ve rastgele şahsiyet sayfasında kırmızı gösterilir.</p>
       <div class="form-field"><label for="f-devir">Yaşadığı devir</label><select id="f-devir">${devirSecenek}</select></div>
       <div class="form-row">
-        <div class="form-field"><label for="f-anne">Anne</label><input id="f-anne" type="text"></div>
-        <div class="form-field"><label for="f-baba">Baba</label><input id="f-baba" type="text"></div>
+        <div class="form-field"><label for="f-anne">Anne</label><input id="f-anne" type="text" list="admin-kisi-listesi" autocomplete="off"><p class="form-hint">Yazmaya başlayın veya mevcut şahsiyetlerden seçin.</p></div>
+        <div class="form-field"><label for="f-baba">Baba</label><input id="f-baba" type="text" list="admin-kisi-listesi" autocomplete="off"><p class="form-hint">Yazmaya başlayın veya mevcut şahsiyetlerden seçin.</p></div>
       </div>
+      <datalist id="admin-kisi-listesi"></datalist>
       <div class="form-field"><label for="f-es">Eşi / Eşleri</label><input id="f-es" type="text"><p class="form-hint">Birden fazla ise virgülle ayırın.</p></div>
       <div class="form-field"><label for="f-baglar">Diğer bağlar</label><input id="f-baglar" type="text" placeholder="Ali (Çocuk), Fatıma (Kardeş)">
         <p class="form-hint">Biçim: İsim (Tür), İsim (Tür). Türler: Çocuk, Kardeş, Dede, Nine, Torun, Amca, Hala, Dayı, Teyze, Yeğen.</p></div>
@@ -931,6 +1040,7 @@ function adminFormuKur() {
       <div class="form-actions">
         <button type="button" class="button primary" data-action="admin-kaydet">Kaydet</button>
         <button type="button" class="button" data-action="admin-iptal">Temizle</button>
+        <span id="f-kirli" class="unsaved-badge" hidden>Kaydedilmemiş değişiklik</span>
       </div>
     </div>`;
   } else {
@@ -948,9 +1058,12 @@ function adminFormuKur() {
       <div class="form-actions">
         <button type="button" class="button primary" data-action="admin-kaydet">Kaydet</button>
         <button type="button" class="button" data-action="admin-iptal">Temizle</button>
+        <span id="f-kirli" class="unsaved-badge" hidden>Kaydedilmemiş değişiklik</span>
       </div>
     </div>`;
   }
+  adminKisiListesiniGuncelle();
+  adminKirliAyarla(false);
 }
 
 function formMesaj(metin, hata) {
@@ -962,10 +1075,14 @@ function adminFormuDoldur(k) {
   const zat = durum.admin.sekme === "zat";
   const set = (id, v) => { const e = $("#" + id); if (e) e.value = bos(v) ? "" : v; };
   durum.admin.duzenleId = k.id;
+  adminKisiListesiniGuncelle();
   if (zat) {
     set("f-isim", k.isim); set("f-anne", k.anne); set("f-baba", k.baba); set("f-es", k.es); set("f-baglar", k.baglar);
     set("f-d-hicri", k.d_hicri); set("f-d-miladi", k.d_miladi); set("f-v-hicri", k.v_hicri); set("f-v-miladi", k.v_miladi);
-    const ra = $("#f-ra"); if (ra) ra.checked = /\((r\.?\s?a|r\.?\s?anh)/i.test(k.isim || "");
+    const ra = $("#f-ra");
+    if (ra) ra.checked = typeof k.kirmiziKart === "boolean"
+      ? !k.kirmiziKart
+      : /\((r\.?\s?a|r\.?\s?anh)/i.test(k.isim || "");
   } else {
     set("f-ad", k.ad); set("f-hicri", k.hicri); set("f-miladi", k.miladi);
   }
@@ -973,6 +1090,8 @@ function adminFormuDoldur(k) {
   const ed = $("#f-bilgi"); if (ed) ed.innerHTML = bos(k.bilgi) ? "" : temizHtml(k.bilgi);
   const b = $("#f-baslik"); if (b) b.textContent = zat ? "Şahsiyeti düzenle" : "Olayı düzenle";
   formMesaj("", false);
+  adminKopyaUyarisiGuncelle();
+  adminKirliAyarla(false);
   const f = $("#admin-form"); if (f && f.scrollIntoView) f.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -989,17 +1108,24 @@ async function adminKaydet() {
     if (zat) {
       let ad = baslikBuyut(v("f-isim"));
       if (!ad) return formMesaj("İsim alanı boş bırakılamaz.", true);
+      if (!durum.yuklendi.zat) return formMesaj("Mükerrer kayıt kontrolü için şahsiyet listesinin yüklenmesini bekleyin.", true);
+      const ayni = adminAyniKisiBul(ad);
+      if (ayni) {
+        adminKopyaUyarisiGuncelle();
+        return formMesaj(`Bu şahsiyet zaten kayıtlı: ${ayni.isim}`, true);
+      }
       const ra = $("#f-ra");
-      if (ra && ra.checked) {
+      const raIsaretli = !ra || ra.checked;
+      if (raIsaretli) {
         const kucuk = trKucuk(ad);
         if (!kucuk.includes("(ra)") && !kucuk.includes("(r.a.)") && !kucuk.includes("(r.a)")) ad += " (ra)";
       }
       const obj = {
-        isim: ad, devir: v("f-devir"),
+        isim: ad, isimAnahtar: adAnahtar(ad), devir: v("f-devir"),
         anne: q(baslikBuyut(v("f-anne"))), baba: q(baslikBuyut(v("f-baba"))), es: q(baslikBuyut(v("f-es"))),
         baglar: q(v("f-baglar")),
         d_hicri: q(v("f-d-hicri")), d_miladi: q(v("f-d-miladi")), v_hicri: q(v("f-v-hicri")), v_miladi: q(v("f-v-miladi")),
-        bilgi, kaynak: q(v("f-kaynak")), guncellemeTarihi: Date.now(),
+        bilgi, kaynak: q(v("f-kaynak")), kirmiziKart: !raIsaretli, guncellemeTarihi: Date.now(),
       };
       if (id) await FS.updateDoc(FS.doc(db, "zatlar", id), obj); else await FS.addDoc(FS.collection(db, "zatlar"), obj);
     } else {
@@ -1361,9 +1487,9 @@ function arayuzuGenislet() {
       if (once) kolon.insertBefore(a, once); else kolon.appendChild(a);
     });
   };
-  ekle(kolonlar[0], [["Portalda Ara", "#search"]], kolonlar[0] ? kolonlar[0].querySelector('a[href="#login"]') : null);
+  ekle(kolonlar[0], [["Portalda Ara", "#search"]], kolonlar[0] ? kolonlar[0].querySelector('a[href="#login"], a[href$="login.html"]') : null);
   const hakkinda = [["Kaynakça", "#sources"], ["Katkıda Bulun", "#contribute"], ["Gizlilik Politikası", "#privacy"], ["Sürüm Notları", "#changelog"]];
-  if (!document.querySelector('.footer-links a[href="#faq"]')) hakkinda.unshift(["Sıkça Sorulan Sorular", "#faq"]);
+  if (!document.querySelector('.footer-links a[href="#faq"], .footer-links a[href$="faq.html"]')) hakkinda.unshift(["Sıkça Sorulan Sorular", "#faq"]);
   ekle(kolonlar[1], hakkinda);
 }
 
@@ -1439,9 +1565,63 @@ async function googleGiris() {
     girisMesaji(hataMetni(err));
   }
 }
+
+function sifreGosterGizle(el) {
+  const alan = $("#giris-sifre");
+  if (!alan) return;
+  const goster = alan.type === "password";
+  alan.type = goster ? "text" : "password";
+  el.textContent = goster ? "Gizle" : "Göster";
+  el.setAttribute("aria-pressed", String(goster));
+  el.setAttribute("aria-label", goster ? "Şifreyi gizle" : "Şifreyi göster");
+  alan.focus();
+}
+
+async function sifreSifirla() {
+  if (!AU || !auth) return girisMesaji("Kimlik doğrulama servisi yüklenemedi. Sayfayı yenileyin.");
+  const { eposta } = girisAlanlari();
+  if (!eposta) return girisMesaji("Şifre sıfırlama bağlantısı için e-posta adresinizi yazın.");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(eposta)) return girisMesaji("Geçerli bir e-posta adresi girin.");
+  girisMesaji("Sıfırlama bağlantısı gönderiliyor…", true);
+  try {
+    await AU.sendPasswordResetEmail(auth, eposta);
+    girisMesaji("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.", true);
+  } catch (err) {
+    console.error("Şifre sıfırlama hatası:", err && err.code, err);
+    girisMesaji(hataMetni(err));
+  }
+}
+
+function adminYedekIndir() {
+  if (!adminMi()) return;
+  if (durum.hata || !(durum.yuklendi.zat && durum.yuklendi.olay)) {
+    alert("Yedek indirmeden önce tüm kayıtların yüklenmesini bekleyin.");
+    return;
+  }
+  const temizle = (k) => {
+    const { _ara, _duz, ...veri } = k;
+    return veri;
+  };
+  const yedek = {
+    format: "asr-saadet-archive-backup",
+    version: SURUM,
+    exportedAt: new Date().toISOString(),
+    zatlar: durum.zatlar.map(temizle),
+    olaylar: durum.olaylar.map(temizle),
+  };
+  const blob = new Blob([JSON.stringify(yedek, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `asr-saadet-yedek-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 async function cikisYap() {
   try { if (AU) await AU.signOut(auth); } catch (e) { console.error(e); }
-  if (rota.sec === "admin" || rota.sec === "account") location.hash = "#home";
+  if (rota.sec === "admin" || rota.sec === "account") sayfayaGit("home");
 }
 
 /* ---------- Favoriler ve kişisel notlar (yorum özelliği bilerek yok) ---------- */
@@ -1457,7 +1637,7 @@ const hataYazi = (e) => (e && e.code === "permission-denied")
   : ((e && e.message) || String(e));
 
 async function favToggle(tip, id) {
-  if (!durum.kullanici) { location.hash = "#login"; return; }
+  if (!durum.kullanici) { sayfayaGit("login"); return; }
   const key = favAnahtar(tip, id);
   const mevcut = durum.favoriler[key];
   try {
@@ -1565,7 +1745,7 @@ async function iletisimGonder() {
   } catch (e) { yaz("Bağlantı hatası. Lütfen daha sonra tekrar deneyin."); }
 }
 
-/* ---------- Yönlendirme (hash tabanlı) ---------- */
+/* ---------- Yönlendirme (çok sayfalı + eski hash bağlantılarıyla uyumlu) ---------- */
 let rota = { sec: "home", param: "" };
 const SAYFALAR = {
   home: sayfaHome, archive: sayfaArsiv, timeline: sayfaCizelge, genealogy: sayfaSoy,
@@ -1578,13 +1758,49 @@ const BASLIKLAR = {
   search: "Ara", privacy: "Gizlilik Politikası", sources: "Kaynakça", contribute: "Katkıda Bulun", changelog: "Sürüm Notları",
 };
 
-function rotaOku() {
-  const h = (location.hash || "").replace(/^#\/?/, "");
+const SAYFA_DOSYALARI = {
+  home: "index.html", archive: "archive.html", timeline: "timeline.html", genealogy: "genealogy.html",
+  random: "random.html", articles: "articles.html", faq: "faq.html", login: "login.html", admin: "admin.html",
+  account: "account.html", search: "search.html", privacy: "privacy.html", sources: "sources.html",
+  contribute: "contribute.html", changelog: "changelog.html",
+};
+const DOSYADAN_SAYFA = Object.fromEntries(Object.entries(SAYFA_DOSYALARI).map(([sayfa, dosya]) => [dosya, sayfa]));
+
+function rotaUrl(sec, param = "", sorgu = "") {
+  const dosya = SAYFA_DOSYALARI[sec] || SAYFA_DOSYALARI.home;
+  const query = sorgu ? (String(sorgu).startsWith("?") ? String(sorgu) : "?" + String(sorgu)) : "";
+  return `./${dosya}${query}${param !== "" ? "#" + encodeURIComponent(param) : ""}`;
+}
+
+function sayfayaGit(sec, param = "", sorgu = "") {
+  location.href = rotaUrl(sec, param, sorgu);
+}
+
+function eskiHashRotasi(hash) {
+  const h = String(hash || "").replace(/^#\/?/, "");
   const i = h.indexOf("/");
   const sec = i < 0 ? h : h.slice(0, i);
+  if (!SAYFALAR[sec]) return null;
   let param = i < 0 ? "" : h.slice(i + 1);
   try { param = decodeURIComponent(param); } catch (e) { /* olduğu gibi kalsın */ }
-  return { sec: SAYFALAR[sec] ? sec : "home", param };
+  return { sec, param };
+}
+
+function cokSayfaliLinkleriDuzenle(kok = document) {
+  kok.querySelectorAll('a[href^="#"]').forEach((a) => {
+    const hedef = eskiHashRotasi(a.getAttribute("href"));
+    if (hedef) a.setAttribute("href", rotaUrl(hedef.sec, hedef.param));
+  });
+}
+
+function rotaOku() {
+  const dosya = location.pathname.split("/").pop() || "index.html";
+  const sayfa = document.body.dataset.page || DOSYADAN_SAYFA[dosya] || "home";
+  const eski = eskiHashRotasi(location.hash);
+  if (eski && eski.sec !== sayfa) return eski;
+  let param = eski ? eski.param : (location.hash || "").replace(/^#\/?/, "");
+  try { param = decodeURIComponent(param); } catch (e) { /* olduğu gibi kalsın */ }
+  return { sec: SAYFALAR[sayfa] ? sayfa : "home", param };
 }
 
 function rotaHazirla(eski) {
@@ -1605,7 +1821,13 @@ function rotaHazirla(eski) {
     if (rota.param) {
       durum.arama = ""; durum.devir = "tumu"; durum.tur = "tumu"; durum.limit = 100000;
       durum.acik.add(rota.param); durum.kaydirHedef = rota.param;
-    } else if (eski.sec !== "archive") durum.limit = 50;
+    } else if (eski.sec !== "archive") {
+      durum.limit = 50;
+      const q = new URLSearchParams(location.search);
+      if (q.has("q")) durum.arama = q.get("q") || "";
+      if (["tumu", "zat", "olay"].includes(q.get("tur"))) durum.tur = q.get("tur");
+      if (q.has("devir")) durum.devir = q.get("devir") || "tumu";
+    }
   }
 }
 
@@ -1613,7 +1835,7 @@ function navGuncelle() {
   const giris = $("#login-nav-link");
   if (giris) {
     giris.textContent = durum.kullanici ? "Hesabım" : "Giriş";
-    giris.setAttribute("href", durum.kullanici ? "#account" : "#login");
+    giris.setAttribute("href", rotaUrl(durum.kullanici ? "account" : "login"));
     giris.dataset.section = durum.kullanici ? "account" : "login";
   }
   document.querySelectorAll(".nav-links a").forEach((a) => {
@@ -1645,6 +1867,7 @@ function render(secenek) {
     durum.kaydirId = null;
   }
   navGuncelle();
+  cokSayfaliLinkleriDuzenle(document);
   document.title = `${BASLIKLAR[sec]} | Asr-ı Saadet Portalı`;
 }
 
@@ -1672,7 +1895,7 @@ function authDegisti(user) {
   if (user && durum.girisIstendi && rota.sec === "login") {
     durum.girisIstendi = false;
     if (adminMi()) hosgeldinBildirimGoster(user.email);
-    location.hash = adminMi() ? "#admin" : "#account";
+    sayfayaGit(adminMi() ? "admin" : "account");
     return;
   }
   durum.girisIstendi = false;
@@ -1710,31 +1933,43 @@ const islem = {
   giris: girisYap,
   "kayit-ol": kayitOl,
   google: googleGiris,
+  "sifre-goster": sifreGosterGizle,
+  "sifre-sifirla": sifreSifirla,
   cikis: cikisYap,
   iletisim: iletisimGonder,
-  git(el) { location.hash = el.dataset.hedef; },
+  git(el) {
+    const hedef = eskiHashRotasi(el.dataset.hedef);
+    if (hedef) sayfayaGit(hedef.sec, hedef.param);
+  },
   "ara-etiket"(el) {
     durum.genelArama = el.dataset.deger;
     const i = $("#genel-arama"); if (i) { i.value = durum.genelArama; i.focus(); }
     aramaGuncelle();
-    history.replaceState(null, "", "#search/" + encodeURIComponent(durum.genelArama));
+    history.replaceState(null, "", rotaUrl("search", durum.genelArama));
   },
   "arsivde-ara"(el) {
     durum.arama = durum.genelArama.trim(); durum.tur = el.dataset.tur; durum.devir = "tumu"; durum.limit = 50;
-    location.hash = "#archive";
+    const sorgu = new URLSearchParams({ q: durum.arama, tur: durum.tur });
+    sayfayaGit("archive", "", sorgu.toString());
   },
   fav(el) { favToggle(el.dataset.tip, el.dataset.id); },
   "not-kaydet"(el) { notKaydet(el.dataset.tip, el.dataset.id); },
   "not-sil"(el) { notSil(el.dataset.tip, el.dataset.id); },
-  "admin-sekme"(el) { durum.admin.sekme = el.dataset.sekme; adminListeGuncelle(); adminFormuKur(); },
+  "admin-sekme"(el) {
+    if (!adminDegisikligiBirakabilir()) return;
+    durum.admin.sekme = el.dataset.sekme; durum.admin.arama = "";
+    adminListeGuncelle(); adminFormuKur();
+  },
   "admin-duzenle"(el) {
+    if (!adminDegisikligiBirakabilir()) return;
     const liste = durum.admin.sekme === "zat" ? durum.zatlar : durum.olaylar;
     const k = liste.find((x) => x.id === el.dataset.id);
     if (k) adminFormuDoldur(k);
   },
   "admin-sil"(el) { adminSil(el.dataset.id); },
   "admin-kaydet": adminKaydet,
-  "admin-iptal"() { adminFormuKur(); },
+  "admin-iptal"() { if (adminDegisikligiBirakabilir()) adminFormuKur(); },
+  "admin-yedek": adminYedekIndir,
   komut(el) {
     const ed = $("#f-bilgi");
     if (!ed) return;
@@ -1750,6 +1985,11 @@ const islem = {
 
 function olayBagla() {
   document.addEventListener("click", (e) => {
+    const baglanti = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (baglanti) {
+      const hedef = eskiHashRotasi(baglanti.getAttribute("href"));
+      if (hedef) { e.preventDefault(); sayfayaGit(hedef.sec, hedef.param); return; }
+    }
     const el = e.target.closest ? e.target.closest("[data-action]") : null;
     if (!el) return;
     const f = islem[el.dataset.action];
@@ -1759,7 +1999,7 @@ function olayBagla() {
     const hedef = e.target;
     if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey && hedef.tagName && !/^(INPUT|TEXTAREA|SELECT)$/.test(hedef.tagName) && !hedef.isContentEditable) {
       e.preventDefault();
-      if (rota.sec === "search") { const g = $("#genel-arama"); if (g) g.focus(); } else location.hash = "#search";
+      if (rota.sec === "search") { const g = $("#genel-arama"); if (g) g.focus(); } else sayfayaGit("search");
       return;
     }
     if ((e.key === "Enter" || e.key === " ") && hedef.matches && hedef.matches('[role="button"][data-action], [role="link"][data-action]')) {
@@ -1774,21 +2014,48 @@ function olayBagla() {
     if (e.target.closest && e.target.closest(".editor-toolbar button")) e.preventDefault(); /* seçim kaybolmasın */
   });
   document.addEventListener("input", (e) => {
+    if (e.target.id === "admin-arama") {
+      durum.admin.arama = e.target.value;
+      adminListeGovdesiGuncelle();
+      return;
+    }
+    if (e.target.id === "f-isim") adminKopyaUyarisiGuncelle();
+    if (e.target.closest && e.target.closest(".admin-form")) adminKirliAyarla(true);
     if (e.target.classList && e.target.classList.contains("not-alani")) durum.notTaslak[e.target.dataset.anahtar] = e.target.value;
     if (e.target.id === "genel-arama") {
       durum.genelArama = e.target.value;
       aramaGuncelle();
       const q = durum.genelArama.trim();
-      history.replaceState(null, "", q ? "#search/" + encodeURIComponent(q) : "#search");
+      history.replaceState(null, "", rotaUrl("search", q));
     }
     if (e.target.id === "arama") { durum.arama = e.target.value; durum.limit = 50; arsivGuncelle(); }
   });
   document.addEventListener("change", (e) => {
-    if (e.target.id === "soy-sec") location.hash = e.target.value ? "#genealogy/" + encodeURIComponent(e.target.value) : "#genealogy";
+    if (e.target.id === "admin-sirala") {
+      durum.admin.siralama = e.target.value;
+      adminListeGovdesiGuncelle();
+      return;
+    }
+    if (e.target.id === "admin-eksik") {
+      durum.admin.sadeceEksik = e.target.checked;
+      adminListeGovdesiGuncelle();
+      return;
+    }
+    if (e.target.closest && e.target.closest(".admin-form")) adminKirliAyarla(true);
+    if (e.target.id === "soy-sec") sayfayaGit("genealogy", e.target.value || "");
+  });
+  window.addEventListener("beforeunload", (e) => {
+    if (rota.sec !== "admin" || !durum.admin.kirli) return;
+    e.preventDefault();
+    e.returnValue = "";
   });
   window.addEventListener("hashchange", () => {
     const eski = rota;
     rota = rotaOku();
+    if (rota.sec !== (document.body.dataset.page || "home")) {
+      sayfayaGit(rota.sec, rota.param);
+      return;
+    }
     rotaHazirla(eski);
     render();
   });
@@ -1846,6 +2113,10 @@ async function baslat() {
   ekStilEkle();
   arayuzuGenislet();
   rota = rotaOku();
+  if (rota.sec !== (document.body.dataset.page || "home")) {
+    location.replace(rotaUrl(rota.sec, rota.param));
+    return;
+  }
   rotaHazirla({ sec: "" });
   render();
   olayBagla();
