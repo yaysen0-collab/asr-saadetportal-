@@ -1190,3 +1190,17 @@ html[data-theme="dark"] .account-entry-not .account-entry-mark { color: var(--cr
   .account-entry { padding: 1rem; gap: .75rem; }
   .account-entry-actions { display: grid; grid-template-columns: 1fr; }
 }
+
+/* 9. Mobil menü (hamburger) güvenilirlik düzeltmesi */
+.menu-toggle {
+  z-index: 3;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 940px) {
+  .site-nav { -webkit-backdrop-filter: blur(18px) saturate(120%); }
+  .nav-links { visibility: hidden; pointer-events: none; }
+  .nav-links { transition: max-height .5s var(--ease), opacity .25s ease, transform .4s var(--ease), padding .4s var(--ease), visibility 0s linear .5s; }
+  .site-nav.menu-open .nav-links { visibility: visible; pointer-events: auto; transition-delay: 0s; }
+}
