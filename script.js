@@ -120,6 +120,12 @@ const MAKALELER = [
    Menüdeki ve alt bilgideki sürüm numarası otomatik olarak ilk kayıttan alınır.
    ========================================================================== */
 const SURUMLER = [
+  { ay: "Eylül 2026", surum: "3.5.0", baslik: "Kişisel çalışma alanı ve hızlı olay ekleme", maddeler: [
+    "Hesabım sayfası; özet göstergeleri, son hareketler, birleşik arama, tür filtreleri ve hızlı erişim bağlantılarıyla kişisel çalışma alanına dönüştürüldü.",
+    "Favoriler ve notlar tek görünümde veya ayrı sekmelerde yönetilebilir; kişisel veriler JSON olarak dışa aktarılabilir.",
+    "Yönetici paneline her ekrandan ulaşılabilen belirgin Yeni olay ekle ve Yeni şahsiyet düğmeleri eklendi.",
+    "Olay formu açıklayıcı alan adları, zorunlu alan işaretleri ve daha görünür bir kayıt akışıyla yenilendi.",
+  ] },
   { ay: "Eylül 2026", surum: "3.4.0", baslik: "Yeni tasarım, arama ve hesap özellikleri", maddeler: [
     "Tüm sayfalar yeni tasarıma göre yeniden hazırlandı: bir yanda görsel, diğer yanda içerik.",
     "Arşiv (arama, tür ve devir filtreleri), Zaman Çizelgesi, Soyağacı, Rastgele Şahsiyet, Makaleler, Sıkça Sorulan Sorular ve iletişim formu yenilendi.",
@@ -168,6 +174,7 @@ const durum = {
   makaleAcik: new Set(),
   loginMod: "giris",
   admin: { sekme: "zat", duzenleId: null, arama: "", siralama: "ad", sadeceEksik: false, kirli: false },
+  hesap: { sekme: "tumu", arama: "", tur: "tumu" },
   favoriler: {}, notlar: {}, notTaslak: {}, kullaniciDinleyici: [], kisiselHata: null,
   genelArama: "", kaydirId: null, yavas: false, appCheck: null,
 };
@@ -851,14 +858,23 @@ function sayfaAdmin() {
   }
   return `<section class="admin-page">
     <div class="admin-top">
-      <h1>Yönetici Paneli</h1>
+      <div><p class="admin-kicker">Arşiv yönetimi</p><h1>Yönetici Paneli</h1><p class="admin-lead">Şahsiyetleri ve tarihî olayları tek merkezden ekleyin, düzenleyin ve denetleyin.</p></div>
       <div class="admin-top-actions">
+        <button type="button" class="button primary" data-action="admin-yeni" data-tip="olay">Yeni olay ekle</button>
+        <button type="button" class="button" data-action="admin-yeni" data-tip="zat">Yeni şahsiyet</button>
         <button type="button" class="button" data-action="admin-yedek">JSON yedeği indir</button>
         <a class="button" href="#home">Siteyi gör</a>
         <button type="button" class="button" data-action="cikis">Çıkış yap</button>
       </div>
     </div>
     <div class="admin-overview" id="admin-ozet"></div>
+    <div class="admin-create-callout">
+      <div><span>Hızlı kayıt</span><strong>Arşive yeni bir içerik ekleyin</strong><p>Olaylar için tarih, dönem, açıklama ve kaynak; şahsiyetler için nesep ve hayat bilgilerini kaydedebilirsiniz.</p></div>
+      <div class="admin-create-actions">
+        <button type="button" class="button primary" data-action="admin-yeni" data-tip="olay">Olay ekleme formunu aç</button>
+        <button type="button" class="button" data-action="admin-yeni" data-tip="zat">Şahsiyet ekle</button>
+      </div>
+    </div>
     <div class="admin-tabs" id="admin-sekmeler"></div>
     <div class="admin-grid">
       <div class="admin-col-list" id="admin-liste"></div>
@@ -871,7 +887,8 @@ function adminSekmeleriGuncelle() {
   const el = $("#admin-sekmeler");
   if (!el) return;
   const s = durum.admin.sekme;
-  el.innerHTML = `<button type="button" class="tab-btn${s === "zat" ? " active" : ""}" data-action="admin-sekme" data-sekme="zat">Şahsiyetler (${durum.zatlar.length})</button>
+  el.innerHTML = `<div class="admin-tabs-label"><span>Kayıt türü</span><strong>${s === "zat" ? "Şahsiyet kayıtları" : "Olay kayıtları"}</strong></div>
+    <button type="button" class="tab-btn${s === "zat" ? " active" : ""}" data-action="admin-sekme" data-sekme="zat">Şahsiyetler (${durum.zatlar.length})</button>
     <button type="button" class="tab-btn${s === "olay" ? " active" : ""}" data-action="admin-sekme" data-sekme="olay">Olaylar (${durum.olaylar.length})</button>`;
 }
 
@@ -1005,6 +1022,20 @@ function adminDegisikligiBirakabilir() {
   return !durum.admin.kirli || confirm(mesaj);
 }
 
+function adminYeniKayit(tip) {
+  if (!adminMi() || !["zat", "olay"].includes(tip)) return;
+  if (!adminDegisikligiBirakabilir()) return;
+  durum.admin.sekme = tip;
+  durum.admin.arama = "";
+  durum.admin.sadeceEksik = false;
+  adminListeGuncelle();
+  adminFormuKur();
+  const form = $("#admin-form");
+  if (form && form.scrollIntoView) form.scrollIntoView({ behavior: "smooth", block: "start" });
+  const ilkAlan = tip === "olay" ? $("#f-ad") : $("#f-isim");
+  if (ilkAlan) setTimeout(() => ilkAlan.focus({ preventScroll: true }), 350);
+}
+
 function adminFormuKur() {
   const el = $("#admin-form");
   if (!el) return;
@@ -1045,19 +1076,19 @@ function adminFormuKur() {
     </div>`;
   } else {
     el.innerHTML = `<div class="admin-form">
-      <h3 id="f-baslik">Yeni olay</h3>
+      <div class="admin-form-heading"><span>Olay kaydı</span><h3 id="f-baslik">Yeni olay ekle</h3><p>Olayı zaman çizelgesinde doğru konumlandırmak için en az bir tarih ve doğrulanabilir kaynak ekleyin.</p></div>
       <div id="f-mesaj"></div>
-      <div class="form-field"><label for="f-ad">Olay başlığı</label><input id="f-ad" type="text" autocomplete="off"></div>
-      <div class="form-field"><label for="f-devir">Dönem</label><select id="f-devir">${devirSecenek}</select></div>
+      <div class="form-field"><label for="f-ad">Olay başlığı <span class="required-mark">Zorunlu</span></label><input id="f-ad" type="text" autocomplete="off" placeholder="Örn. Bedir Gazvesi" required></div>
+      <div class="form-field"><label for="f-devir">Tarihî dönem</label><select id="f-devir">${devirSecenek}</select></div>
       <div class="form-row">
-        <div class="form-field"><label for="f-hicri">Hicri</label><input id="f-hicri" type="text" placeholder="H. 2"></div>
-        <div class="form-field"><label for="f-miladi">Miladi</label><input id="f-miladi" type="text" placeholder="624"></div>
+        <div class="form-field"><label for="f-hicri">Hicri tarih</label><input id="f-hicri" type="text" placeholder="Örn. H. 2"></div>
+        <div class="form-field"><label for="f-miladi">Miladi tarih</label><input id="f-miladi" type="text" inputmode="numeric" placeholder="Örn. 624"></div>
       </div>
       ${EDITOR_HTML}
-      <div class="form-field"><label for="f-kaynak">Kaynak / sayfa no</label><input id="f-kaynak" type="text"></div>
+      <div class="form-field"><label for="f-kaynak">Kaynak / sayfa no</label><input id="f-kaynak" type="text" placeholder="Eser adı, cilt ve sayfa"></div>
       <div class="form-actions">
-        <button type="button" class="button primary" data-action="admin-kaydet">Kaydet</button>
-        <button type="button" class="button" data-action="admin-iptal">Temizle</button>
+        <button type="button" class="button primary" data-action="admin-kaydet">Olayı kaydet</button>
+        <button type="button" class="button" data-action="admin-iptal">Formu temizle</button>
         <span id="f-kirli" class="unsaved-badge" hidden>Kaydedilmemiş değişiklik</span>
       </div>
     </div>`;
@@ -1162,63 +1193,178 @@ async function adminSil(id) {
   }
 }
 
-/* ---------- HESABIM (favoriler + notlar) ---------- */
+/* ---------- HESABIM / KİŞİSEL ÇALIŞMA ALANI ---------- */
+function hesapTarih(zaman, yedek = "Henüz hareket yok") {
+  if (!zaman) return yedek;
+  const d = new Date(zaman);
+  if (Number.isNaN(d.getTime())) return yedek;
+  return new Intl.DateTimeFormat(document.documentElement.lang === "en" ? "en-GB" : "tr-TR", {
+    day: "numeric", month: "short", year: "numeric",
+  }).format(d);
+}
+
+function hesapHamVeri() {
+  const favler = Object.values(durum.favoriler).sort((a, b) => (b.eklenmeTarihi || 0) - (a.eklenmeTarihi || 0));
+  const notlar = Object.values(durum.notlar).filter((n) => n.metin && n.metin.trim())
+    .sort((a, b) => (b.guncellemeTarihi || 0) - (a.guncellemeTarihi || 0));
+  return { favler, notlar };
+}
+
+function hesapFiltrelenmisVeri() {
+  const { favler, notlar } = hesapHamVeri();
+  const q = trKucuk(durum.hesap.arama.trim());
+  const tur = durum.hesap.tur;
+  const ekle = (veri, turu) => veri.map((x) => {
+    const k = kayitBul(x.tip, x.itemId);
+    return {
+      turu, veri: x, kayit: k,
+      ad: kayitAdi(x.tip, k) || x.ad || "İsimsiz kayıt",
+      zaman: turu === "favori" ? x.eklenmeTarihi : x.guncellemeTarihi,
+    };
+  });
+  let liste = [
+    ...(durum.hesap.sekme === "not" ? [] : ekle(favler, "favori")),
+    ...(durum.hesap.sekme === "favori" ? [] : ekle(notlar, "not")),
+  ];
+  liste = liste.filter((x) => {
+    if (tur !== "tumu" && x.veri.tip !== tur) return false;
+    return !q || trKucuk(`${x.ad} ${x.veri.metin || ""}`).includes(q);
+  });
+  return liste.sort((a, b) => (b.zaman || 0) - (a.zaman || 0));
+}
+
+function hesapKayitSatiri(x) {
+  const yuk = durum.yuklendi.zat && durum.yuklendi.olay;
+  const var_ = !!x.kayit || !yuk;
+  const tipAdi = x.veri.tip === "zat" ? "Şahsiyet" : "Olay";
+  const turAdi = x.turu === "favori" ? "Favori" : "Kişisel not";
+  return `<article class="account-entry account-entry-${x.turu}">
+    <div class="account-entry-mark" aria-hidden="true">${x.turu === "favori" ? "F" : "N"}</div>
+    <div class="account-entry-main">
+      <div class="account-entry-meta"><span>${turAdi}</span><i></i><span>${tipAdi}</span><i></i><time>${hesapTarih(x.zaman, "Tarih yok")}</time></div>
+      <h3>${var_ ? `<a href="#archive/${x.veri.tip}-${esc(x.veri.itemId)}">${esc(x.ad)}</a>` : esc(x.ad)}</h3>
+      ${x.turu === "not" ? `<p>${esc(x.veri.metin)}</p>` : `<p>${var_ ? "Okumak veya not eklemek için kaydı açın." : "Bu kayıt arşivden kaldırılmış."}</p>`}
+    </div>
+    <div class="account-entry-actions">
+      ${var_ ? `<a class="btn-small" href="#archive/${x.veri.tip}-${esc(x.veri.itemId)}">${x.turu === "not" ? "Notu düzenle" : "Kaydı aç"}</a>` : ""}
+      <button type="button" class="btn-small btn-danger" data-action="${x.turu === "favori" ? "fav" : "not-sil"}" data-tip="${x.veri.tip}" data-id="${esc(x.veri.itemId)}">${x.turu === "favori" ? "Favoriden çıkar" : "Notu sil"}</button>
+    </div>
+  </article>`;
+}
+
+function hesapListeIcerigi() {
+  const liste = hesapFiltrelenmisVeri();
+  if (liste.length) return liste.map(hesapKayitSatiri).join("");
+  const filtreli = durum.hesap.arama || durum.hesap.tur !== "tumu" || durum.hesap.sekme !== "tumu";
+  return `<div class="account-empty"><span aria-hidden="true">${filtreli ? "0" : "+"}</span><h3>${filtreli ? "Eşleşen kayıt bulunamadı" : "Çalışma alanınız hazır"}</h3><p>${filtreli ? "Arama ifadenizi veya filtreleri değiştirin." : "Arşivdeki bir şahsiyeti ya da olayı favorilerinize ekleyin; kişisel notlarınız da burada bir araya gelsin."}</p>${filtreli ? `<button type="button" class="button" data-action="hesap-filtre-temizle">Filtreleri temizle</button>` : `<a class="button primary" href="#archive">Arşivi keşfet</a>`}</div>`;
+}
+
+function hesapListeGuncelle() {
+  const el = $("#hesap-liste");
+  if (el) el.innerHTML = hesapListeIcerigi();
+  const sonuc = $("#hesap-sonuc");
+  if (sonuc) sonuc.textContent = `${hesapFiltrelenmisVeri().length} öğe gösteriliyor`;
+}
+
+function hesapVerisiniIndir() {
+  if (!durum.kullanici) return;
+  const { favler, notlar } = hesapHamVeri();
+  const veri = {
+    format: "asr-saadet-kisisel-veri",
+    version: SURUM,
+    exportedAt: new Date().toISOString(),
+    favorites: favler.map(({ docIds, ...x }) => x),
+    notes: notlar.map(({ docId, ...x }) => x),
+  };
+  const blob = new Blob([JSON.stringify(veri, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `asr-saadet-kisisel-veriler-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function sayfaHesap() {
   const u = durum.kullanici;
   if (!u) {
     return `<section class="split">
       ${gorselYari({ f: "dome", alt: "Cami kubbesinin iç mimarisi", sticky: true, icerik: `<p class="eyebrow">Hesap</p><h1>Hesabım</h1>` })}
       <div class="half content" style="align-items:flex-start"><div class="login-panel">
-        <h2>Giriş gerekli</h2>
-        <p>Favorilerinizi ve notlarınızı görmek için giriş yapın.</p>
-        <a class="button primary" href="#login">Giriş yap</a>
+        <h2>Giriş gerekli</h2><p>Favorilerinizi ve notlarınızı görmek için giriş yapın.</p><a class="button primary" href="#login">Giriş yap</a>
       </div></div>
     </section>`;
   }
-  const yuk = durum.yuklendi.zat && durum.yuklendi.olay;
-  const favler = Object.values(durum.favoriler).sort((a, b) => (b.eklenmeTarihi || 0) - (a.eklenmeTarihi || 0));
-  const notlar = Object.values(durum.notlar).filter((n) => n.metin && n.metin.trim())
-    .sort((a, b) => (b.guncellemeTarihi || 0) - (a.guncellemeTarihi || 0));
-  const turAdi = (t) => (t === "zat" ? "Şahsiyet" : "Olay");
 
-  const favSatir = (f) => {
-    const k = kayitBul(f.tip, f.itemId);
-    const ad = kayitAdi(f.tip, k) || f.ad || "İsimsiz kayıt";
-    const var_ = !!k || !yuk;
-    const ic = `<div class="record-head"><h3>${esc(ad)}</h3><span class="era">${turAdi(f.tip)}</span></div>${var_ ? "" : "<small>Bu kayıt arşivden kaldırılmış.</small>"}`;
-    return `<article class="record fav-satir">
-      ${var_ ? `<a href="#archive/${f.tip}-${esc(f.itemId)}">${ic}</a>` : `<div>${ic}</div>`}
-      <button type="button" class="btn-small btn-danger" data-action="fav" data-tip="${f.tip}" data-id="${esc(f.itemId)}">Kaldır</button>
-    </article>`;
-  };
-  const notSatir = (n) => {
-    const k = kayitBul(n.tip, n.itemId);
-    const ad = kayitAdi(n.tip, k) || n.ad || "İsimsiz kayıt";
-    return `<article class="record">
-      <div class="record-head"><h3>${esc(ad)}</h3><span class="era">${turAdi(n.tip)}</span></div>
-      <p class="not-metin">${esc(n.metin)}</p>
-      <div class="hesap-araclar">
-        ${k || !yuk ? `<a class="btn-small" href="#archive/${n.tip}-${esc(n.itemId)}">Kayıtta düzenle</a>` : ""}
-        <button type="button" class="btn-small btn-danger" data-action="not-sil" data-tip="${n.tip}" data-id="${esc(n.itemId)}">Notu sil</button>
-      </div>
-    </article>`;
-  };
+  const { favler, notlar } = hesapHamVeri();
+  const zatFav = favler.filter((x) => x.tip === "zat").length;
+  const olayFav = favler.filter((x) => x.tip === "olay").length;
+  const tumHareket = [
+    ...favler.map((x) => ({ ad: kayitAdi(x.tip, kayitBul(x.tip, x.itemId)) || x.ad, tur: "Favoriye eklendi", zaman: x.eklenmeTarihi })),
+    ...notlar.map((x) => ({ ad: kayitAdi(x.tip, kayitBul(x.tip, x.itemId)) || x.ad, tur: "Not güncellendi", zaman: x.guncellemeTarihi })),
+  ].sort((a, b) => (b.zaman || 0) - (a.zaman || 0));
+  const sonHareket = tumHareket[0];
+  const ad = u.displayName || (u.email ? u.email.split("@")[0] : "Okur");
+  const basHarf = String(ad).trim().charAt(0).toLocaleUpperCase("tr") || "A";
+  const uyelik = hesapTarih(u.metadata && u.metadata.creationTime, "Üyelik tarihi bilinmiyor");
+  const arsivToplam = durum.zatlar.length + durum.olaylar.length;
+  const seciliOran = arsivToplam ? Math.min(100, Math.round((favler.length / arsivToplam) * 100)) : 0;
 
-  return `<section class="split">
-    ${gorselYari({ f: "dome", alt: "Cami kubbesinin iç mimarisi", sticky: true, icerik: `
-      <p class="eyebrow">Hesap</p>
-      <h1>Hesabım</h1>
-      <p class="visual-copy">${esc(u.displayName || u.email || "")}</p>` })}
-    <div class="half content ark-icerik">
-      ${durum.kisiselHata ? `<div class="error">Favori ve notlar okunamadı: ${esc(durum.kisiselHata)}<br>Firestore kurallarında "favoriler" ve "notlar" koleksiyonlarına giriş yapmış kullanıcı için izin verildiğinden emin olun.</div>` : ""}
-      <h3 class="hesap-bolum">Favorilerim (${favler.length})</h3>
-      ${favler.length ? `<div class="record-list">${favler.map(favSatir).join("")}</div>` : `<div class="empty">Henüz favori eklemediniz. Arşivde bir kaydı açıp “Favorilere ekle”ye basın.</div>`}
-      <h3 class="hesap-bolum">Notlarım (${notlar.length})</h3>
-      ${notlar.length ? `<div class="record-list">${notlar.map(notSatir).join("")}</div>` : `<div class="empty">Henüz not almadınız. Arşivde bir kaydı açıp “Kişisel notum” alanına yazabilirsiniz.</div>`}
-      <div class="hesap-araclar" style="margin-top:2rem">
-        ${adminMi() ? `<a class="button" href="#admin">Yönetim paneli</a>` : ""}
-        <button type="button" class="button" data-action="cikis">Çıkış yap</button>
+  return `<section class="account-page">
+    <header class="account-hero">
+      <div class="account-identity">
+        <div class="account-avatar" aria-hidden="true">${esc(basHarf)}</div>
+        <div><p class="account-eyebrow">Kişisel çalışma alanı</p><h1>Hoş geldiniz, ${esc(ad)}</h1><p>${esc(u.email || "")}<span class="account-dot"></span>${adminMi() ? "Yönetici hesabı" : `Üyelik: ${uyelik}`}</p></div>
       </div>
+      <div class="account-hero-actions">
+        ${adminMi() ? `<a class="button primary" href="#admin">Yönetim paneli</a>` : ""}
+        <button type="button" class="button" data-action="hesap-disa-aktar">Verilerimi dışa aktar</button>
+        <button type="button" class="button account-signout" data-action="cikis">Çıkış yap</button>
+      </div>
+    </header>
+
+    ${durum.kisiselHata ? `<div class="error account-error">Favori ve notlar okunamadı: ${esc(durum.kisiselHata)}<br>Firestore kurallarında "favoriler" ve "notlar" koleksiyonlarına giriş yapmış kullanıcı için izin verildiğinden emin olun.</div>` : ""}
+
+    <div class="account-stats" aria-label="Hesap özeti">
+      <article><span>01</span><p>Favoriler</p><strong>${favler.length}</strong><small>Kaydedilmiş içerik</small></article>
+      <article><span>02</span><p>Kişisel notlar</p><strong>${notlar.length}</strong><small>Size özel not</small></article>
+      <article><span>03</span><p>Şahsiyetler</p><strong>${zatFav}</strong><small>Favori şahsiyet</small></article>
+      <article><span>04</span><p>Olaylar</p><strong>${olayFav}</strong><small>Favori tarihî olay</small></article>
+    </div>
+
+    <div class="account-insights">
+      <article class="account-pulse">
+        <div class="account-card-heading"><div><span>Arşiv nabzı</span><h2>Kişisel seçkiniz</h2></div><strong>${seciliOran}%</strong></div>
+        <div class="account-progress" role="progressbar" aria-label="Favorilere eklenen arşiv oranı" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${seciliOran}"><i style="width:${seciliOran}%"></i></div>
+        <p>${arsivToplam ? `${arsivToplam} arşiv kaydından ${favler.length} tanesini favorilerinize eklediniz.` : "Arşiv kayıtları yükleniyor."}</p>
+      </article>
+      <article class="account-latest">
+        <div class="account-card-heading"><div><span>Son hareket</span><h2>${esc((sonHareket && sonHareket.ad) || "Henüz bir hareket yok")}</h2></div><time>${hesapTarih(sonHareket && sonHareket.zaman)}</time></div>
+        <p>${sonHareket ? `${sonHareket.tur}. Tüm hareketlerinizi çalışma alanından yönetebilirsiniz.` : "Bir kaydı favorileyerek veya not ekleyerek kişisel arşivinizi oluşturmaya başlayın."}</p>
+      </article>
+    </div>
+
+    <div class="account-layout">
+      <section class="account-workspace" aria-labelledby="account-workspace-title">
+        <div class="account-workspace-head"><div><span>Arşiv masam</span><h2 id="account-workspace-title">Favoriler ve notlar</h2></div><small id="hesap-sonuc">${hesapFiltrelenmisVeri().length} öğe gösteriliyor</small></div>
+        <div class="account-tabs" role="group" aria-label="İçerik türü">
+          ${[["tumu", "Tüm hareketler", favler.length + notlar.length], ["favori", "Favoriler", favler.length], ["not", "Notlar", notlar.length]].map(([v, l, c]) => `<button type="button" class="account-tab${durum.hesap.sekme === v ? " active" : ""}" data-action="hesap-sekme" data-deger="${v}" aria-pressed="${durum.hesap.sekme === v}">${l}<span>${c}</span></button>`).join("")}
+        </div>
+        <div class="account-filters">
+          <label class="account-search"><span>Çalışma alanında ara</span><input id="hesap-arama" type="search" value="${esc(durum.hesap.arama)}" placeholder="İsim veya not içinde ara…"></label>
+          <label><span>Kayıt türü</span><select id="hesap-tur"><option value="tumu"${durum.hesap.tur === "tumu" ? " selected" : ""}>Tüm kayıt türleri</option><option value="zat"${durum.hesap.tur === "zat" ? " selected" : ""}>Şahsiyetler</option><option value="olay"${durum.hesap.tur === "olay" ? " selected" : ""}>Olaylar</option></select></label>
+        </div>
+        <div class="account-list" id="hesap-liste">${hesapListeIcerigi()}</div>
+      </section>
+
+      <aside class="account-sidebar">
+        <section><span class="account-aside-index">01 / Keşfet</span><h2>Okumaya devam edin</h2><p>Arşivin farklı görünümlerinden yeni bağlantılar ve tarihî kayıtlar keşfedin.</p>
+          <nav class="account-quick-links" aria-label="Hesap hızlı erişim">
+            <a href="#archive"><span>Arşivde ara</span><b>→</b></a><a href="#timeline"><span>Zaman çizelgesini aç</span><b>→</b></a><a href="#genealogy"><span>Soyağacını incele</span><b>→</b></a><a href="#random"><span>Rastgele bir şahsiyet</span><b>→</b></a>
+          </nav>
+        </section>
+        <section class="account-privacy"><span class="account-aside-index">02 / Gizlilik</span><h2>Yalnızca size özel</h2><p>Notlarınız ve favorileriniz hesabınızla ilişkilidir; diğer ziyaretçilere gösterilmez.</p><a href="#privacy">Gizlilik politikasını okuyun →</a></section>
+      </aside>
     </div>
   </section>`;
 }
@@ -1955,11 +2101,25 @@ const islem = {
   fav(el) { favToggle(el.dataset.tip, el.dataset.id); },
   "not-kaydet"(el) { notKaydet(el.dataset.tip, el.dataset.id); },
   "not-sil"(el) { notSil(el.dataset.tip, el.dataset.id); },
+  "hesap-sekme"(el) {
+    durum.hesap.sekme = el.dataset.deger;
+    document.querySelectorAll(".account-tab").forEach((b) => {
+      const aktif = b.dataset.deger === durum.hesap.sekme;
+      b.classList.toggle("active", aktif); b.setAttribute("aria-pressed", String(aktif));
+    });
+    hesapListeGuncelle();
+  },
+  "hesap-filtre-temizle"() {
+    durum.hesap = { sekme: "tumu", arama: "", tur: "tumu" };
+    render({ scroll: false });
+  },
+  "hesap-disa-aktar": hesapVerisiniIndir,
   "admin-sekme"(el) {
     if (!adminDegisikligiBirakabilir()) return;
     durum.admin.sekme = el.dataset.sekme; durum.admin.arama = "";
     adminListeGuncelle(); adminFormuKur();
   },
+  "admin-yeni"(el) { adminYeniKayit(el.dataset.tip); },
   "admin-duzenle"(el) {
     if (!adminDegisikligiBirakabilir()) return;
     const liste = durum.admin.sekme === "zat" ? durum.zatlar : durum.olaylar;
@@ -2014,6 +2174,11 @@ function olayBagla() {
     if (e.target.closest && e.target.closest(".editor-toolbar button")) e.preventDefault(); /* seçim kaybolmasın */
   });
   document.addEventListener("input", (e) => {
+    if (e.target.id === "hesap-arama") {
+      durum.hesap.arama = e.target.value;
+      hesapListeGuncelle();
+      return;
+    }
     if (e.target.id === "admin-arama") {
       durum.admin.arama = e.target.value;
       adminListeGovdesiGuncelle();
@@ -2031,6 +2196,11 @@ function olayBagla() {
     if (e.target.id === "arama") { durum.arama = e.target.value; durum.limit = 50; arsivGuncelle(); }
   });
   document.addEventListener("change", (e) => {
+    if (e.target.id === "hesap-tur") {
+      durum.hesap.tur = e.target.value;
+      hesapListeGuncelle();
+      return;
+    }
     if (e.target.id === "admin-sirala") {
       durum.admin.siralama = e.target.value;
       adminListeGovdesiGuncelle();
