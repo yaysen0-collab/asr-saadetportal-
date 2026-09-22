@@ -12,7 +12,7 @@
     "Asr-ı Saadet Portalı": "Age of Felicity Portal",
     "Ana menü": "Main navigation",
     "Asr-ı Saadet Portalı ana sayfa": "Age of Felicity Portal home",
-    "Dijital Miras Portalı": "Digital Heritage Portal",
+    "İslam tarihi ve Ashab-ı Kiram arşivi": "Islamic history and Companions archive",
     "Ana Sayfa": "Home",
     "Arşiv": "Archive",
     "Zaman Çizelgesi": "Timeline",
