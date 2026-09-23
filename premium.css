@@ -16,7 +16,7 @@
   --brass-text: #806126;
   --ink: #171b17;
   --muted: #655f54;
-  --quiet: #948b7b;
+  --quiet: #6f675b;
   --cream: #f7f0df;
   --line: rgba(128, 97, 38, 0.2);
   --display: "Cormorant Garamond", Georgia, serif;
@@ -124,16 +124,16 @@ a, button, input, textarea, select { transition: color .25s ease, background-col
 .brand-mark img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 5px 10px rgba(0,0,0,.15)); }
 
 .brand-copy { display: grid; line-height: 1; }
-.brand-copy strong { color: var(--cream); font-size: 1.22rem; font-weight: 600; letter-spacing: .02em; }
-.brand-copy small { margin-top: .3rem; color: var(--brass); font-family: var(--body); font-size: .52rem; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; }
+.brand-copy strong { color: #fffaf0; font-size: 1.12rem; font-weight: 600; letter-spacing: .01em; white-space: nowrap; }
+.brand-copy small { margin-top: .34rem; color: var(--brass-bright); font-family: var(--body); font-size: .54rem; font-weight: 700; letter-spacing: .08em; white-space: nowrap; }
 
 .nav-links { gap: clamp(.8rem, 1.5vw, 1.45rem); }
 .nav-links a {
   position: relative;
   padding: 1.75rem 0;
-  color: rgba(247,240,223,.64);
-  font-size: .64rem;
-  font-weight: 600;
+  color: rgba(247,240,223,.84);
+  font-size: .66rem;
+  font-weight: 700;
   letter-spacing: .13em;
 }
 .nav-links a::after {
@@ -244,7 +244,7 @@ main { min-height: 80vh; counter-reset: section; }
   font-size: .6rem;
   font-weight: 600;
   letter-spacing: .2em;
-  content: "0" counter(section) "  /  ASR-I SAADET";
+  content: "ASR-I SAADET PORTALI";
 }
 
 .visual h1,
@@ -262,7 +262,7 @@ main { min-height: 80vh; counter-reset: section; }
 
 .visual h2 { font-size: clamp(2.6rem, 4.7vw, 5rem); }
 .visual .quote-source,
-.visual-copy { max-width: 36ch; color: rgba(247,240,223,.68); font-family: var(--body); font-size: .78rem; font-style: normal; letter-spacing: .04em; line-height: 1.8; }
+.visual-copy { max-width: 36ch; color: rgba(247,240,223,.86); font-family: var(--body); font-size: .8rem; font-style: normal; letter-spacing: .04em; line-height: 1.8; }
 
 .brass-rule { width: 72px; height: 1px; margin-top: 2.2rem; background: linear-gradient(90deg, var(--brass-bright), transparent); }
 
@@ -339,7 +339,7 @@ main { min-height: 80vh; counter-reset: section; }
 }
 .dark-content::after { border-color: var(--brass-bright); }
 .dark-content .eyebrow { color: var(--brass-bright); }
-.dark-content .lead { color: rgba(247,240,223,.62); }
+.dark-content .lead { color: rgba(247,240,223,.84); }
 
 .sticky { top: 76px; height: calc(100vh - 76px); }
 
@@ -623,7 +623,7 @@ main { min-height: 80vh; counter-reset: section; }
 .site-footer {
   position: relative;
   min-height: 310px;
-  color: rgba(247,240,223,.6);
+  color: rgba(247,240,223,.8);
   background-color: #081914;
   background-image: radial-gradient(circle at 15% 50%, rgba(201,166,90,.09), transparent 30rem);
   border-top: 1px solid rgba(224,196,126,.25);
@@ -636,7 +636,7 @@ main { min-height: 80vh; counter-reset: section; }
 .footer-links p { max-width: 42ch; font-size: .75rem; line-height: 1.9; }
 .footer-links { background: rgba(255,255,255,.018); border-left-color: rgba(224,196,126,.12); }
 .footer-links h3 { color: var(--brass-bright); font-weight: 700; }
-.footer-links a { width: fit-content; color: rgba(247,240,223,.62); font-size: .72rem; }
+.footer-links a { width: fit-content; color: rgba(247,240,223,.82); font-size: .74rem; }
 .footer-links a:hover { color: var(--brass-bright); transform: translateX(4px); }
 
 .prose { max-width: 720px; }
@@ -761,10 +761,13 @@ mark { color: var(--forest); background: rgba(224,196,126,.55); }
 
 /* 7. Language and day/night preferences */
 .preference-controls {
+  position: relative;
+  z-index: 4;
   display: inline-flex;
   align-items: center;
   gap: .55rem;
   margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .language-switch {
@@ -776,7 +779,7 @@ mark { color: var(--forest); background: rgba(224,196,126,.55); }
 
 .language-switch button,
 .theme-toggle {
-  color: rgba(247,240,223,.62);
+  color: rgba(247,240,223,.9);
   background: transparent;
   border: 0;
   cursor: pointer;
@@ -929,15 +932,25 @@ html[data-theme="dark"] .random-card.record-red {
 }
 
 @media (max-width: 940px) {
-  .preference-controls { margin-left: 0; }
-  .menu-toggle { margin-left: auto; }
+  .brand { min-width: 0; margin-right: auto; order: 1; }
+  .preference-controls { margin-left: 0; order: 2; }
+  .menu-toggle { margin-left: 0; order: 3; }
+  .nav-links { order: 4; }
+}
+
+@media (max-width: 720px) {
+  .brand-copy small { display: none; }
 }
 
 @media (max-width: 520px) {
-  .brand-copy small { display: none; }
+  .nav-row { padding-inline: .75rem; gap: .45rem; }
+  .brand { gap: .45rem; }
+  .brand-mark { width: 25px; height: 31px; }
+  .brand-copy strong { font-size: .88rem; }
   .preference-controls { gap: .35rem; }
-  .language-switch button { min-width: 27px; padding-inline: .35rem; }
-  .theme-toggle { width: 32px; height: 32px; }
+  .language-switch button { min-width: 25px; min-height: 25px; padding-inline: .25rem; }
+  .theme-toggle { width: 30px; height: 30px; }
+  .menu-toggle { width: 38px; height: 38px; }
 }
 
 /* 8. Account workspace — editorial archive desk */
