@@ -1153,11 +1153,33 @@ function adminFormuDoldur(k) {
    Var olan hiçbir bilgi silinmez/üzerine yazılmaz: sadece BOŞ alanlar
    doldurulur ve bir isme karşı HİÇ bağ girilmemişse eksik bağ eklenir.
 
-   Bu hesaplama iki yerden kullanılır:
-   - kardesGrubunuSenkronizeEt: her "Kaydet" işleminden sonra otomatik çalışır.
+   C) İSİM DEĞİŞİKLİĞİ / SİLME SONRASI REFERANS GÜNCELLEMESİ
+      Yukarıdaki A ve B, isimler DEĞİŞMEDİĞİ sürece doğru çalışır. Bir
+      şahsiyetin ismi düzenlenip değiştirildiğinde veya kaydı tamamen
+      silindiğinde, diğer kayıtların anne/baba/eş/"Diğer bağlar" alanlarında
+      hâlâ ESKİ isim metin olarak durur (çünkü bu alanlar isim/ID değil, düz
+      metin tutar). Bunu gidermek için:
+      - isimReferanslariniGuncelle(calisma, eskiIsim, yeniIsimVeyaNull):
+        TÜM kayıtları tarar; eskiIsime eşleşen anne/baba/eş/bağ girişlerini
+        yeni isimle DEĞİŞTİRİR (isim değişikliği) ya da tamamen KALDIRIR
+        (yeniIsimVeyaNull === null, yani kayıt silindi).
+      - Bu, kayitSonrasiSenkronizeEt (kayıt kaydedilince) ve
+        adminSilinenReferanslariTemizle (kayıt silinince) tarafından
+        otomatik çağrılır; ayrıca elle tetiklenen "Bağları tara ve düzelt"
+        (adminAkrabaTumunuTara) sadece A ve B'yi çalıştırır, çünkü o özellik
+        eksik/tek yönlü bağları TAMAMLAMAK içindir, isim geçmişini onarmak
+        için değil (isim değişince zaten anında C devreye girer).
+
+   Bu hesaplama şu yerlerden kullanılır:
+   - kayitSonrasiSenkronizeEt: her "Kaydet" işleminden sonra otomatik çalışır
+     (önce C: isim değiştiyse referansları günceller, sonra A/B: kardeş ve
+     akrabalık bağlarını tamamlar).
+   - adminSilinenReferanslariTemizle: bir kayıt silindiğinde otomatik çalışır
+     (yalnızca C: silinen isme yapılan referansları kaldırır).
    - adminAkrabaTumunuTara: yönetici panelindeki "Bağları tara ve düzelt"
      düğmesiyle, ELLE tetiklenerek TÜM veritabanını bir kerede düzeltir
-     (özellikle bu özellik eklenmeden önce girilmiş eski kayıtlar için). */
+     (özellikle bu özellik eklenmeden önce girilmiş eski kayıtlar için;
+     yalnızca A/B). */
 const TERS_ILISKI = {
   "kardeş": "Kardeş",
   "dede": "Torun",
@@ -1255,6 +1277,51 @@ function kardesVeAkrabaGuncellemeleriniHesapla(calisma) {
   });
   return guncellemeler;
 }
+
+/* ---- C) İsim değişikliği / silme sonrası referans güncelleme yardımcıları ---- */
+function esListesiniAyir(es) {
+  return bos(es) ? [] : String(es).split(/\s*,\s*/).filter(Boolean);
+}
+function esListesiniBirlestir(liste) {
+  return liste.length ? liste.join(", ") : "?";
+}
+/* eskiIsim'e (anne/baba/eş/bağ alanlarında) referans veren TÜM kayıtları tarar.
+   yeniIsim bir metin ise referansı yeni isimle değiştirir; null ise (kayıt
+   silindiğinde) referansı tamamen kaldırır. Sadece hesaplar, yazmaz. */
+function isimReferanslariniGuncelle(calisma, eskiIsim, yeniIsim) {
+  const eskiAnah = adAnahtar(eskiIsim);
+  if (!eskiAnah) return [];
+  const guncellemeler = [];
+  calisma.forEach((z) => {
+    const patch = {};
+    if (!bos(z.anne) && adAnahtar(z.anne) === eskiAnah) patch.anne = yeniIsim || "?";
+    if (!bos(z.baba) && adAnahtar(z.baba) === eskiAnah) patch.baba = yeniIsim || "?";
+    if (!bos(z.es)) {
+      const esler = esListesiniAyir(z.es);
+      let degisti = false;
+      const yeniEsler = esler.map((e) => {
+        if (adAnahtar(e) === eskiAnah) { degisti = true; return yeniIsim; }
+        return e;
+      }).filter(Boolean);
+      if (degisti) patch.es = esListesiniBirlestir(yeniEsler);
+    }
+    if (!bos(z.baglar)) {
+      const bagListesi = baglariAyir(z.baglar);
+      let degisti = false;
+      const yeniListe = bagListesi.map((b) => {
+        if (adAnahtar(b.ad) === eskiAnah) {
+          degisti = true;
+          return yeniIsim ? { ad: yeniIsim, tur: b.tur } : null;
+        }
+        return b;
+      }).filter(Boolean);
+      if (degisti) patch.baglar = kbBaglarString(yeniListe) || "?";
+    }
+    if (Object.keys(patch).length) guncellemeler.push({ id: z.id, veri: patch });
+  });
+  return guncellemeler;
+}
+
 async function kbGuncellemeleriYaz(guncellemeler) {
   /* Firestore writeBatch en fazla 500 işlem alabildiğinden, güvenli olması için 400'lük parçalar hâlinde yazıyoruz */
   for (let i = 0; i < guncellemeler.length; i += 400) {
@@ -1264,7 +1331,14 @@ async function kbGuncellemeleriYaz(guncellemeler) {
     await batch.commit();
   }
 }
-async function kardesGrubunuSenkronizeEt(kayitId, kaydedilenObj) {
+
+/* Bir zat kaydı kaydedildikten (eklendikten veya düzenlendikten) sonra çağrılır.
+   eskiIsim, düzenleme durumunda kaydın ÖNCEKİ ismidir (yeni kayıtta null/undefined
+   geçilir). İsim değiştiyse önce diğer kayıtlardaki eski isim referanslarını yeni
+   isimle günceller (bkz. C), ardından kardeş/akrabalık bağlarını tamamlar (bkz. A/B).
+   İkisi de aynı yerel "calisma" kopyası üzerinden hesaplanıp TEK bir batch ile
+   yazılır, böylece "baglar" alanı için çakışan/üzerine yazan iki ayrı istek olmaz. */
+async function kayitSonrasiSenkronizeEt(kayitId, kaydedilenObj, eskiIsim) {
   if (!FS || !db || !kayitId) return [];
   try {
     /* Firestore'un gerçek zamanlı dinleyicisi henüz güncellenmemiş olabileceğinden,
@@ -1274,21 +1348,65 @@ async function kardesGrubunuSenkronizeEt(kayitId, kaydedilenObj) {
     if (mevcutIdx >= 0) calisma[mevcutIdx] = { ...calisma[mevcutIdx], ...kaydedilenObj, id: kayitId };
     else calisma.push({ ...kaydedilenObj, id: kayitId });
 
-    const guncellemeler = kardesVeAkrabaGuncellemeleriniHesapla(calisma);
+    /* Birleşik güncelleme haritası: id -> patch nesnesi (aynı kayda birden fazla
+       adımdan gelen değişiklikler burada üst üste (merge) uygulanır) */
+    const birlesikPatch = new Map();
+    const patchEkle = (id, patch) => {
+      if (!patch || !Object.keys(patch).length) return;
+      birlesikPatch.set(id, { ...(birlesikPatch.get(id) || {}), ...patch });
+    };
+
+    /* C) İsim değiştiyse: diğer kayıtlardaki eski isim referanslarını güncelle.
+       Hem "calisma" üzerinde (A/B'nin doğru veriyle çalışması için) hem de
+       yazılacak patch listesinde uygula. */
+    if (eskiIsim && adAnahtar(eskiIsim) !== adAnahtar(kaydedilenObj.isim)) {
+      const isimGuncellemeleri = isimReferanslariniGuncelle(
+        calisma.filter((z) => z.id !== kayitId), eskiIsim, kaydedilenObj.isim
+      );
+      isimGuncellemeleri.forEach((g) => {
+        const idx = calisma.findIndex((z) => z.id === g.id);
+        if (idx >= 0) calisma[idx] = { ...calisma[idx], ...g.veri };
+        patchEkle(g.id, g.veri);
+      });
+    }
+
+    /* A/B) Kardeş grupları + yönü net akrabalık bağlarının otomatik tamamlanması */
+    kardesVeAkrabaGuncellemeleriniHesapla(calisma).forEach((g) => patchEkle(g.id, g.veri));
+
+    const guncellemeler = [...birlesikPatch.entries()].map(([id, veri]) => ({ id, veri }));
     /* Diğer kişilerde yapılan otomatik değişiklikler (kaydedilen kişinin kendisi hariç) */
     const digerGuncellemeler = guncellemeler.filter((g) => g.id !== kayitId);
     if (digerGuncellemeler.length) {
-      console.log("Otomatik kardeş/akrabalık güncellemesi yapılan kayıtlar:",
+      console.log("Otomatik kardeş/akrabalık/isim güncellemesi yapılan kayıtlar:",
         digerGuncellemeler.map((g) => ({ isim: (calisma.find((z) => z.id === g.id) || {}).isim || g.id, degisen: g.veri })));
     }
     if (!guncellemeler.length) return [];
     await kbGuncellemeleriYaz(guncellemeler);
     return digerGuncellemeler.map((g) => (calisma.find((z) => z.id === g.id) || {}).isim || g.id);
   } catch (e) {
-    console.error("Kardeş/akrabalık senkronizasyon hatası:", e);
+    console.error("Kardeş/akrabalık/isim senkronizasyon hatası:", e);
     return [];
   }
 }
+
+/* Bir zat kaydı SİLİNDİKTEN sonra çağrılır: silinen ismi anne/baba/eş/"Diğer
+   bağlar" alanında referans olarak tutan TÜM diğer kayıtlardan bu referansı
+   kaldırır (bkz. C). Kardeş/akrabalık TAMAMLAMA adımı (A/B) burada bilerek
+   çalıştırılmaz; silme sadece var olan hatalı/eskimiş referansları temizler. */
+async function adminSilinenReferanslariTemizle(silinenId, silinenIsim) {
+  if (!FS || !db || bos(silinenIsim)) return [];
+  try {
+    const calisma = durum.zatlar.filter((z) => z.id !== silinenId).map((z) => ({ ...z }));
+    const guncellemeler = isimReferanslariniGuncelle(calisma, silinenIsim, null);
+    if (!guncellemeler.length) return [];
+    await kbGuncellemeleriYaz(guncellemeler);
+    return guncellemeler.map((g) => (calisma.find((z) => z.id === g.id) || {}).isim || g.id);
+  } catch (e) {
+    console.error("Silinen kayıt referans temizleme hatası:", e);
+    return [];
+  }
+}
+
 /* Yönetici panelindeki "Bağları tara ve düzelt" düğmesi: özellik eklenmeden
    önce girilmiş, hiçbir kaydı yeniden kaydetmeden TÜM veritabanını tek
    seferde tarayıp eksik kardeş/anne/baba/akrabalık bağlarını tamamlar. */
@@ -1351,10 +1469,11 @@ async function adminKaydet() {
         d_hicri: q(v("f-d-hicri")), d_miladi: q(v("f-d-miladi")), v_hicri: q(v("f-v-hicri")), v_miladi: q(v("f-v-miladi")),
         bilgi, kaynak: q(v("f-kaynak")), kirmiziKart: !raIsaretli, guncellemeTarihi: Date.now(),
       };
+      const eskiKayit = id ? durum.zatlar.find((z) => z.id === id) : null;
       let kaydedilenId = id;
       if (id) { await FS.updateDoc(FS.doc(db, "zatlar", id), obj); }
       else { const yeniRef = await FS.addDoc(FS.collection(db, "zatlar"), obj); kaydedilenId = yeniRef.id; }
-      var otomatikGuncellenenler = await kardesGrubunuSenkronizeEt(kaydedilenId, obj);
+      var otomatikGuncellenenler = await kayitSonrasiSenkronizeEt(kaydedilenId, obj, eskiKayit ? eskiKayit.isim : null);
     } else {
       const ad = baslikBuyut(v("f-ad"));
       if (!ad) return formMesaj("Olay başlığı boş bırakılamaz.", true);
@@ -1384,9 +1503,17 @@ async function adminSil(id) {
   if (!adminMi()) return;
   if (!confirm("Bu kayıt kalıcı olarak silinsin mi?")) return;
   const kol = durum.admin.sekme === "zat" ? "zatlar" : "olaylar";
+  const silinenKayit = kol === "zatlar" ? durum.zatlar.find((z) => z.id === id) : null;
   try {
     await FS.deleteDoc(FS.doc(db, kol, id));
     if (durum.admin.duzenleId === id) adminFormuKur();
+    if (silinenKayit && !bos(silinenKayit.isim)) {
+      const temizlenenler = await adminSilinenReferanslariTemizle(id, silinenKayit.isim);
+      if (temizlenenler.length) {
+        console.log("Silinen kayda ait bağlar temizlenen kişiler:", temizlenenler);
+        formMesaj(`Kayıt silindi. ${temizlenenler.length} kişideki bağlantı otomatik temizlendi: ${temizlenenler.slice(0, 8).join(", ")}${temizlenenler.length > 8 ? "…" : ""}`, false);
+      }
+    }
   } catch (e) {
     console.error("silme hatası:", e);
     formMesaj("Silinemedi: " + (e && e.message ? e.message : e), true);
