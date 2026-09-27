@@ -1265,7 +1265,7 @@ async function kbGuncellemeleriYaz(guncellemeler) {
   }
 }
 async function kardesGrubunuSenkronizeEt(kayitId, kaydedilenObj) {
-  if (!FS || !db || !kayitId) return;
+  if (!FS || !db || !kayitId) return [];
   try {
     /* Firestore'un gerçek zamanlı dinleyicisi henüz güncellenmemiş olabileceğinden,
        hesaplamayı mevcut liste + az önce kaydedilen veriyle birleştirerek yapıyoruz. */
@@ -1275,10 +1275,18 @@ async function kardesGrubunuSenkronizeEt(kayitId, kaydedilenObj) {
     else calisma.push({ ...kaydedilenObj, id: kayitId });
 
     const guncellemeler = kardesVeAkrabaGuncellemeleriniHesapla(calisma);
-    if (!guncellemeler.length) return;
+    /* Diğer kişilerde yapılan otomatik değişiklikler (kaydedilen kişinin kendisi hariç) */
+    const digerGuncellemeler = guncellemeler.filter((g) => g.id !== kayitId);
+    if (digerGuncellemeler.length) {
+      console.log("Otomatik kardeş/akrabalık güncellemesi yapılan kayıtlar:",
+        digerGuncellemeler.map((g) => ({ isim: (calisma.find((z) => z.id === g.id) || {}).isim || g.id, degisen: g.veri })));
+    }
+    if (!guncellemeler.length) return [];
     await kbGuncellemeleriYaz(guncellemeler);
+    return digerGuncellemeler.map((g) => (calisma.find((z) => z.id === g.id) || {}).isim || g.id);
   } catch (e) {
     console.error("Kardeş/akrabalık senkronizasyon hatası:", e);
+    return [];
   }
 }
 /* Yönetici panelindeki "Bağları tara ve düzelt" düğmesi: özellik eklenmeden
@@ -1293,7 +1301,18 @@ async function adminAkrabaTumunuTara() {
     const guncellemeler = kardesVeAkrabaGuncellemeleriniHesapla(calisma);
     if (!guncellemeler.length) { alert("Güncellenecek bir şey bulunamadı; tüm bağlar zaten güncel."); return; }
     await kbGuncellemeleriYaz(guncellemeler);
-    alert(guncellemeler.length + " kayıt güncellendi.");
+    const alanAdi = { anne: "Anne", baba: "Baba", baglar: "Diğer bağlar" };
+    const detay = guncellemeler.map((g) => {
+      const kisi = calisma.find((z) => z.id === g.id);
+      const alanlar = Object.keys(g.veri).map((a) => alanAdi[a] || a).join(", ");
+      return { isim: kisi ? kisi.isim : g.id, alanlar };
+    });
+    console.log("Kardeş/akrabalık taraması ile güncellenen kayıtlar:", detay);
+    const ILK_GOSTERILEN = 25;
+    let mesaj = `${guncellemeler.length} kayıt güncellendi:\n\n`
+      + detay.slice(0, ILK_GOSTERILEN).map((d) => `• ${d.isim} → ${d.alanlar}`).join("\n");
+    if (detay.length > ILK_GOSTERILEN) mesaj += `\n… ve ${detay.length - ILK_GOSTERILEN} kayıt daha (tam liste tarayıcı konsolunda: F12 → Console).`;
+    alert(mesaj);
   } catch (e) {
     console.error("Toplu akrabalık taraması hatası:", e);
     alert("Tarama sırasında bir hata oluştu: " + (e && e.message ? e.message : e));
@@ -1335,7 +1354,7 @@ async function adminKaydet() {
       let kaydedilenId = id;
       if (id) { await FS.updateDoc(FS.doc(db, "zatlar", id), obj); }
       else { const yeniRef = await FS.addDoc(FS.collection(db, "zatlar"), obj); kaydedilenId = yeniRef.id; }
-      await kardesGrubunuSenkronizeEt(kaydedilenId, obj);
+      var otomatikGuncellenenler = await kardesGrubunuSenkronizeEt(kaydedilenId, obj);
     } else {
       const ad = baslikBuyut(v("f-ad"));
       if (!ad) return formMesaj("Olay başlığı boş bırakılamaz.", true);
@@ -1350,7 +1369,11 @@ async function adminKaydet() {
       } else await FS.addDoc(FS.collection(db, "olaylar"), obj);
     }
     adminFormuKur();
-    formMesaj(id ? "Kayıt güncellendi." : "Kayıt eklendi.", false);
+    let mesaj = id ? "Kayıt güncellendi." : "Kayıt eklendi.";
+    if (zat && Array.isArray(otomatikGuncellenenler) && otomatikGuncellenenler.length) {
+      mesaj += ` (+ ${otomatikGuncellenenler.length} kardeş/akraba kaydı otomatik güncellendi: ${otomatikGuncellenenler.slice(0, 8).join(", ")}${otomatikGuncellenenler.length > 8 ? "…" : ""})`;
+    }
+    formMesaj(mesaj, false);
   } catch (e) {
     console.error("kaydetme hatası:", e);
     formMesaj("Kaydedilemedi: " + (e && e.message ? e.message : e) + " (Firestore yazma izinlerini kontrol edin.)", true);
