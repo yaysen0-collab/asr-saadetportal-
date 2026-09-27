@@ -863,6 +863,7 @@ function sayfaAdmin() {
         <button type="button" class="button primary" data-action="admin-yeni" data-tip="olay">Yeni olay ekle</button>
         <button type="button" class="button" data-action="admin-yeni" data-tip="zat">Yeni şahsiyet</button>
         <button type="button" class="button" data-action="admin-yedek">JSON yedeği indir</button>
+        <button type="button" class="button" data-action="admin-akraba-tara">Bağları tara ve düzelt</button>
         <a class="button" href="#home">Siteyi gör</a>
         <button type="button" class="button" data-action="cikis">Çıkış yap</button>
       </div>
@@ -1126,27 +1127,142 @@ function adminFormuDoldur(k) {
   const f = $("#admin-form"); if (f && f.scrollIntoView) f.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/* ---------- KARDEŞ GRUBU OTOMATİK SENKRONİZASYONU ----------
-   Bir şahsiyet kaydedildiğinde (yeni bir kardeş eklendiğinde, "Diğer bağlar"
-   alanına birini "Kardeş" olarak işaretlediğinizde ya da ortak anne/baba
-   girdiğinizde) bu fonksiyon:
-   1) Kaydedilen kişiyle aynı kardeş grubunda olan HERKESİ bulur (ortak anne,
-      ortak baba veya "İsim (Kardeş)" şeklindeki açık bağlar üzerinden,
-      zincirleme/geçişli olarak).
-   2) Gruptaki biri anne veya baba bilgisini girmişse, bu bilgiyi eksik olan
-      TÜM diğer kardeşlere (daha önce eklenmiş kayıtlar dahil) otomatik yazar.
-   3) Grup üyelerinin "Diğer bağlar" alanına, birbirlerini karşılıklı olarak
-      "Kardeş" gösteren eksik bağları ekler.
-   4) Değişen bütün kayıtları TEK SEFERDE (writeBatch) Firestore'a yazar.
-   Var olan hiçbir bilgi silinmez/üzerine yazılmaz; sadece BOŞ olan alanlar
-   doldurulur ve eksik kardeş bağları eklenir. */
+/* ---------- KARDEŞ / AKRABALIK BAĞLARININ OTOMATİK SENKRONİZASYONU ----------
+   kardesVeAkrabaGuncellemeleriniHesapla(calisma), TÜM "zatlar" listesi üzerinde
+   şunları hesaplar (yazma yapmaz, sadece hangi kayıtların nasıl değişmesi
+   gerektiğini döndürür):
+
+   A) KARDEŞ GRUPLARI + ORTAK ANNE/BABA
+      Ortak anne, ortak baba veya "İsim (Kardeş)" bağı üzerinden birbirine
+      bağlı olan TÜM kardeş gruplarını (zincirleme/geçişli olarak) bulur.
+      Gruptan biri anne veya baba girmişse bu bilgi, eksik olan TÜM diğer
+      kardeşlere (daha önce eklenmiş kayıtlar dahil) yazılır ve grup
+      üyelerinin "Diğer bağlar" alanına birbirlerini "Kardeş" gösteren eksik
+      bağlar eklenir.
+
+   B) YÖNÜ NET OLAN DİĞER AKRABALIK BAĞLARI
+      "Amca / Dayı / Hala / Teyze" → karşı taraf otomatik "Yeğen" olur.
+      "Dede / Nine" → karşı taraf otomatik "Torun" olur.
+      Bu adım TÜM kayıtlar üzerinden çalışır, yani daha önce tek yönlü
+      girilmiş eski bağları da düzeltir (geriye dönük).
+      NOT: "Çocuk", "Torun" ve "Yeğen" bağlarının karşılığı (kişinin Anne mi
+      Baba mı, Dede mi Nine mi, Amca/Dayı mı Hala/Teyze mi olduğu) sistemde
+      cinsiyet bilgisi tutulmadığından kesin olarak belirlenemez; bu yüzden
+      bu üç tür OTOMATİK ters çevrilmez, elle girilmeye devam eder.
+
+   Var olan hiçbir bilgi silinmez/üzerine yazılmaz: sadece BOŞ alanlar
+   doldurulur ve bir isme karşı HİÇ bağ girilmemişse eksik bağ eklenir.
+
+   Bu hesaplama iki yerden kullanılır:
+   - kardesGrubunuSenkronizeEt: her "Kaydet" işleminden sonra otomatik çalışır.
+   - adminAkrabaTumunuTara: yönetici panelindeki "Bağları tara ve düzelt"
+     düğmesiyle, ELLE tetiklenerek TÜM veritabanını bir kerede düzeltir
+     (özellikle bu özellik eklenmeden önce girilmiş eski kayıtlar için). */
+const TERS_ILISKI = {
+  "kardeş": "Kardeş",
+  "dede": "Torun",
+  "nine": "Torun",
+  "amca": "Yeğen",
+  "dayı": "Yeğen",
+  "hala": "Yeğen",
+  "teyze": "Yeğen",
+};
 function kbBaglarString(bagListesi) {
   return bagListesi.map((b) => (b.tur ? `${b.ad} (${b.tur})` : b.ad)).join(", ");
 }
-function kbKardesEkle(bagListesi, isim) {
+function kbBagEkle(bagListesi, isim, tur) {
   const anah = adAnahtar(isim);
-  if (bagListesi.some((b) => adAnahtar(b.ad) === anah)) return bagListesi;
-  return [...bagListesi, { ad: isim, tur: "Kardeş" }];
+  if (bagListesi.some((b) => adAnahtar(b.ad) === anah)) return bagListesi; /* bu isme zaten bir bağ var, dokunma */
+  return [...bagListesi, { ad: isim, tur }];
+}
+function kardesVeAkrabaGuncellemeleriniHesapla(calisma) {
+  const anahIdMap = new Map();
+  calisma.forEach((z) => { const a = adAnahtar(z.isim); if (a && !anahIdMap.has(a)) anahIdMap.set(a, z.id); });
+
+  /* Her kişinin "Diğer bağlar" alanının üzerinde çalışılan (mutasyona uğrayabilen) hâli */
+  const bagCalismaMap = new Map();
+  calisma.forEach((z) => bagCalismaMap.set(z.id, baglariAyir(z.baglar)));
+
+  /* ---- A) Kardeşlik kenarları: ortak anne, ortak baba veya açık "Kardeş" bağı ---- */
+  const komsu = new Map();
+  const kenarEkle = (a, b) => {
+    if (a === b) return;
+    if (!komsu.has(a)) komsu.set(a, new Set());
+    if (!komsu.has(b)) komsu.set(b, new Set());
+    komsu.get(a).add(b); komsu.get(b).add(a);
+  };
+  for (let i = 0; i < calisma.length; i++) {
+    for (let j = i + 1; j < calisma.length; j++) {
+      const z = calisma[i], y = calisma[j];
+      if (!bos(z.anne) && !bos(y.anne) && adAnahtar(z.anne) === adAnahtar(y.anne)) kenarEkle(z.id, y.id);
+      if (!bos(z.baba) && !bos(y.baba) && adAnahtar(z.baba) === adAnahtar(y.baba)) kenarEkle(z.id, y.id);
+    }
+  }
+  calisma.forEach((z) => {
+    bagCalismaMap.get(z.id).filter((b) => trKucuk(b.tur) === "kardeş").forEach((b) => {
+      const hedefId = anahIdMap.get(adAnahtar(b.ad));
+      if (hedefId) kenarEkle(z.id, hedefId);
+    });
+  });
+
+  /* Bulunan HER kardeş grubunu (bağlantılı bileşen) dolaş, anne/baba ve karşılıklı Kardeş bağını uygula */
+  const anneBabaGuncelleme = new Map(); /* id -> { anne?, baba? } */
+  const ziyaretEdildi = new Set();
+  calisma.forEach((baslangic) => {
+    if (ziyaretEdildi.has(baslangic.id) || !komsu.has(baslangic.id)) return;
+    const grup = new Set([baslangic.id]);
+    const kuyruk = [baslangic.id];
+    while (kuyruk.length) {
+      const su = kuyruk.pop();
+      ziyaretEdildi.add(su);
+      (komsu.get(su) || new Set()).forEach((k) => { if (!grup.has(k)) { grup.add(k); kuyruk.push(k); } });
+    }
+    if (grup.size < 2) return;
+    const uyeler = [...grup].map((id) => calisma.find((z) => z.id === id)).filter(Boolean);
+    const ortakAnne = uyeler.map((u) => u.anne).find((v) => !bos(v));
+    const ortakBaba = uyeler.map((u) => u.baba).find((v) => !bos(v));
+    uyeler.forEach((u) => {
+      const patch = {};
+      if (ortakAnne && bos(u.anne)) patch.anne = ortakAnne;
+      if (ortakBaba && bos(u.baba)) patch.baba = ortakBaba;
+      if (Object.keys(patch).length) anneBabaGuncelleme.set(u.id, patch);
+      uyeler.forEach((diger) => {
+        if (diger.id === u.id) return;
+        bagCalismaMap.set(u.id, kbBagEkle(bagCalismaMap.get(u.id), diger.isim, "Kardeş"));
+      });
+    });
+  });
+
+  /* ---- B) Yönü net olan diğer akrabalık bağlarının karşılığını ekle (tüm kayıtlar taranır) ---- */
+  calisma.forEach((kaynak) => {
+    baglariAyir(kaynak.baglar).forEach((b) => {
+      const tersTur = TERS_ILISKI[trKucuk(b.tur)];
+      if (!tersTur) return;
+      const hedefId = anahIdMap.get(adAnahtar(b.ad));
+      if (!hedefId || hedefId === kaynak.id) return;
+      bagCalismaMap.set(hedefId, kbBagEkle(bagCalismaMap.get(hedefId), kaynak.isim, tersTur));
+    });
+  });
+
+  /* ---- Değişiklikleri topla ---- */
+  const guncellemeler = [];
+  calisma.forEach((u) => {
+    const patch = { ...(anneBabaGuncelleme.get(u.id) || {}) };
+    const yeniBaglar = kbBaglarString(bagCalismaMap.get(u.id)) || "?";
+    const eskiBaglar = bos(u.baglar) ? "?" : u.baglar;
+    if (yeniBaglar !== eskiBaglar) patch.baglar = yeniBaglar;
+    if (Object.keys(patch).length) guncellemeler.push({ id: u.id, veri: patch });
+  });
+  return guncellemeler;
+}
+async function kbGuncellemeleriYaz(guncellemeler) {
+  /* Firestore writeBatch en fazla 500 işlem alabildiğinden, güvenli olması için 400'lük parçalar hâlinde yazıyoruz */
+  for (let i = 0; i < guncellemeler.length; i += 400) {
+    const parca = guncellemeler.slice(i, i + 400);
+    const batch = FS.writeBatch(db);
+    parca.forEach((g) => batch.update(FS.doc(db, "zatlar", g.id), g.veri));
+    await batch.commit();
+  }
 }
 async function kardesGrubunuSenkronizeEt(kayitId, kaydedilenObj) {
   if (!FS || !db || !kayitId) return;
@@ -1158,70 +1274,29 @@ async function kardesGrubunuSenkronizeEt(kayitId, kaydedilenObj) {
     if (mevcutIdx >= 0) calisma[mevcutIdx] = { ...calisma[mevcutIdx], ...kaydedilenObj, id: kayitId };
     else calisma.push({ ...kaydedilenObj, id: kayitId });
 
-    const anahIdMap = new Map();
-    calisma.forEach((z) => { const a = adAnahtar(z.isim); if (a && !anahIdMap.has(a)) anahIdMap.set(a, z.id); });
-
-    /* Kardeşlik kenarları: ortak anne, ortak baba veya açık "Kardeş" bağı */
-    const komsu = new Map();
-    const kenarEkle = (a, b) => {
-      if (a === b) return;
-      if (!komsu.has(a)) komsu.set(a, new Set());
-      if (!komsu.has(b)) komsu.set(b, new Set());
-      komsu.get(a).add(b); komsu.get(b).add(a);
-    };
-    for (let i = 0; i < calisma.length; i++) {
-      for (let j = i + 1; j < calisma.length; j++) {
-        const z = calisma[i], y = calisma[j];
-        if (!bos(z.anne) && !bos(y.anne) && adAnahtar(z.anne) === adAnahtar(y.anne)) kenarEkle(z.id, y.id);
-        if (!bos(z.baba) && !bos(y.baba) && adAnahtar(z.baba) === adAnahtar(y.baba)) kenarEkle(z.id, y.id);
-      }
-    }
-    calisma.forEach((z) => {
-      baglariAyir(z.baglar).filter((b) => trKucuk(b.tur) === "kardeş").forEach((b) => {
-        const hedefId = anahIdMap.get(adAnahtar(b.ad));
-        if (hedefId) kenarEkle(z.id, hedefId);
-      });
-    });
-
-    if (!komsu.has(kayitId)) return; /* bu kişinin hiç kardeşi yok, yapılacak bir şey yok */
-
-    /* Kaydedilen kişinin bağlı olduğu tüm kardeş grubunu (geçişli olarak) bul */
-    const grup = new Set([kayitId]);
-    const kuyruk = [kayitId];
-    while (kuyruk.length) {
-      const su = kuyruk.pop();
-      (komsu.get(su) || new Set()).forEach((k) => { if (!grup.has(k)) { grup.add(k); kuyruk.push(k); } });
-    }
-    if (grup.size < 2) return;
-    const uyeler = [...grup].map((id) => calisma.find((z) => z.id === id)).filter(Boolean);
-
-    /* Grup içinde girilmiş ilk anne/baba bilgisini bul; sadece BOŞ alanlara yazılacak */
-    const ortakAnne = uyeler.map((u) => u.anne).find((v) => !bos(v));
-    const ortakBaba = uyeler.map((u) => u.baba).find((v) => !bos(v));
-
-    const guncellemeler = [];
-    uyeler.forEach((u) => {
-      const yeniObj = {};
-      let degisti = false;
-
-      if (ortakAnne && bos(u.anne)) { yeniObj.anne = ortakAnne; degisti = true; }
-      if (ortakBaba && bos(u.baba)) { yeniObj.baba = ortakBaba; degisti = true; }
-
-      let bagListesi = baglariAyir(u.baglar);
-      uyeler.forEach((diger) => { if (diger.id !== u.id) bagListesi = kbKardesEkle(bagListesi, diger.isim); });
-      const yeniBaglar = kbBaglarString(bagListesi) || "?";
-      const eskiBaglar = bos(u.baglar) ? "?" : u.baglar;
-      if (yeniBaglar !== eskiBaglar) { yeniObj.baglar = yeniBaglar; degisti = true; }
-
-      if (degisti) guncellemeler.push({ id: u.id, veri: yeniObj });
-    });
-
+    const guncellemeler = kardesVeAkrabaGuncellemeleriniHesapla(calisma);
     if (!guncellemeler.length) return;
-    const batch = FS.writeBatch(db);
-    guncellemeler.forEach((g) => batch.update(FS.doc(db, "zatlar", g.id), g.veri));
-    await batch.commit();
+    await kbGuncellemeleriYaz(guncellemeler);
   } catch (e) {
-    console.error("Kardeş grubu senkronizasyon hatası:", e);
+    console.error("Kardeş/akrabalık senkronizasyon hatası:", e);
+  }
+}
+/* Yönetici panelindeki "Bağları tara ve düzelt" düğmesi: özellik eklenmeden
+   önce girilmiş, hiçbir kaydı yeniden kaydetmeden TÜM veritabanını tek
+   seferde tarayıp eksik kardeş/anne/baba/akrabalık bağlarını tamamlar. */
+async function adminAkrabaTumunuTara() {
+  if (!adminMi()) return;
+  if (!durum.yuklendi.zat) { alert("Şahsiyet listesi henüz yüklenmedi, birkaç saniye sonra tekrar deneyin."); return; }
+  if (!confirm("Tüm şahsiyet kayıtları taranacak ve eksik kardeş / anne / baba / akrabalık bağları otomatik tamamlanacaktır. Devam edilsin mi?")) return;
+  try {
+    const calisma = durum.zatlar.map((z) => ({ ...z }));
+    const guncellemeler = kardesVeAkrabaGuncellemeleriniHesapla(calisma);
+    if (!guncellemeler.length) { alert("Güncellenecek bir şey bulunamadı; tüm bağlar zaten güncel."); return; }
+    await kbGuncellemeleriYaz(guncellemeler);
+    alert(guncellemeler.length + " kayıt güncellendi.");
+  } catch (e) {
+    console.error("Toplu akrabalık taraması hatası:", e);
+    alert("Tarama sırasında bir hata oluştu: " + (e && e.message ? e.message : e));
   }
 }
 
@@ -2232,6 +2307,7 @@ const islem = {
   "admin-kaydet": adminKaydet,
   "admin-iptal"() { if (adminDegisikligiBirakabilir()) adminFormuKur(); },
   "admin-yedek": adminYedekIndir,
+  "admin-akraba-tara": adminAkrabaTumunuTara,
   komut(el) {
     const ed = $("#f-bilgi");
     if (!ed) return;
