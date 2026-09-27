@@ -1899,9 +1899,21 @@ const SAYFALAR = {
   search: sayfaAra, privacy: sayfaGizlilik, sources: sayfaKaynakca, contribute: sayfaKatki, changelog: sayfaSurum,
 };
 const BASLIKLAR = {
-  home: "Ana Sayfa", archive: "Arşiv", timeline: "Zaman Çizelgesi", genealogy: "Soyağacı",
-  random: "Rastgele Şahsiyet", articles: "Makaleler", faq: "Sıkça Sorulan Sorular", login: "Giriş", admin: "Yönetici Paneli", account: "Hesabım",
-  search: "Ara", privacy: "Gizlilik Politikası", sources: "Kaynakça", contribute: "Katkıda Bulun", changelog: "Sürüm Notları",
+  home: "Sahabe Hayatları ve İslam Tarihi | Asr-ı Saadet Portalı",
+  archive: "Sahabe Hayatları ve Siyer Arşivi | Asr-ı Saadet",
+  timeline: "Asr-ı Saadet Zaman Çizelgesi | İslam Tarihi",
+  genealogy: "Sahabe Soyağacı ve Akrabalık Bağları | Asr-ı Saadet",
+  random: "Rastgele Bir Sahabeyi Tanıyın | Asr-ı Saadet",
+  articles: "Siyer, Sahabe ve İslam Tarihi Makaleleri | Asr-ı Saadet",
+  faq: "Sahabeler ve Asr-ı Saadet Hakkında Sorular",
+  login: "Üye Girişi | Asr-ı Saadet Portalı",
+  admin: "Yönetici Paneli | Asr-ı Saadet Portalı",
+  account: "Kullanıcı Hesabı | Asr-ı Saadet Portalı",
+  search: "Sahabe ve İslam Tarihi Arama | Asr-ı Saadet",
+  privacy: "Gizlilik Politikası | Asr-ı Saadet Portalı",
+  sources: "Siyer ve İslam Tarihi Kaynakları | Asr-ı Saadet",
+  contribute: "Asr-ı Saadet Portalına Katkıda Bulunun",
+  changelog: "Site Güncellemeleri ve Sürüm Notları | Asr-ı Saadet",
 };
 
 const SAYFA_DOSYALARI = {
@@ -2014,7 +2026,7 @@ function render(secenek) {
   }
   navGuncelle();
   cokSayfaliLinkleriDuzenle(document);
-  document.title = `${BASLIKLAR[sec]} | Asr-ı Saadet Portalı`;
+  document.title = BASLIKLAR[sec];
 }
 
 /* Veri değişince: yazı yazılan sayfalarda sadece ilgili bölümü güncelle */
