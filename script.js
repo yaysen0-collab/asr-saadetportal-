@@ -1126,6 +1126,105 @@ function adminFormuDoldur(k) {
   const f = $("#admin-form"); if (f && f.scrollIntoView) f.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+/* ---------- KARDEŞ GRUBU OTOMATİK SENKRONİZASYONU ----------
+   Bir şahsiyet kaydedildiğinde (yeni bir kardeş eklendiğinde, "Diğer bağlar"
+   alanına birini "Kardeş" olarak işaretlediğinizde ya da ortak anne/baba
+   girdiğinizde) bu fonksiyon:
+   1) Kaydedilen kişiyle aynı kardeş grubunda olan HERKESİ bulur (ortak anne,
+      ortak baba veya "İsim (Kardeş)" şeklindeki açık bağlar üzerinden,
+      zincirleme/geçişli olarak).
+   2) Gruptaki biri anne veya baba bilgisini girmişse, bu bilgiyi eksik olan
+      TÜM diğer kardeşlere (daha önce eklenmiş kayıtlar dahil) otomatik yazar.
+   3) Grup üyelerinin "Diğer bağlar" alanına, birbirlerini karşılıklı olarak
+      "Kardeş" gösteren eksik bağları ekler.
+   4) Değişen bütün kayıtları TEK SEFERDE (writeBatch) Firestore'a yazar.
+   Var olan hiçbir bilgi silinmez/üzerine yazılmaz; sadece BOŞ olan alanlar
+   doldurulur ve eksik kardeş bağları eklenir. */
+function kbBaglarString(bagListesi) {
+  return bagListesi.map((b) => (b.tur ? `${b.ad} (${b.tur})` : b.ad)).join(", ");
+}
+function kbKardesEkle(bagListesi, isim) {
+  const anah = adAnahtar(isim);
+  if (bagListesi.some((b) => adAnahtar(b.ad) === anah)) return bagListesi;
+  return [...bagListesi, { ad: isim, tur: "Kardeş" }];
+}
+async function kardesGrubunuSenkronizeEt(kayitId, kaydedilenObj) {
+  if (!FS || !db || !kayitId) return;
+  try {
+    /* Firestore'un gerçek zamanlı dinleyicisi henüz güncellenmemiş olabileceğinden,
+       hesaplamayı mevcut liste + az önce kaydedilen veriyle birleştirerek yapıyoruz. */
+    const calisma = durum.zatlar.map((z) => ({ ...z }));
+    const mevcutIdx = calisma.findIndex((z) => z.id === kayitId);
+    if (mevcutIdx >= 0) calisma[mevcutIdx] = { ...calisma[mevcutIdx], ...kaydedilenObj, id: kayitId };
+    else calisma.push({ ...kaydedilenObj, id: kayitId });
+
+    const anahIdMap = new Map();
+    calisma.forEach((z) => { const a = adAnahtar(z.isim); if (a && !anahIdMap.has(a)) anahIdMap.set(a, z.id); });
+
+    /* Kardeşlik kenarları: ortak anne, ortak baba veya açık "Kardeş" bağı */
+    const komsu = new Map();
+    const kenarEkle = (a, b) => {
+      if (a === b) return;
+      if (!komsu.has(a)) komsu.set(a, new Set());
+      if (!komsu.has(b)) komsu.set(b, new Set());
+      komsu.get(a).add(b); komsu.get(b).add(a);
+    };
+    for (let i = 0; i < calisma.length; i++) {
+      for (let j = i + 1; j < calisma.length; j++) {
+        const z = calisma[i], y = calisma[j];
+        if (!bos(z.anne) && !bos(y.anne) && adAnahtar(z.anne) === adAnahtar(y.anne)) kenarEkle(z.id, y.id);
+        if (!bos(z.baba) && !bos(y.baba) && adAnahtar(z.baba) === adAnahtar(y.baba)) kenarEkle(z.id, y.id);
+      }
+    }
+    calisma.forEach((z) => {
+      baglariAyir(z.baglar).filter((b) => trKucuk(b.tur) === "kardeş").forEach((b) => {
+        const hedefId = anahIdMap.get(adAnahtar(b.ad));
+        if (hedefId) kenarEkle(z.id, hedefId);
+      });
+    });
+
+    if (!komsu.has(kayitId)) return; /* bu kişinin hiç kardeşi yok, yapılacak bir şey yok */
+
+    /* Kaydedilen kişinin bağlı olduğu tüm kardeş grubunu (geçişli olarak) bul */
+    const grup = new Set([kayitId]);
+    const kuyruk = [kayitId];
+    while (kuyruk.length) {
+      const su = kuyruk.pop();
+      (komsu.get(su) || new Set()).forEach((k) => { if (!grup.has(k)) { grup.add(k); kuyruk.push(k); } });
+    }
+    if (grup.size < 2) return;
+    const uyeler = [...grup].map((id) => calisma.find((z) => z.id === id)).filter(Boolean);
+
+    /* Grup içinde girilmiş ilk anne/baba bilgisini bul; sadece BOŞ alanlara yazılacak */
+    const ortakAnne = uyeler.map((u) => u.anne).find((v) => !bos(v));
+    const ortakBaba = uyeler.map((u) => u.baba).find((v) => !bos(v));
+
+    const guncellemeler = [];
+    uyeler.forEach((u) => {
+      const yeniObj = {};
+      let degisti = false;
+
+      if (ortakAnne && bos(u.anne)) { yeniObj.anne = ortakAnne; degisti = true; }
+      if (ortakBaba && bos(u.baba)) { yeniObj.baba = ortakBaba; degisti = true; }
+
+      let bagListesi = baglariAyir(u.baglar);
+      uyeler.forEach((diger) => { if (diger.id !== u.id) bagListesi = kbKardesEkle(bagListesi, diger.isim); });
+      const yeniBaglar = kbBaglarString(bagListesi) || "?";
+      const eskiBaglar = bos(u.baglar) ? "?" : u.baglar;
+      if (yeniBaglar !== eskiBaglar) { yeniObj.baglar = yeniBaglar; degisti = true; }
+
+      if (degisti) guncellemeler.push({ id: u.id, veri: yeniObj });
+    });
+
+    if (!guncellemeler.length) return;
+    const batch = FS.writeBatch(db);
+    guncellemeler.forEach((g) => batch.update(FS.doc(db, "zatlar", g.id), g.veri));
+    await batch.commit();
+  } catch (e) {
+    console.error("Kardeş grubu senkronizasyon hatası:", e);
+  }
+}
+
 async function adminKaydet() {
   if (!adminMi()) return formMesaj("Bu işlem için yönetici hesabıyla giriş yapmalısınız.", true);
   const zat = durum.admin.sekme === "zat";
@@ -1158,7 +1257,10 @@ async function adminKaydet() {
         d_hicri: q(v("f-d-hicri")), d_miladi: q(v("f-d-miladi")), v_hicri: q(v("f-v-hicri")), v_miladi: q(v("f-v-miladi")),
         bilgi, kaynak: q(v("f-kaynak")), kirmiziKart: !raIsaretli, guncellemeTarihi: Date.now(),
       };
-      if (id) await FS.updateDoc(FS.doc(db, "zatlar", id), obj); else await FS.addDoc(FS.collection(db, "zatlar"), obj);
+      let kaydedilenId = id;
+      if (id) { await FS.updateDoc(FS.doc(db, "zatlar", id), obj); }
+      else { const yeniRef = await FS.addDoc(FS.collection(db, "zatlar"), obj); kaydedilenId = yeniRef.id; }
+      await kardesGrubunuSenkronizeEt(kaydedilenId, obj);
     } else {
       const ad = baslikBuyut(v("f-ad"));
       if (!ad) return formMesaj("Olay başlığı boş bırakılamaz.", true);
@@ -1899,21 +2001,9 @@ const SAYFALAR = {
   search: sayfaAra, privacy: sayfaGizlilik, sources: sayfaKaynakca, contribute: sayfaKatki, changelog: sayfaSurum,
 };
 const BASLIKLAR = {
-  home: "Sahabe Hayatları ve İslam Tarihi | Asr-ı Saadet Portalı",
-  archive: "Sahabe Hayatları ve Siyer Arşivi | Asr-ı Saadet",
-  timeline: "Asr-ı Saadet Zaman Çizelgesi | İslam Tarihi",
-  genealogy: "Sahabe Soyağacı ve Akrabalık Bağları | Asr-ı Saadet",
-  random: "Rastgele Bir Sahabeyi Tanıyın | Asr-ı Saadet",
-  articles: "Siyer, Sahabe ve İslam Tarihi Makaleleri | Asr-ı Saadet",
-  faq: "Sahabeler ve Asr-ı Saadet Hakkında Sorular",
-  login: "Üye Girişi | Asr-ı Saadet Portalı",
-  admin: "Yönetici Paneli | Asr-ı Saadet Portalı",
-  account: "Kullanıcı Hesabı | Asr-ı Saadet Portalı",
-  search: "Sahabe ve İslam Tarihi Arama | Asr-ı Saadet",
-  privacy: "Gizlilik Politikası | Asr-ı Saadet Portalı",
-  sources: "Siyer ve İslam Tarihi Kaynakları | Asr-ı Saadet",
-  contribute: "Asr-ı Saadet Portalına Katkıda Bulunun",
-  changelog: "Site Güncellemeleri ve Sürüm Notları | Asr-ı Saadet",
+  home: "Ana Sayfa", archive: "Arşiv", timeline: "Zaman Çizelgesi", genealogy: "Soyağacı",
+  random: "Rastgele Şahsiyet", articles: "Makaleler", faq: "Sıkça Sorulan Sorular", login: "Giriş", admin: "Yönetici Paneli", account: "Hesabım",
+  search: "Ara", privacy: "Gizlilik Politikası", sources: "Kaynakça", contribute: "Katkıda Bulun", changelog: "Sürüm Notları",
 };
 
 const SAYFA_DOSYALARI = {
@@ -2026,7 +2116,7 @@ function render(secenek) {
   }
   navGuncelle();
   cokSayfaliLinkleriDuzenle(document);
-  document.title = BASLIKLAR[sec];
+  document.title = `${BASLIKLAR[sec]} | Asr-ı Saadet Portalı`;
 }
 
 /* Veri değişince: yazı yazılan sayfalarda sadece ilgili bölümü güncelle */
