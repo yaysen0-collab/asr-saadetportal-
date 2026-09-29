@@ -641,16 +641,11 @@ function sayfaCizelge() {
   </section>`;
 }
 
-/* ---------- SOYAĞACI ---------- */
-function adIndeks() {
-  const m = new Map();
-  durum.zatlar.forEach((z) => { const a = adAnahtar(z.isim); if (a && !m.has(a)) m.set(a, z); });
-  return m;
-}
-function adLink(ad, idx) {
+/* ---------- SOYAĞACI (ID tabanlı) ---------- */
+function adLink(ad, ix) {
   if (bos(ad)) return "";
-  const b = idx.get(adAnahtar(ad));
-  return b ? `<a href="#genealogy/${esc(b.id)}">${esc(adTemiz(ad) || ad)}</a>` : esc(ad);
+  const s = adCozumle(ad, ix, true);
+  return s.kayit ? `<a href="#genealogy/${esc(s.kayit.id)}">${esc(adTemiz(ad) || ad)}</a>` : esc(ad);
 }
 function baglariAyir(baglar) {
   if (bos(baglar)) return [];
@@ -662,24 +657,26 @@ function baglariAyir(baglar) {
 }
 
 function soyAgaci(k) {
-  const idx = adIndeks();
+  const ix = adIndeksiKur(durum.zatlar);
   const g = akrabalikGrafigi(durum.zatlar);
-  const anah = adAnahtar(k.isim);
-  const d = g.get(anah);
-  const kisi = (n) => (n.kayit ? `<a href="#genealogy/${esc(n.kayit.id)}">${esc(adTemiz(n.kayit.isim))}</a>` : esc(n.ad));
+  const d = g.get(k.id);
+  const kisi = (n) => `<a href="#genealogy/${esc(n.kayit.id)}">${esc(adTemiz(n.kayit.isim))}</a>`;
   const ebv = d ? [...d.ebeveynler.entries()] : [];
   const bul = (rol) => { const e = ebv.find(([, r]) => r === rol); return e ? g.get(e[0]) : null; };
-  const dugum = (iliski, n) => n
-    ? `<div class="family-node"><span class="relation">${iliski}</span><h3>${kisi(n)}</h3><p>${n.kayit ? esc(devirOf(n.kayit)) : "Arşivde ayrı bir kaydı yok."}</p></div>`
-    : `<div class="family-node"><span class="relation">${iliski}</span><h3>Kayıtlı değil</h3><p>Bu bilgi arşive girilmemiş.</p></div>`;
+  const dugum = (iliski, n, metin) => n
+    ? `<div class="family-node"><span class="relation">${iliski}</span><h3>${kisi(n)}</h3><p>${esc(devirOf(n.kayit))}</p></div>`
+    : !bos(metin)
+      ? `<div class="family-node"><span class="relation">${iliski}</span><h3>${esc(metin)}</h3><p>Arşivde ayrı bir kaydı yok.</p></div>`
+      : `<div class="family-node"><span class="relation">${iliski}</span><h3>Kayıtlı değil</h3><p>Bu bilgi arşive girilmemiş.</p></div>`;
   const belirsizEbeveyn = ebv.filter(([, r]) => !r).map(([pk]) => kisi(g.get(pk)));
 
-  const gruplar = d ? akrabalikHesapla(g, anah) : [];
+  const gruplar = d ? akrabalikHesapla(g, k.id) : [];
   const turetilen = new Set(ebv.map(([pk]) => pk));
   gruplar.forEach((gr) => gr.ogeler.forEach((o) => turetilen.add(o.key)));
   const elle = baglariAyir(k.baglar)
-    .filter((b) => trKucuk(b.tur) !== "çocuk" && !turetilen.has(adAnahtar(b.ad)))
-    .map((b) => adLink(b.ad, idx) + (b.tur ? ` (${esc(b.tur)})` : ""));
+    .filter((b) => trKucuk(b.tur) !== "çocuk")
+    .filter((b) => { const s = adCozumle(b.ad, ix, true); return !(s.kayit && turetilen.has(s.kayit.id)); })
+    .map((b) => adLink(b.ad, ix) + (b.tur ? ` (${esc(b.tur)})` : ""));
 
   const satir = (e, h) => (h ? `<div class="family-detail"><span>${e}</span><strong>${h}</strong></div>` : "");
   const satirlar = [
@@ -692,8 +689,8 @@ function soyAgaci(k) {
   const tarih = zatTarih(k);
   return `
     <div class="family-tree">
-      ${dugum("Baba", bul("baba"))}
-      ${dugum("Anne", bul("anne"))}
+      ${dugum("Baba", bul("baba"), k.baba)}
+      ${dugum("Anne", bul("anne"), k.anne)}
       <div class="family-node main"><span class="relation">Seçilen şahsiyet</span><h3>${esc(k.isim)}</h3><p>${esc(devirOf(k))}${tarih ? " · " + esc(tarih) : ""}</p></div>
     </div>
     <div class="family-details">
@@ -989,6 +986,25 @@ function adminKisiListesiniGuncelle() {
     .join("");
 }
 
+/* Anne/baba/eş/çocuk alanlarının altında, yazılan ismin hangi kayda bağlandığını gösterir */
+function adminBagDurumuGuncelle() {
+  const ix = adIndeksiKur(durum.zatlar.filter((z) => z.id !== durum.admin.duzenleId));
+  ["f-anne", "f-baba", "f-es", "f-cocuklar"].forEach((id) => {
+    const alan = $("#" + id);
+    if (!alan) return;
+    let el = $("#" + id + "-bag");
+    if (!el) { el = document.createElement("p"); el.id = id + "-bag"; el.className = "form-hint"; alan.parentNode.appendChild(el); }
+    const coklu = id === "f-es" || id === "f-cocuklar";
+    const adlar = coklu ? esListesiniAyir(alan.value) : (bos(alan.value) ? [] : [alan.value.trim()]);
+    el.innerHTML = adlar.map((ad) => {
+      const s = adCozumle(ad, ix, true);
+      if (s.kayit) return "✓ " + esc(s.kayit.isim);
+      if (s.durum === "belirsiz") return `⚠ “${esc(ad)}” birden fazla kayıtla eşleşiyor`;
+      return `⚠ “${esc(ad)}” kayıtlı değil: yalnızca metin olarak saklanır, akrabalık bağı kurulmaz`;
+    }).join("<br>");
+  });
+}
+
 function adminKopyaUyarisiGuncelle() {
   const alan = $("#f-isim"), uyari = $("#f-kopya-uyari");
   if (!alan || !uyari) return null;
@@ -1089,6 +1105,7 @@ function adminFormuKur() {
     </div>`;
   }
   adminKisiListesiniGuncelle();
+  adminBagDurumuGuncelle();
   adminKirliAyarla(false);
 }
 
@@ -1117,26 +1134,25 @@ function adminFormuDoldur(k) {
   const b = $("#f-baslik"); if (b) b.textContent = zat ? "Şahsiyeti düzenle" : "Olayı düzenle";
   formMesaj("", false);
   adminKopyaUyarisiGuncelle();
+  adminBagDurumuGuncelle();
   adminKirliAyarla(false);
   const f = $("#admin-form"); if (f && f.scrollIntoView) f.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/* ---------- AKRABALIK: yönetici SADECE anne, baba, eş, çocuk (ve cinsiyet) girer ----------
-   Kardeş, dede, nine, büyük dede/nine, torun, amca, dayı, hala, teyze, yeğen, kuzen (amca kızı,
-   dayı oğlu vb.), gelin/damat ve kayınlar veritabanına YAZILMAZ. Soyağacı sayfası açılırken,
-   anne / baba / eş / çocuk bilgilerinden HESAPLANIR (akrabalikGrafigi + akrabalikHesapla).
-   Böylece bir bilgi düzeltilince her şey kendiliğinden düzelir; silinen bağ geri gelmez.
+/* ---------- AKRABALIK: bağlar kayıt ID'siyle tutulur ----------
+   Yönetici SADECE anne, baba, eş, çocuk (ve cinsiyet) girer. Formda yazılan isim, mevcut bir
+   kayıtla TAM eşleşirse kaydın ID'si saklanır (anneId, babaId, esIds, cocukIds). Aynı isimli
+   farklı kişiler bu sayede karışmaz. Kayıtlı olmayan isimler yalnızca metin olarak kalır.
 
-   - Kişiler isim anahtarıyla (adAnahtar) eşleşir. Kaydı olmayan isimler de düğüm olur.
-   - Çocuk yazmak, o çocuğun kaydında anne/baba yazmasa da yeterlidir: ebeveyn rolü (anne/baba)
-     ebeveynin cinsiyetinden bulunur. Cinsiyet seçilmemişse ama kişi başka bir kaydın anne/babası
-     olarak yazılmışsa cinsiyeti oradan anlaşılır.
-   - Cinsiyet bilinmiyorsa etiket genel kalır (ör. "Babanın kardeşi", "Kuzen").
+   Kardeş, dede, nine, büyük dede/nine, torun, amca, dayı, hala, teyze, yeğen, kuzen, gelin/damat ve
+   kayınlar veritabanına YAZILMAZ; soyağacı açılırken bu ID bağlarından HESAPLANIR
+   (akrabalikGrafigi + akrabalikHesapla).
+
+   - Çocuk yazmak, o çocuğun kaydında anne/baba yazmasa da yeterlidir. Ebeveyn rolü (anne/baba)
+     ebeveynin cinsiyetinden bulunur. Aynı rolde iki ebeveyn olamaz: çocuğun kendi kaydı kazanır.
    - Eş bağı tek taraftan girilse de iki yönlü sayılır.
    - "Diğer bağlar" alanı yalnızca otomatik bulunamayan istisnalar içindir (ör. süt kardeşi).
-
-   İsim değişince / kayıt silinince, düz metin olan anne/baba/eş/çocuk alanlarındaki eski isim
-   güncellenir veya kaldırılır (isimReferanslariniGuncelle). */
+   - Henüz ID'ye dönüştürülmemiş eski kayıtlarda yalnızca KESİN eşleşen isimler kullanılır. */
 function kbBaglarString(bagListesi) {
   return bagListesi.map((b) => (b.tur ? `${b.ad} (${b.tur})` : b.ad)).join(", ");
 }
@@ -1152,42 +1168,93 @@ function cinsiyetOf(z) {
 }
 const dugumAdi = (n) => (n.kayit ? n.kayit.isim : n.ad);
 
-/* Tüm kayıtlardan bir akrabalık grafiği kurar. Yazma yapmaz. */
-function akrabalikGrafigi(zatlar) {
-  const dugumler = new Map();
-  const al = (ad) => {
-    const key = adAnahtar(ad);
-    if (!key) return null;
-    if (!dugumler.has(key)) dugumler.set(key, { key, ad: adTemiz(ad), kayit: null, cinsiyet: null, kesin: false, ebeveynler: new Map(), cocuklar: new Set(), es: new Set() });
-    return dugumler.get(key);
-  };
-  const kayitli = [];
+const idListesi = (v) => (Array.isArray(v) ? v.filter(Boolean) : []);
+const baglarGocMu = (z) => ["anneId", "babaId", "esIds", "cocukIds"].some((a) => a in z);
+/* "Hz. Ali (ra)" ve "Ali" aynı anahtara iner */
+const hzsiz = (ad) => adAnahtar(ad).replace(/^(hz|hazreti)\.?\s+/, "");
+
+/* İsim → kayıt eşleştirme tablosu. "onek": başka bir ismin baş kısmı olan isimler
+   (ör. "Abdullah", "Abdullah bin Ömer"in başıdır) → belirsiz sayılır. */
+function adIndeksiKur(zatlar) {
+  const tam = new Map(), onek = new Set();
   zatlar.forEach((z) => {
-    const d = al(z.isim);
-    if (!d || d.kayit) return;
-    d.kayit = z;
-    const c = cinsiyetOf(z);
-    if (c) { d.cinsiyet = c; d.kesin = true; }
-    kayitli.push([d, z]);
+    const h = hzsiz(z.isim);
+    if (!h) return;
+    if (!tam.has(h)) tam.set(h, []);
+    tam.get(h).push(z);
+    const kel = h.split(" ");
+    for (let i = 1; i < kel.length; i++) onek.add(kel.slice(0, i).join(" "));
   });
+  return { tam, onek };
+}
+
+/* acik=true: yönetici formunda, isim tam yazılmışsa tek kayıtla eşleşmesi yeterli.
+   acik=false: otomatik dönüştürmede, belirsiz isimler ASLA bağlanmaz. */
+function adCozumle(ad, ix, acik) {
+  const a = hzsiz(ad);
+  const l = a ? ix.tam.get(a) : null;
+  if (!l) return { durum: "yok" };
+  if (l.length > 1 || (!acik && ix.onek.has(a))) return { durum: "belirsiz", adaylar: l };
+  return { durum: "tamam", kayit: l[0] };
+}
+
+/* Bir kaydın bağlarını ID olarak döndürür.
+   ID alanı olan kayıt: yalnızca ID'lere güvenilir.
+   Henüz dönüştürülmemiş eski kayıt: sadece KESİN eşleşen isimler kullanılır. */
+function baglariCoz(z, idx, ix) {
+  const tek = (id) => (id && id !== z.id && idx.has(id) ? id : "");
+  const liste = (a) => [...new Set(idListesi(a).filter((id) => id !== z.id && idx.has(id)))];
+  if (baglarGocMu(z)) return { anne: tek(z.anneId), baba: tek(z.babaId), es: liste(z.esIds), cocuk: liste(z.cocukIds) };
+  const bir = (ad) => {
+    if (bos(ad)) return "";
+    const s = adCozumle(ad, ix, false);
+    return s.durum === "tamam" && s.kayit.id !== z.id ? s.kayit.id : "";
+  };
+  const cok = (ad) => [...new Set(esListesiniAyir(ad).map(bir).filter(Boolean))];
+  const eskiCocuk = baglariAyir(z.baglar).filter((b) => trKucuk(b.tur) === "çocuk").map((b) => bir(b.ad)).filter(Boolean);
+  return { anne: bir(z.anne), baba: bir(z.baba), es: cok(z.es), cocuk: [...new Set([...cok(z.cocuklar), ...eskiCocuk])] };
+}
+
+/* Tüm kayıtlardan bir akrabalık grafiği kurar. Düğüm anahtarı kayıt ID'sidir. Yazma yapmaz. */
+function akrabalikGrafigi(zatlar) {
+  const idx = new Map(zatlar.map((z) => [z.id, z]));
+  const ix = adIndeksiKur(zatlar);
+  const dugumler = new Map();
+  zatlar.forEach((z) => {
+    const c = cinsiyetOf(z);
+    dugumler.set(z.id, { key: z.id, ad: adTemiz(z.isim), kayit: z, cinsiyet: c, kesin: !!c, ebeveynler: new Map(), cocuklar: new Set(), es: new Set() });
+  });
+  const baglar = new Map(zatlar.map((z) => [z.id, baglariCoz(z, idx, ix)]));
+
   const ebeveynBagla = (cocuk, ebeveyn, rol) => {
     if (!cocuk || !ebeveyn || cocuk.key === ebeveyn.key) return;
-    const eski = cocuk.ebeveynler.has(ebeveyn.key) ? cocuk.ebeveynler.get(ebeveyn.key) : undefined;
+    /* Bir kişinin aynı rolde iki ebeveyni olamaz: ilk yazılan (çocuğun kendi kaydı) kazanır */
+    if (rol && [...cocuk.ebeveynler].some(([k, r]) => r === rol && k !== ebeveyn.key)) {
+      console.warn("Çelişen " + rol + " bilgisi:", cocuk.ad, "→", ebeveyn.ad);
+      return;
+    }
+    if (!rol && !cocuk.ebeveynler.has(ebeveyn.key) && cocuk.ebeveynler.size >= 2) {
+      console.warn("Fazla ebeveyn bilgisi:", cocuk.ad, "→", ebeveyn.ad);
+      return;
+    }
+    const eski = cocuk.ebeveynler.get(ebeveyn.key);
     if (eski === undefined || (!eski && rol)) cocuk.ebeveynler.set(ebeveyn.key, rol || null);
     ebeveyn.cocuklar.add(cocuk.key);
   };
-  /* 1. tur: anne / baba alanları (ve bunlardan cinsiyet çıkarımı) */
-  kayitli.forEach(([d, z]) => {
-    if (!bos(z.baba)) { const p = al(z.baba); ebeveynBagla(d, p, "baba"); if (p && !p.kesin && !p.cinsiyet) p.cinsiyet = "erkek"; }
-    if (!bos(z.anne)) { const p = al(z.anne); ebeveynBagla(d, p, "anne"); if (p && !p.kesin && !p.cinsiyet) p.cinsiyet = "kadin"; }
+
+  /* 1. tur: kişinin KENDİ kaydındaki anne / baba (ve bunlardan cinsiyet çıkarımı) */
+  zatlar.forEach((z) => {
+    const d = dugumler.get(z.id), b = baglar.get(z.id);
+    if (b.baba) { const p = dugumler.get(b.baba); ebeveynBagla(d, p, "baba"); if (p && !p.kesin && !p.cinsiyet) p.cinsiyet = "erkek"; }
+    if (b.anne) { const p = dugumler.get(b.anne); ebeveynBagla(d, p, "anne"); if (p && !p.kesin && !p.cinsiyet) p.cinsiyet = "kadin"; }
   });
-  /* 2. tur: çocuk listesi (eski "(Çocuk)" bağları dahil) ve eşler */
-  kayitli.forEach(([d, z]) => {
+  /* 2. tur: çocuk listeleri ve eşler */
+  zatlar.forEach((z) => {
+    const d = dugumler.get(z.id), b = baglar.get(z.id);
     const rol = d.cinsiyet === "erkek" ? "baba" : d.cinsiyet === "kadin" ? "anne" : null;
-    const cocukAdlari = [...esListesiniAyir(z.cocuklar), ...baglariAyir(z.baglar).filter((b) => trKucuk(b.tur) === "çocuk").map((b) => b.ad)];
-    cocukAdlari.forEach((ad) => ebeveynBagla(al(ad), d, rol));
-    esListesiniAyir(z.es).forEach((ad) => {
-      const q = al(ad);
+    b.cocuk.forEach((cid) => ebeveynBagla(dugumler.get(cid), d, rol));
+    b.es.forEach((eid) => {
+      const q = dugumler.get(eid);
       if (q && q.key !== d.key) { d.es.add(q.key); q.es.add(d.key); }
     });
   });
@@ -1293,7 +1360,8 @@ function akrabalikHesapla(g, key) {
 /* ---- İsim değişikliği / silme sonrası referans güncelleme yardımcıları ---- */
 /* eskiIsim'e (anne/baba/eş/çocuk/bağ alanlarında) referans veren TÜM kayıtları tarar.
    yeniIsim bir metin ise referansı yeni isimle değiştirir; null ise (kayıt
-   silindiğinde) referansı tamamen kaldırır. Sadece hesaplar, yazmaz. */
+   silindiğinde) referansı tamamen kaldırır. Sadece hesaplar, yazmaz.
+   (Yalnızca ID'ye dönüştürülmemiş eski kayıtlar için kullanılır.) */
 function isimReferanslariniGuncelle(calisma, eskiIsim, yeniIsim) {
   const eskiAnah = adAnahtar(eskiIsim);
   if (!eskiAnah) return [];
@@ -1328,6 +1396,35 @@ function isimReferanslariniGuncelle(calisma, eskiIsim, yeniIsim) {
   return guncellemeler;
 }
 
+/* Bir kayıt yeniden adlandırılınca (yeniAd metin) veya silinince (yeniAd null),
+   ONA ID İLE BAĞLI kayıtların gösterim metinlerini/ID'lerini günceller. Yazmaz, hesaplar. */
+function idReferansYamalari(zatlar, hedefId, eskiAd, yeniAd) {
+  const eskiAnah = adAnahtar(eskiAd);
+  const yamalar = [];
+  zatlar.forEach((z) => {
+    if (z.id === hedefId) return;
+    const p = {};
+    [["anneId", "anne"], ["babaId", "baba"]].forEach(([idA, metinA]) => {
+      if (z[idA] === hedefId) { p[metinA] = yeniAd || "?"; if (!yeniAd) p[idA] = ""; }
+    });
+    [["esIds", "es"], ["cocukIds", "cocuklar"]].forEach(([idA, metinA]) => {
+      const ids = idListesi(z[idA]);
+      if (!ids.includes(hedefId)) return;
+      const adlar = esListesiniAyir(z[metinA]).map((e) => (adAnahtar(e) === eskiAnah ? yeniAd : e)).filter(Boolean);
+      p[metinA] = esListesiniBirlestir(adlar);
+      if (!yeniAd) p[idA] = ids.filter((x) => x !== hedefId);
+    });
+    if (Object.keys(p).length) yamalar.push({ id: z.id, veri: p });
+  });
+  return yamalar;
+}
+function tumReferansYamalari(calisma, hedefId, eskiAd, yeniAd) {
+  return [
+    ...idReferansYamalari(calisma, hedefId, eskiAd, yeniAd),
+    ...isimReferanslariniGuncelle(calisma.filter((z) => z.id !== hedefId && !baglarGocMu(z)), eskiAd, yeniAd),
+  ];
+}
+
 async function kbGuncellemeleriYaz(guncellemeler) {
   /* Firestore writeBatch en fazla 500 işlem alabildiğinden, güvenli olması için 400'lük parçalar hâlinde yazıyoruz */
   for (let i = 0; i < guncellemeler.length; i += 400) {
@@ -1338,14 +1435,14 @@ async function kbGuncellemeleriYaz(guncellemeler) {
   }
 }
 
-/* Bir zat kaydı kaydedildikten sonra çağrılır. Yalnızca İSİM DEĞİŞTİYSE, diğer kayıtlardaki
-   eski ismi yeni isimle değiştirir. (Akrabalıklar artık hesaplandığı için başka senkronizasyon yok.) */
+/* Bir zat kaydı kaydedildikten sonra çağrılır. Yalnızca İSİM DEĞİŞTİYSE, ona bağlı kayıtlardaki
+   eski ismi yeni isimle değiştirir. (Akrabalıklar hesaplandığı için başka senkronizasyon yok.) */
 async function kayitSonrasiSenkronizeEt(kayitId, kaydedilenObj, eskiIsim) {
   if (!FS || !db || !kayitId || !eskiIsim) return [];
   if (adAnahtar(eskiIsim) === adAnahtar(kaydedilenObj.isim)) return [];
   try {
     const calisma = durum.zatlar.filter((z) => z.id !== kayitId).map((z) => ({ ...z }));
-    const guncellemeler = isimReferanslariniGuncelle(calisma, eskiIsim, kaydedilenObj.isim);
+    const guncellemeler = tumReferansYamalari(calisma, kayitId, eskiIsim, kaydedilenObj.isim);
     if (!guncellemeler.length) return [];
     await kbGuncellemeleriYaz(guncellemeler);
     return guncellemeler.map((g) => (calisma.find((z) => z.id === g.id) || {}).isim || g.id);
@@ -1355,13 +1452,13 @@ async function kayitSonrasiSenkronizeEt(kayitId, kaydedilenObj, eskiIsim) {
   }
 }
 
-/* Bir zat kaydı SİLİNDİKTEN sonra çağrılır: silinen ismi anne/baba/eş/çocuk/"Diğer bağlar"
-   alanında tutan TÜM diğer kayıtlardan bu referansı kaldırır. */
+/* Bir zat kaydı SİLİNDİKTEN sonra çağrılır: silinen kayda bağlı TÜM diğer kayıtlardan
+   bu referansı (ID ve metin) kaldırır. */
 async function adminSilinenReferanslariTemizle(silinenId, silinenIsim) {
   if (!FS || !db || bos(silinenIsim)) return [];
   try {
     const calisma = durum.zatlar.filter((z) => z.id !== silinenId).map((z) => ({ ...z }));
-    const guncellemeler = isimReferanslariniGuncelle(calisma, silinenIsim, null);
+    const guncellemeler = tumReferansYamalari(calisma, silinenId, silinenIsim, null);
     if (!guncellemeler.length) return [];
     await kbGuncellemeleriYaz(guncellemeler);
     return guncellemeler.map((g) => (calisma.find((z) => z.id === g.id) || {}).isim || g.id);
@@ -1371,66 +1468,97 @@ async function adminSilinenReferanslariTemizle(silinenId, silinenIsim) {
   }
 }
 
-/* "Eski bağları temizle" düğmesi. Eski sistemin veritabanına yazdığı bağları düzenler:
-   1) "(Çocuk)" bağlarını "Çocukları" alanına taşır (hiçbir bilgi kaybolmaz).
-   2) Kardeş/Dede/Nine/Torun/Amca/Dayı/Hala/Teyze/Yeğen bağlarından, artık anne/baba/eş/çocuktan
-      hesaplanıp DOĞRULANANLARI siler. Doğrulanamayanlara dokunmaz, sonunda listeler. */
+/* "Eski bağları temizle" düğmesi. Bir kez çalıştırmanız yeterlidir; tekrar çalıştırmak zarar vermez.
+   1) Tüm kayıtlarda anne/baba/eş/çocuk isimlerini kayıt ID'sine çevirir. Yalnızca KESİN eşleşenler
+      bağlanır; belirsiz isimler (ör. sadece "Abdullah") bağlanmaz ve sonunda listelenir.
+   2) "(Çocuk)" bağlarını "Çocukları" alanına taşır.
+   3) Artık hesaplanan kardeş/dede/nine/torun/amca/dayı/hala/teyze/yeğen bağlarından doğrulananları
+      "Diğer bağlar"dan siler. Doğrulanamayanlara dokunmaz, sonunda listeler. */
 const TURETILEN_TURLER = {
   "kardeş": "kardes", "dede": "dedenine", "nine": "dedenine", "torun": "torun",
   "amca": "amcahala", "dayı": "amcahala", "hala": "amcahala", "teyze": "amcahala", "yeğen": "yegen",
 };
+const ID_YAMA_ALANLARI = ["anneId", "babaId", "esIds", "cocukIds", "cocuklar", "baglar"];
 async function adminBaglariTemizle() {
   if (!adminMi()) return;
   if (!durum.yuklendi.zat) { alert("Şahsiyet listesi henüz yüklenmedi, birkaç saniye sonra tekrar deneyin."); return; }
-  if (!confirm("Eski otomatik bağlar temizlenecek: (Çocuk) bağları \"Çocukları\" alanına taşınacak, artık otomatik hesaplanan kardeş/dede/amca/yeğen gibi bağlar silinecek. Doğrulanamayan bağlara dokunulmaz. Önce JSON yedeği indirmeniz önerilir. Devam edilsin mi?")) return;
+  if (!confirm("Akrabalık bağları isim yerine kayıt ID'siyle tutulacak. Belirsiz isimler (ör. sadece \"Abdullah\") bağlanmaz ve size listelenir. (Çocuk) bağları \"Çocukları\" alanına taşınacak, artık otomatik hesaplanan kardeş/dede/amca/yeğen gibi bağlar silinecek. Önce JSON yedeği indirmeniz önerilir. Devam edilsin mi?")) return;
   try {
     const calisma = durum.zatlar.map((z) => ({ ...z }));
-    const yamalar = new Map();
-    const yamaEkle = (id, veri) => yamalar.set(id, { ...(yamalar.get(id) || {}), ...veri });
+    const ix = adIndeksiKur(calisma);
+    const belirsiz = new Set();
+    const coz = (z, alan, ad) => {
+      if (bos(ad)) return "";
+      const s = adCozumle(ad, ix, false);
+      if (s.durum === "tamam" && s.kayit.id !== z.id) return s.kayit.id;
+      if (s.durum === "belirsiz") belirsiz.add(`${adTemiz(z.isim)} → ${alan}: ${ad}`);
+      return "";
+    };
+    const cok = (z, alan, ad) => [...new Set(esListesiniAyir(ad).map((x) => coz(z, alan, x)).filter(Boolean))];
 
+    /* 1) (Çocuk) bağlarını metne taşı, 2) ID alanlarını doldur */
     calisma.forEach((z) => {
       const liste = baglariAyir(z.baglar);
-      const cocuklar = liste.filter((b) => trKucuk(b.tur) === "çocuk");
-      if (!cocuklar.length) return;
-      const mevcut = esListesiniAyir(z.cocuklar);
-      const anahtarlar = new Set(mevcut.map(adAnahtar));
-      cocuklar.forEach((b) => { if (!anahtarlar.has(adAnahtar(b.ad))) { anahtarlar.add(adAnahtar(b.ad)); mevcut.push(b.ad); } });
-      z.cocuklar = mevcut.join(", ");
-      z.baglar = kbBaglarString(liste.filter((b) => trKucuk(b.tur) !== "çocuk")) || "?";
-      yamaEkle(z.id, { cocuklar: z.cocuklar, baglar: z.baglar });
+      const cocukB = liste.filter((b) => trKucuk(b.tur) === "çocuk");
+      if (cocukB.length) {
+        const m = esListesiniAyir(z.cocuklar), an = new Set(m.map(adAnahtar));
+        cocukB.forEach((b) => { if (!an.has(adAnahtar(b.ad))) { an.add(adAnahtar(b.ad)); m.push(b.ad); } });
+        z.cocuklar = m.join(", ");
+        z.baglar = kbBaglarString(liste.filter((b) => trKucuk(b.tur) !== "çocuk")) || "?";
+      }
+      if (baglarGocMu(z)) return; /* zaten dönüştürülmüş */
+      z.anneId = coz(z, "anne", z.anne);
+      z.babaId = coz(z, "baba", z.baba);
+      z.esIds = cok(z, "eş", z.es);
+      z.cocukIds = cok(z, "çocuk", z.cocuklar);
     });
 
+    /* 3) Artık hesaplanan bağları "Diğer bağlar"dan temizle */
     const g = akrabalikGrafigi(calisma);
     const dogrulanamayan = [];
     calisma.forEach((z) => {
       if (bos(z.baglar)) return;
       const liste = baglariAyir(z.baglar);
       if (!liste.some((b) => TURETILEN_TURLER[trKucuk(b.tur)])) return;
-      const gruplar = akrabalikHesapla(g, adAnahtar(z.isim));
+      const gruplar = akrabalikHesapla(g, z.id);
       const kalan = liste.filter((b) => {
         const grupId = TURETILEN_TURLER[trKucuk(b.tur)];
         if (!grupId) return true;
+        const s = adCozumle(b.ad, ix, true);
         const gr = gruplar.find((x) => x.id === grupId);
-        const onayli = !!(gr && gr.ogeler.some((o) => o.key === adAnahtar(b.ad)));
+        const onayli = !!(s.kayit && gr && gr.ogeler.some((o) => o.key === s.kayit.id));
         if (!onayli) dogrulanamayan.push(`${adTemiz(z.isim)} → ${b.ad} (${b.tur})`);
         return !onayli;
       });
-      if (kalan.length !== liste.length) yamaEkle(z.id, { baglar: kbBaglarString(kalan) || "?" });
+      if (kalan.length !== liste.length) z.baglar = kbBaglarString(kalan) || "?";
     });
 
-    const guncellemeler = [...yamalar.entries()].map(([id, veri]) => ({ id, veri }));
+    /* Yalnızca değişen alanları yaz */
+    const guncellemeler = [];
+    calisma.forEach((z, i) => {
+      const eski = durum.zatlar[i], veri = {};
+      ID_YAMA_ALANLARI.forEach((a) => {
+        if (JSON.stringify(z[a] === undefined ? null : z[a]) !== JSON.stringify(eski[a] === undefined ? null : eski[a])) veri[a] = z[a];
+      });
+      if (Object.keys(veri).length) guncellemeler.push({ id: z.id, veri });
+    });
     if (guncellemeler.length) await kbGuncellemeleriYaz(guncellemeler);
-    let mesaj = guncellemeler.length ? `${guncellemeler.length} kayıt güncellendi.` : "Temizlenecek bir bağ bulunamadı.";
+
+    let mesaj = guncellemeler.length ? `${guncellemeler.length} kayıt güncellendi.` : "Güncellenecek kayıt bulunamadı.";
+    if (belirsiz.size) {
+      const b = [...belirsiz];
+      mesaj += `\n\nBELİRSİZ olduğu için BAĞLANMAYAN ${b.length} isim var. Bu kayıtları düzenleyip formdaki listeden tam ismi seçin:\n` +
+        b.slice(0, 25).map((x) => "• " + x).join("\n") + (b.length > 25 ? `\n… ve ${b.length - 25} tane daha (F12 → Console).` : "");
+      console.log("Belirsiz isimler:", b);
+    }
     if (dogrulanamayan.length) {
-      mesaj += `\n\nAnne/baba/eş/çocuk bilgilerinden doğrulanamadığı için DOKUNULMAYAN ${dogrulanamayan.length} bağ var (kontrol edin):\n` +
-        dogrulanamayan.slice(0, 20).map((x) => "• " + x).join("\n") +
-        (dogrulanamayan.length > 20 ? `\n… ve ${dogrulanamayan.length - 20} tane daha (konsolda: F12 → Console).` : "");
+      mesaj += `\n\nHesaplanıp doğrulanamadığı için DOKUNULMAYAN ${dogrulanamayan.length} "Diğer bağ" var (F12 → Console).`;
       console.log("Doğrulanamayan bağlar:", dogrulanamayan);
     }
     alert(mesaj);
   } catch (e) {
-    console.error("Bağ temizleme hatası:", e);
-    alert("Temizleme sırasında bir hata oluştu: " + (e && e.message ? e.message : e));
+    console.error("Bağ dönüştürme hatası:", e);
+    alert("Dönüştürme sırasında bir hata oluştu: " + (e && e.message ? e.message : e));
   }
 }
 
@@ -1459,10 +1587,23 @@ async function adminKaydet() {
         const kucuk = trKucuk(ad);
         if (!kucuk.includes("(ra)") && !kucuk.includes("(r.a.)") && !kucuk.includes("(r.a)")) ad += " (ra)";
       }
+      /* Anne/baba/eş/çocuk: tam eşleşen kayıtlar ID ile bağlanır, kanonik adla saklanır */
+      const ix = adIndeksiKur(durum.zatlar.filter((z) => z.id !== id));
+      const coz1 = (ham) => {
+        if (bos(ham)) return { ad: "?", id: "" };
+        const s = adCozumle(ham, ix, true);
+        return s.kayit ? { ad: s.kayit.isim, id: s.kayit.id } : { ad: baslikBuyut(ham), id: "" };
+      };
+      const coz2 = (ham) => {
+        const l = esListesiniAyir(ham).map(coz1);
+        return { ad: esListesiniBirlestir(l.map((x) => x.ad)), ids: [...new Set(l.map((x) => x.id).filter(Boolean))] };
+      };
+      const anne = coz1(v("f-anne")), baba = coz1(v("f-baba")), es = coz2(v("f-es")), cocuk = coz2(v("f-cocuklar"));
       const obj = {
         isim: ad, isimAnahtar: adAnahtar(ad), devir: v("f-devir"),
-        anne: q(baslikBuyut(v("f-anne"))), baba: q(baslikBuyut(v("f-baba"))), es: q(baslikBuyut(v("f-es"))),
-        baglar: q(v("f-baglar")), cocuklar: q(baslikBuyut(v("f-cocuklar"))), cinsiyet: v("f-cinsiyet") || "?",
+        anne: anne.ad, anneId: anne.id, baba: baba.ad, babaId: baba.id,
+        es: es.ad, esIds: es.ids, cocuklar: cocuk.ad, cocukIds: cocuk.ids,
+        baglar: q(v("f-baglar")), cinsiyet: v("f-cinsiyet") || "?",
         d_hicri: q(v("f-d-hicri")), d_miladi: q(v("f-d-miladi")), v_hicri: q(v("f-v-hicri")), v_miladi: q(v("f-v-miladi")),
         bilgi, kaynak: q(v("f-kaynak")), kirmiziKart: !raIsaretli, guncellemeTarihi: Date.now(),
       };
@@ -2510,6 +2651,7 @@ function olayBagla() {
       return;
     }
     if (e.target.id === "f-isim") adminKopyaUyarisiGuncelle();
+    if (/^f-(anne|baba|es|cocuklar)$/.test(e.target.id)) adminBagDurumuGuncelle();
     if (e.target.closest && e.target.closest(".admin-form")) adminKirliAyarla(true);
     if (e.target.classList && e.target.classList.contains("not-alani")) durum.notTaslak[e.target.dataset.anahtar] = e.target.value;
     if (e.target.id === "genel-arama") {
