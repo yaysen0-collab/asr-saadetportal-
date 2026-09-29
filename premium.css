@@ -496,50 +496,6 @@ main { min-height: 80vh; counter-reset: section; }
 .hesap-bolum,
 .prose h3,
 .article-full h3 { font-family: var(--display) !important; font-weight: 600 !important; }
-
-.relation-map {
-  position: relative;
-  min-height: 540px;
-  margin: 1.5rem 0;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(201,166,90,.13), transparent 23%),
-    linear-gradient(rgba(128,97,38,.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(128,97,38,.055) 1px, transparent 1px),
-    rgba(250,247,240,.62);
-  background-size: auto, 30px 30px, 30px 30px, auto;
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-sm);
-}
-.relation-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
-.relation-lines line { stroke: var(--brass); stroke-width: 1.4; vector-effect: non-scaling-stroke; stroke-dasharray: 5 7; opacity: .62; }
-.relation-node {
-  position: absolute;
-  z-index: 1;
-  width: min(28%, 230px);
-  min-height: 92px;
-  padding: .85rem 1rem;
-  color: var(--ink);
-  background: var(--paper-light);
-  border: 1px solid var(--line);
-  box-shadow: 0 10px 28px rgba(13,33,27,.09);
-  transform: translate(-50%, -50%);
-}
-.relation-node > span { display: block; margin-bottom: .35rem; color: var(--brass-text); font-size: .59rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.relation-node ul { margin: 0; padding: 0; list-style: none; }
-.relation-node li + li { margin-top: .25rem; }
-.relation-node a { color: var(--forest); font-family: var(--display); font-size: 1.03rem; font-weight: 600; text-decoration-color: rgba(128,97,38,.5); text-underline-offset: 3px; }
-.relation-node em { color: var(--quiet); font-size: .7rem; font-style: normal; }
-.relation-main { top: 50%; left: 50%; width: min(38%, 290px); min-height: 124px; display: grid; align-content: center; color: var(--cream); background: var(--forest); border-color: var(--brass); text-align: center; }
-.relation-main > span { color: var(--brass-bright); }
-.relation-main h2 { margin: 0; color: var(--cream); font-family: var(--display); font-size: clamp(1.3rem, 2vw, 1.85rem); line-height: 1.05; }
-.relation-main p { margin: .45rem 0 0; color: rgba(247,240,223,.72); font-size: .64rem; }
-.relation-father { top: 17%; left: 24%; }
-.relation-mother { top: 17%; left: 76%; }
-.relation-spouse { top: 50%; left: 13%; }
-.relation-other { top: 50%; left: 87%; }
-.relation-children { top: 83%; left: 28%; }
-.relation-siblings { top: 83%; left: 72%; }
 .random-card { position: relative; overflow: hidden; padding: clamp(2rem, 5vw, 4rem); }
 .random-card::before { position: absolute; top: -70px; right: -70px; width: 170px; height: 170px; content: ""; border: 1px solid var(--brass); border-radius: 50%; box-shadow: 0 0 0 18px rgba(201,166,90,.05), 0 0 0 36px rgba(201,166,90,.035); }
 .random-card h2 { font-size: clamp(2.1rem, 4vw, 3.5rem); }
@@ -686,34 +642,6 @@ main { min-height: 80vh; counter-reset: section; }
 .prose { max-width: 720px; }
 .prose p,
 .prose li { color: var(--muted); font-size: .88rem; line-height: 1.9; }
-
-.record-source {
-  margin-top: 1.35rem;
-  padding: 1rem 1.1rem;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: baseline;
-  gap: .35rem .75rem;
-  color: var(--muted);
-  background: rgba(201, 166, 90, .08);
-  border-left: 2px solid var(--brass);
-}
-.record-source strong { color: var(--brass-text); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; }
-.record-source cite { font-size: .76rem; font-style: normal; line-height: 1.65; }
-.record-source small { grid-column: 2 / -1; color: var(--quiet); }
-.source-status { padding: .16rem .45rem; color: var(--forest); background: rgba(201,166,90,.18); border: 1px solid var(--line); font-size: .56rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.source-zayif, .source-ihtilafli { color: var(--record-red); background: var(--record-red-soft); border-color: var(--record-red-line); }
-
-.source-fields { margin: 1.25rem 0; padding: 1.25rem; border: 1px solid var(--line); }
-.source-fields legend { padding: 0 .55rem; color: var(--forest); font-family: var(--display); font-size: 1.15rem; font-weight: 600; }
-.source-fields .form-row { margin-top: .8rem; }
-.source-grid-3 { grid-template-columns: .6fr .6fr 1.8fr !important; }
-
-@media (max-width: 640px) {
-  .record-source { grid-template-columns: 1fr; }
-  .record-source small { grid-column: auto; }
-  .source-grid-3 { grid-template-columns: 1fr !important; }
-}
 .prose h3 { margin-top: 2.5rem; color: var(--forest); font-size: 1.5rem !important; }
 .kaynak-liste li { padding: 1rem 0; border-color: var(--line); }
 .kaynak-liste li strong { color: var(--forest); font-family: var(--display); font-size: 1.15rem; font-weight: 600; }
@@ -976,10 +904,6 @@ html[data-theme="dark"] .empty,
 html[data-theme="dark"] .error {
   background-color: rgba(21,44,35,.7);
 }
-html[data-theme="dark"] .relation-map { background-color: rgba(9,23,19,.74); }
-html[data-theme="dark"] .relation-node { background: var(--paper-light); }
-html[data-theme="dark"] .relation-node a { color: var(--ink); }
-html[data-theme="dark"] .relation-main { background: var(--forest-light); }
 
 html[data-theme="dark"] .admin-stat { background: rgba(21,44,35,.68); }
 html[data-theme="dark"] .form-duplicate,
@@ -1261,10 +1185,6 @@ html[data-theme="dark"] .account-entry-not .account-entry-mark { color: var(--cr
   .admin-grid { display: flex; flex-direction: column; }
   .admin-col-form { width: 100%; order: -1; }
   .admin-col-list { width: 100%; }
-  .relation-map { min-height: 0; padding: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-  .relation-lines { display: none; }
-  .relation-node { position: static; width: auto; min-height: 0; transform: none; }
-  .relation-main { grid-column: 1 / -1; min-height: 130px; order: -1; }
 }
 
 @media (max-width: 440px) {
@@ -1282,8 +1202,6 @@ html[data-theme="dark"] .account-entry-not .account-entry-mark { color: var(--cr
   .account-filters { padding: 1rem; }
   .account-entry { padding: 1rem; gap: .75rem; }
   .account-entry-actions { display: grid; grid-template-columns: 1fr; }
-  .relation-map { grid-template-columns: 1fr; }
-  .relation-main { grid-column: auto; }
 }
 
 /* 9. Mobil menü (hamburger) güvenilirlik düzeltmesi */

@@ -18,8 +18,15 @@ const firebaseConfig = {
   messagingSenderId: "930648787998",
   appId: "1:930648787998:web:db163d0f3811786610b20f",
 };
+const ADMIN_EMAILS = ["asrisaadetportali@gmail.com", "zeynepglfm@gmail.com"];
+
 /* Hoş geldin penceresinin arka plan rengi. İstediğiniz rengi yazabilirsiniz: "#14261f", "#5d4037", "var(--forest)"… */
 const KARSILAMA_ARKAPLAN = "var(--forest, #14261f)";
+
+const HOSGELDIN_MESAJLARI = {
+  "asrisaadetportali@gmail.com": "Hoşgeldin patron, koltuk hazır, ekip hazır, başarı zaten seninle geliyor. Her şeyin üstesinden gelebilirsin.",
+  "zeynepglfm@gmail.com": "Hoş geldin ortak! Enerjini topladıysan sahne senin. Birlikte bu projeyi yukarılara taşıyalım. (Not: Seni çok seviyorum)"
+};
 const FORMSPREE_URL = "https://formspree.io/f/xaeygoey";
 
 /* ==========================================================================
@@ -45,7 +52,7 @@ const FOTO = {
   manuscript2: "1720701575003-51dafcf39cb4",
   ornate: "1720700955600-a21cd215d1a3",
 };
-const foto = (k, width = 1100) => `https://images.unsplash.com/photo-${FOTO[k]}?w=${width}&q=62&auto=format&fit=crop`;
+const foto = (k) => `https://images.unsplash.com/photo-${FOTO[k]}?w=1100&q=62&auto=format&fit=crop`;
 
 const DEVIRLER = ["Asr-ı Saadet", "Hulefâ-yi Râşidîn", "Emeviler", "Abbasiler", "Endülüs", "Diğer"];
 const HIZLI_ETIKETLER = ["Ebu Bekir", "Ömer", "Osman", "Ali", "Bedir", "Hamza"];
@@ -161,7 +168,6 @@ const durum = {
   yuklendi: { zat: false, olay: false },
   hata: null,
   kullanici: null,
-  adminYetkili: false,
   arama: "", devir: "tumu", tur: "tumu", limit: 50, acik: new Set(), kaydirHedef: null,
   rastgeleId: null,
   faqAcik: null,
@@ -246,11 +252,16 @@ const kayitAdi = (tip, k) => (k ? (tip === "zat" ? k.isim : k.ad) || "" : "");
 const kirmiziKartMi = (k) => !!(k && k.kirmiziKart === true);
 
 function adminMi() {
-  return !!(durum.kullanici && durum.adminYetkili === true);
+  const u = durum.kullanici;
+  /* E-posta ASCII'dir: Türkçe kuralıyla değil düz küçük harfe çevirerek karşılaştır (I → ı sorunu olmasın) */
+  return !!(u && u.email && ADMIN_EMAILS.some(function(email) {
+    return email.toLowerCase() === u.email.toLowerCase();
+  }));
 }
 
-function hosgeldinBildirimGoster() {
-  const mesaj = "Yönetici hesabıyla giriş yaptınız.";
+function hosgeldinBildirimGoster(email) {
+  const mesaj = HOSGELDIN_MESAJLARI[String(email).toLowerCase()];
+  if (!mesaj) return;
 
   const ortu = document.createElement("div");
   ortu.className = "welcome-toast-overlay";
@@ -409,7 +420,7 @@ const olayTarih = (o) => birlestir(o.hicri, o.miladi);
 function gorselYari({ f, alt, sticky = false, ortada = false, icerik, oncelik = false }) {
   const imgOzellik = oncelik ? `fetchpriority="high"` : `loading="lazy"`;
   return `<div class="half visual${sticky ? " sticky" : ""}${ortada ? " middle" : ""}">
-    <img src="${foto(f)}" srcset="${foto(f, 640)} 640w, ${foto(f, 1100)} 1100w, ${foto(f, 1600)} 1600w" sizes="(max-width: 940px) 100vw, 55vw" alt="${esc(alt)}" decoding="async" ${imgOzellik}>
+    <img src="${foto(f)}" alt="${esc(alt)}" ${imgOzellik}>
     <div class="visual-content">${icerik}</div>
   </div>`;
 }
@@ -546,7 +557,6 @@ function kisiselAlan(tur, k) {
 function kayitKarti(k, tur) {
   const ad = tur === "zat" ? k.isim : k.ad;
   const anahtar = `${tur}-${k.id}`;
-  const detayId = `detay-${anahtar}`;
   const acik = durum.acik.has(anahtar);
   const tarih = tur === "zat" ? zatTarih(k) : olayTarih(k);
   let detay = "";
@@ -554,20 +564,20 @@ function kayitKarti(k, tur) {
     const satirlar = tur === "zat"
       ? [["Anne", k.anne], ["Baba", k.baba], ["Eşi / Eşleri", k.es], ["Diğer bağlar", k.baglar]].filter(([, v]) => !bos(v))
       : [];
-    detay = `<div class="kayit-detay" id="${esc(detayId)}">
+    detay = `<div class="kayit-detay">
       <div class="kayit-metin">${bilgiHtml(k.bilgi)}</div>
       ${satirlar.length ? `<dl class="kayit-bilgi">${satirlar.map(([a, v]) => `<div><dt>${a}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
-      ${kaynakGoster(k)}
+      ${!bos(k.kaynak) ? `<small>Kaynak: ${esc(k.kaynak)}</small>` : ""}
       ${tur === "zat" ? `<a class="text-link" href="#genealogy/${esc(k.id)}">Soyağacında gör →</a>` : ""}
       ${kisiselAlan(tur, k)}
     </div>`;
   }
   return `<article class="record${tur === "zat" && kirmiziKartMi(k) ? " record-red" : ""}" id="kayit-${esc(anahtar)}">
-    <button type="button" class="kayit-ust" aria-expanded="${acik}" aria-controls="${esc(detayId)}" data-action="kayit" data-anahtar="${esc(anahtar)}">
+    <div class="kayit-ust" role="button" tabindex="0" aria-expanded="${acik}" data-action="kayit" data-anahtar="${esc(anahtar)}">
       <div class="record-head"><h3>${esc(ad)}${durum.favoriler[favAnahtar(tur, k.id)] ? ` <span class="fav-isaret" title="Favorilerinizde">★</span>` : ""}</h3><span class="era">${esc(devirOf(k))}</span></div>
       ${acik ? "" : `<p>${esc(bos(k.bilgi) ? "Bu kayıt için henüz bilgi girilmemiş." : ozet(k.bilgi, 150))}</p>`}
       ${tarih ? `<small>${esc(tarih)}</small>` : ""}
-    </button>
+    </div>
     ${detay}
   </article>`;
 }
@@ -653,6 +663,11 @@ function baglariAyir(baglar) {
 
 function soyAgaci(k) {
   const idx = adIndeks();
+  const dugum = (iliski, ad) => {
+    if (bos(ad)) return `<div class="family-node"><span class="relation">${iliski}</span><h3>Kayıtlı değil</h3><p>Bu bilgi arşive girilmemiş.</p></div>`;
+    const b = idx.get(adAnahtar(ad));
+    return `<div class="family-node"><span class="relation">${iliski}</span><h3>${adLink(ad, idx)}</h3><p>${b ? esc(devirOf(b)) : "Arşivde ayrı bir kaydı yok."}</p></div>`;
+  };
   const anah = adAnahtar(k.isim);
   const bag = baglariAyir(k.baglar);
 
@@ -678,37 +693,21 @@ function soyAgaci(k) {
   const esler = bos(k.es) ? [] : String(k.es).split(/\s*,\s*/).filter(Boolean).map((e) => adLink(e, idx));
 
   const satir = (e, h) => (h ? `<div class="family-detail"><span>${e}</span><strong>${h}</strong></div>` : "");
-  const gruplar = [
-    { key: "father", label: "Baba", items: bos(k.baba) ? [] : [adLink(k.baba, idx)], always: true, x: 240, y: 90 },
-    { key: "mother", label: "Anne", items: bos(k.anne) ? [] : [adLink(k.anne, idx)], always: true, x: 760, y: 90 },
-    { key: "spouse", label: "Eşi / Eşleri", items: esler, x: 120, y: 270 },
-    { key: "other", label: "Diğer Akrabalar", items: diger, x: 880, y: 270 },
-    { key: "children", label: "Çocukları", items: cocuklar, x: 280, y: 450 },
-    { key: "siblings", label: "Kardeşleri", items: kardesler, x: 720, y: 450 },
-  ].filter((g) => g.always || g.items.length);
-  const grupKart = (g) => `<section class="relation-node relation-${g.key}" aria-label="${esc(g.label)}">
-    <span>${esc(g.label)}</span>
-    ${g.items.length ? `<ul>${g.items.map((ad) => `<li>${ad}</li>`).join("")}</ul>` : `<em>Kayıtlı değil</em>`}
-  </section>`;
   const tarih = zatTarih(k);
   return `
-    <div class="relation-map" aria-label="${esc(k.isim)} için akrabalık bağlantıları">
-      <svg class="relation-lines" viewBox="0 0 1000 540" preserveAspectRatio="none" aria-hidden="true">
-        ${gruplar.map((g) => `<line x1="500" y1="270" x2="${g.x}" y2="${g.y}"></line>`).join("")}
-      </svg>
-      <section class="relation-node relation-main" aria-label="Seçilen şahsiyet">
-        <span>Seçilen şahsiyet</span><h2>${esc(k.isim)}</h2><p>${esc(devirOf(k))}${tarih ? " · " + esc(tarih) : ""}</p>
-      </section>
-      ${gruplar.map(grupKart).join("")}
+    <div class="family-tree">
+      ${dugum("Baba", k.baba)}
+      ${dugum("Anne", k.anne)}
+      <div class="family-node main"><span class="relation">Seçilen şahsiyet</span><h3>${esc(k.isim)}</h3><p>${esc(devirOf(k))}${tarih ? " · " + esc(tarih) : ""}</p></div>
     </div>
     <div class="family-details">
       ${satir("Eşi / Eşleri", esler.join(", "))}
       ${satir("Çocukları", cocuklar.join(", "))}
       ${satir("Kardeşleri", kardesler.join(", "))}
       ${satir("Diğer akrabalar", diger.join(", "))}
+      ${satir("Kaynak", bos(k.kaynak) ? "" : esc(k.kaynak))}
       ${!esler.length && !cocuklar.length && !kardesler.length && !diger.length ? `<div class="family-detail"><span>Bağlantı</span><strong>Başka bağlantı kaydı yok</strong></div>` : ""}
     </div>
-    ${kaynakGoster(k)}
     <a class="text-link" href="#archive/zat-${esc(k.id)}">Tam kaydı arşivde oku →</a>`;
 }
 
@@ -773,8 +772,8 @@ function sayfaMakaleler() {
     const acik = durum.makaleAcik.has(i);
     const gorsel = gorselYari({ f: m.foto, alt: m.baslik, icerik: `<span class="article-tag">${esc(m.etiket)}</span><h2>${esc(m.baslik)}</h2>` });
     const icerik = `<div class="half content">
-      <div id="makale-icerik-${i}">${acik ? `<div class="article-full">${m.govde}</div>` : `<p>${esc(m.ozet)}</p>`}</div>
-      <button type="button" class="text-link" data-action="makale" data-i="${i}" aria-expanded="${acik}" aria-controls="makale-icerik-${i}">${acik ? "Daha az göster ↑" : "Devamını oku →"}</button>
+      ${acik ? `<div class="article-full">${m.govde}</div>` : `<p>${esc(m.ozet)}</p>`}
+      <button type="button" class="text-link" data-action="makale" data-i="${i}">${acik ? "Daha az göster ↑" : "Devamını oku →"}</button>
     </div>`;
     return `<section class="split article-section" id="makale-${i}">${i % 2 === 0 ? gorsel + icerik : icerik + gorsel}</section>`;
   }).join("");
@@ -785,10 +784,10 @@ function faqListe() {
   return `<div class="faq-list">${SSS.map(([q, a], i) => {
     const acik = durum.faqAcik === i;
     return `<div class="faq-item" id="sss-${i}">
-      <button type="button" class="faq-question" data-action="faq" data-i="${i}" aria-expanded="${acik}" aria-controls="sss-cevap-${i}">
+      <button type="button" class="faq-question" data-action="faq" data-i="${i}" aria-expanded="${acik}">
         <span>${esc(q)}</span><span class="faq-icon">${acik ? "−" : "+"}</span>
       </button>
-      ${acik ? `<div class="faq-answer" id="sss-cevap-${i}" role="region" aria-label="${esc(q)} yanıtı">${esc(a)}</div>` : ""}
+      ${acik ? `<div class="faq-answer">${esc(a)}</div>` : ""}
     </div>`;
   }).join("")}</div>`;
 }
@@ -828,8 +827,8 @@ function sayfaGiris() {
     const kayit = durum.loginMod === "kayit";
     govde = `<h2>${kayit ? "Üye ol" : "Giriş yap"}</h2>
       <p>${kayit ? "E-posta ve şifrenizle hesap oluşturun." : "Hesabınızla giriş yapın. Yönetim paneli yalnızca yönetici hesabına açıktır."}</p>
-      <div class="login-field"><label for="giris-eposta">E-posta</label><input id="giris-eposta" type="email" autocomplete="email" required></div>
-      <div class="login-field"><label for="giris-sifre">Şifre</label><div class="password-input"><input id="giris-sifre" type="password" autocomplete="${kayit ? "new-password" : "current-password"}" minlength="6" required><button type="button" data-action="sifre-goster" aria-label="Şifreyi göster" aria-pressed="false">Göster</button></div></div>
+      <div class="login-field"><label for="giris-eposta">E-posta</label><input id="giris-eposta" type="email" autocomplete="email"></div>
+      <div class="login-field"><label for="giris-sifre">Şifre</label><div class="password-input"><input id="giris-sifre" type="password" autocomplete="${kayit ? "new-password" : "current-password"}"><button type="button" data-action="sifre-goster" aria-label="Şifreyi göster" aria-pressed="false">Göster</button></div></div>
       <p class="login-message" id="giris-mesaj" role="alert"></p>
       <div class="login-actions">
         <button type="button" class="button primary" data-action="${kayit ? "kayit-ol" : "giris"}">${kayit ? "Üye ol" : "Giriş yap"}</button>
@@ -917,7 +916,7 @@ function adminFiltrelenmisListe() {
   const kaynak = durum.admin.sekme === "zat" ? durum.zatlar : durum.olaylar;
   const q = trKucuk(durum.admin.arama.trim());
   const liste = kaynak.filter((k) => {
-    const eksik = bos(k.bilgi) || (bos(k.kaynak) && bos(k.kaynakEser));
+    const eksik = bos(k.bilgi) || bos(k.kaynak);
     const metin = trKucuk(`${k.isim || k.ad || ""} ${devirOf(k)} ${duzMetin(k.bilgi)}`);
     return (!q || metin.includes(q)) && (!durum.admin.sadeceEksik || eksik);
   }).slice();
@@ -981,38 +980,6 @@ const EDITOR_HTML = `<div class="form-field"><label>Bilgi</label>
     </div>
     <div id="f-bilgi" class="rich-editor" contenteditable="true" data-placeholder="Metni buraya yazın…"></div>
   </div></div>`;
-
-const KAYNAK_HTML = `<fieldset class="source-fields">
-  <legend>Kaynak ve akademik kontrol</legend>
-  <div class="form-row">
-    <div class="form-field"><label for="f-kaynak-eser">Eser adı</label><input id="f-kaynak-eser" type="text" autocomplete="off"></div>
-    <div class="form-field"><label for="f-kaynak-yazar">Yazar / müellif</label><input id="f-kaynak-yazar" type="text" autocomplete="off"></div>
-  </div>
-  <div class="form-row source-grid-3">
-    <div class="form-field"><label for="f-kaynak-cilt">Cilt</label><input id="f-kaynak-cilt" type="text"></div>
-    <div class="form-field"><label for="f-kaynak-sayfa">Sayfa</label><input id="f-kaynak-sayfa" type="text"></div>
-    <div class="form-field"><label for="f-kaynak-baski">Baskı / yayınevi</label><input id="f-kaynak-baski" type="text"></div>
-  </div>
-  <div class="form-row">
-    <div class="form-field"><label for="f-rivayet-durumu">Rivayet değerlendirmesi</label><select id="f-rivayet-durumu">
-      <option value="belirtilmedi">Belirtilmedi</option><option value="sahih">Sahih</option><option value="hasen">Hasen</option>
-      <option value="zayif">Zayıf</option><option value="ihtilafli">İhtilaflı</option><option value="incelemede">İncelemede</option><option value="uygulanamaz">Uygulanamaz</option>
-    </select></div>
-    <div class="form-field"><label for="f-inceleyen">İnceleyen</label><input id="f-inceleyen" type="text" autocomplete="off"></div>
-  </div>
-  <div class="form-row">
-    <div class="form-field"><label for="f-kontrol-tarihi">Son kontrol tarihi</label><input id="f-kontrol-tarihi" type="date"></div>
-    <div class="form-field"><label for="f-kaynak">Ek kaynak notu</label><input id="f-kaynak" type="text" placeholder="Eski kayıtlarla uyumlu serbest açıklama"></div>
-  </div>
-</fieldset>`;
-
-function kaynakGoster(k) {
-  const parcalar = [k.kaynakYazar, k.kaynakEser, k.kaynakCilt && `c. ${k.kaynakCilt}`, k.kaynakSayfa && `s. ${k.kaynakSayfa}`, k.kaynakBaski].filter((x) => !bos(x));
-  if (!parcalar.length && !bos(k.kaynak)) parcalar.push(k.kaynak);
-  if (!parcalar.length) return "";
-  const durumEtiketi = { sahih: "Sahih", hasen: "Hasen", zayif: "Zayıf", ihtilafli: "İhtilaflı", incelemede: "İncelemede", uygulanamaz: "Uygulanamaz" }[k.rivayetDurumu];
-  return `<aside class="record-source" aria-label="Kaynak bilgisi"><strong>Kaynak</strong><cite>${esc(parcalar.join(", "))}</cite>${durumEtiketi ? `<span class="source-status source-${esc(k.rivayetDurumu)}">${durumEtiketi}</span>` : ""}${!bos(k.inceleyen) || !bos(k.sonKontrolTarihi) ? `<small>Kontrol: ${esc([k.inceleyen, k.sonKontrolTarihi].filter((x) => !bos(x)).join(" · "))}</small>` : ""}</aside>`;
-}
 
 function adminAyniKisiBul(ad) {
   const anahtar = adAnahtar(ad);
@@ -1100,7 +1067,7 @@ function adminFormuKur() {
         <div class="form-field"><label for="f-v-miladi">Vefat (Miladi)</label><input id="f-v-miladi" type="text"></div>
       </div>
       ${EDITOR_HTML}
-      ${KAYNAK_HTML}
+      <div class="form-field"><label for="f-kaynak">Kaynak / sayfa no</label><input id="f-kaynak" type="text"></div>
       <div class="form-actions">
         <button type="button" class="button primary" data-action="admin-kaydet">Kaydet</button>
         <button type="button" class="button" data-action="admin-iptal">Temizle</button>
@@ -1118,7 +1085,7 @@ function adminFormuKur() {
         <div class="form-field"><label for="f-miladi">Miladi tarih</label><input id="f-miladi" type="text" inputmode="numeric" placeholder="Örn. 624"></div>
       </div>
       ${EDITOR_HTML}
-      ${KAYNAK_HTML}
+      <div class="form-field"><label for="f-kaynak">Kaynak / sayfa no</label><input id="f-kaynak" type="text" placeholder="Eser adı, cilt ve sayfa"></div>
       <div class="form-actions">
         <button type="button" class="button primary" data-action="admin-kaydet">Olayı kaydet</button>
         <button type="button" class="button" data-action="admin-iptal">Formu temizle</button>
@@ -1151,9 +1118,6 @@ function adminFormuDoldur(k) {
     set("f-ad", k.ad); set("f-hicri", k.hicri); set("f-miladi", k.miladi);
   }
   set("f-devir", devirOf(k)); set("f-kaynak", k.kaynak);
-  set("f-kaynak-eser", k.kaynakEser); set("f-kaynak-yazar", k.kaynakYazar);
-  set("f-kaynak-cilt", k.kaynakCilt); set("f-kaynak-sayfa", k.kaynakSayfa); set("f-kaynak-baski", k.kaynakBaski);
-  set("f-rivayet-durumu", k.rivayetDurumu || "belirtilmedi"); set("f-inceleyen", k.inceleyen); set("f-kontrol-tarihi", k.sonKontrolTarihi);
   const ed = $("#f-bilgi"); if (ed) ed.innerHTML = bos(k.bilgi) ? "" : temizHtml(k.bilgi);
   const b = $("#f-baslik"); if (b) b.textContent = zat ? "Şahsiyeti düzenle" : "Olayı düzenle";
   formMesaj("", false);
@@ -1170,11 +1134,6 @@ async function adminKaydet() {
   const q = (x) => (x === "" || x == null ? "?" : x);
   const editor = $("#f-bilgi");
   const bilgi = editor && duzMetin(editor.innerHTML) ? temizHtml(editor.innerHTML) : "";
-  const kaynakAlanlari = {
-    kaynak: q(v("f-kaynak")), kaynakEser: q(v("f-kaynak-eser")), kaynakYazar: q(v("f-kaynak-yazar")),
-    kaynakCilt: q(v("f-kaynak-cilt")), kaynakSayfa: q(v("f-kaynak-sayfa")), kaynakBaski: q(v("f-kaynak-baski")),
-    rivayetDurumu: v("f-rivayet-durumu") || "belirtilmedi", inceleyen: q(v("f-inceleyen")), sonKontrolTarihi: q(v("f-kontrol-tarihi")),
-  };
 
   try {
     if (zat) {
@@ -1197,7 +1156,7 @@ async function adminKaydet() {
         anne: q(baslikBuyut(v("f-anne"))), baba: q(baslikBuyut(v("f-baba"))), es: q(baslikBuyut(v("f-es"))),
         baglar: q(v("f-baglar")),
         d_hicri: q(v("f-d-hicri")), d_miladi: q(v("f-d-miladi")), v_hicri: q(v("f-v-hicri")), v_miladi: q(v("f-v-miladi")),
-        bilgi, ...kaynakAlanlari, kirmiziKart: !raIsaretli, guncellemeTarihi: Date.now(),
+        bilgi, kaynak: q(v("f-kaynak")), kirmiziKart: !raIsaretli, guncellemeTarihi: Date.now(),
       };
       if (id) await FS.updateDoc(FS.doc(db, "zatlar", id), obj); else await FS.addDoc(FS.collection(db, "zatlar"), obj);
     } else {
@@ -1205,7 +1164,7 @@ async function adminKaydet() {
       if (!ad) return formMesaj("Olay başlığı boş bırakılamaz.", true);
       const obj = {
         ad, devir: v("f-devir"), hicri: q(v("f-hicri")), miladi: q(v("f-miladi")),
-        bilgi, ...kaynakAlanlari, eklenmeTarihi: Date.now(), guncellemeTarihi: Date.now(),
+        bilgi, kaynak: q(v("f-kaynak")), eklenmeTarihi: Date.now(), guncellemeTarihi: Date.now(),
       };
       if (id) {
         const mevcut = durum.olaylar.find((o) => o.id === id);
@@ -1530,7 +1489,7 @@ function sayfaAra() {
     <div class="half content ark-icerik">
       <input id="genel-arama" class="search" type="search" placeholder="Bir isim, olay veya kelime yazın…" value="${esc(durum.genelArama)}" autocomplete="off" aria-label="Portalda ara">
       <div class="quick-tags" style="margin-top:.9rem">${HIZLI_ETIKETLER.map((t) => `<button type="button" class="quick-tag" data-action="ara-etiket" data-deger="${esc(t)}">${esc(t)}</button>`).join("")}</div>
-      <div id="arama-alan" style="margin-top:1.5rem" aria-live="polite" aria-atomic="false"></div>
+      <div id="arama-alan" style="margin-top:1.5rem"></div>
     </div>
   </section>`;
 }
@@ -1542,10 +1501,10 @@ function iletisimFormu(baslik, aciklama, konu) {
   return `<div class="contact-box">
     <h3>${esc(baslik)}</h3>
     <p>${esc(aciklama)}</p>
-    <div class="login-field"><label for="ilt-isim">Adınız</label><input id="ilt-isim" type="text" autocomplete="name" required></div>
-    <div class="login-field"><label for="ilt-eposta">E-posta</label><input id="ilt-eposta" type="email" autocomplete="email" required></div>
+    <div class="login-field"><label for="ilt-isim">Adınız</label><input id="ilt-isim" type="text" autocomplete="name"></div>
+    <div class="login-field"><label for="ilt-eposta">E-posta</label><input id="ilt-eposta" type="email" autocomplete="email"></div>
     <div class="login-field"><label for="ilt-konu">Konu</label><input id="ilt-konu" type="text" value="${esc(konu || "")}" placeholder="Örn. Soru, Hata bildirimi, Katkı önerisi"></div>
-    <div class="login-field"><label for="ilt-mesaj">Mesajınız</label><textarea id="ilt-mesaj" rows="4" required></textarea></div>
+    <div class="login-field"><label for="ilt-mesaj">Mesajınız</label><textarea id="ilt-mesaj" rows="4"></textarea></div>
     <button type="button" class="button primary" data-action="iletisim">Mesajı gönder</button>
     <p class="login-message" id="iletisim-durum" role="status"></p>
   </div>`;
@@ -1575,7 +1534,7 @@ function sayfaGizlilik() {
       <p>Asr-ı Saadet Portalı olarak ziyaretçilerimizin gizliliğine ve kişisel verilerinin güvenliğine önem veriyoruz. Portal, genel kullanıma açık tarihî bilgilerin sunulduğu bir eğitim ve araştırma platformudur. Bu sayfa, hangi bilgilerin hangi amaçla ve nerede tutulduğunu açıklar.</p>
 
       <h3>Ziyaretiniz sırasında</h3>
-      <p>Arşivi, zaman çizelgesini, soyağacını ve makaleleri okumak için üye olmanız gerekmez. Bu sırada ad, adres veya telefon gibi bilgileri doğrudan istemeyiz. Site performansını ve genel kullanım eğilimlerini ölçmek için Vercel Web Analytics kullanılabilir; reklam profili oluşturulmaz.</p>
+      <p>Arşivi, zaman çizelgesini, soyağacını ve makaleleri okumak için üye olmanız gerekmez. Bu sırada sizi kişisel olarak tanımlayan bir bilgi (ad, adres, telefon vb.) bizim tarafımızdan toplanmaz. Sitede reklam veya izleme amaçlı çerez kullanılmaz.</p>
 
       <h3>İletişim formu</h3>
       <p>İletişim formunu kullandığınızda yazdığınız ad, e-posta adresi, konu ve mesaj, size dönüş yapabilmemiz için Formspree hizmeti üzerinden bize iletilir. Bu bilgiler üçüncü kişilerle, kurumlarla veya reklam şirketleriyle paylaşılmaz.</p>
@@ -1587,13 +1546,13 @@ function sayfaGizlilik() {
       <p>Favori olarak işaretlediğiniz kayıtlar ve yazdığınız kişisel notlar, hesabınızla ilişkilendirilerek Google Firestore veritabanında saklanır. Bunlar yalnızca siz giriş yaptığınızda gösterilir, diğer ziyaretçilere sunulmaz. İstediğiniz zaman Hesabım sayfasından silebilirsiniz.</p>
 
       <h3>Çerezler ve yerel depolama</h3>
-      <p>Oturumunuzun açık kalması için Firebase, tarayıcınızın yerel depolama alanına oturum bilgisi yazabilir. Dil ve tema tercihleriniz de yalnızca tarayıcınızda saklanır. Reklam amaçlı çerez kullanılmaz.</p>
+      <p>Oturumunuzun açık kalması için Firebase, tarayıcınızın yerel depolama alanına oturum bilgisi yazabilir. Sitemizde reklam veya izleme amaçlı üçüncü taraf çerezi kullanılmaz.</p>
 
       <h3>Üçüncü taraf hizmetler</h3>
       <p>Sayfalar görüntülenirken tarayıcınız yazı tipleri için Google Fonts'a, görseller için Unsplash'a, veriler ve giriş için Google Firebase'e bağlanır. Bu hizmet sağlayıcılar, IP adresiniz gibi standart bağlantı bilgilerini görebilir. Portal Vercel üzerinde barındırılır; barındırma sağlayıcısı standart sunucu kayıtları tutabilir.</p>
 
       <h3>Yönetici paneli güvenliği</h3>
-      <p>Veritabanına kayıt ekleme yetkisi, giriş yapan hesabın kullanıcı kimliğine bağlı yönetici kaydı ve Firestore güvenlik kurallarıyla doğrulanır. Arayüzde bir düğmenin görünmesi tek başına yetki sağlamaz.</p>
+      <p>Veritabanına kayıt ekleme yetkisi bulunan yöneticilerin giriş işlemleri Google Firebase'in güvenlik altyapısı ile korunmaktadır.</p>
 
       <h3>Haklarınız ve iletişim</h3>
       <p>Hesabınızın ve verilerinizin silinmesi, verilerinize erişim veya düzeltme talepleri ile gizlilik politikamıza dair her türlü soru için <a href="#contribute">İletişim formunu</a> kullanabilirsiniz. Portalın işleyişi değiştikçe bu metin güncellenir.</p>
@@ -1992,8 +1951,7 @@ function rotaOku() {
 
 function rotaHazirla(eski) {
   if (rota.sec === "search") {
-    const q = new URLSearchParams(location.search).get("q") || "";
-    if (rota.param || q) durum.genelArama = rota.param || q;
+    if (rota.param) durum.genelArama = rota.param;
     else if (eski.sec !== "search") durum.genelArama = "";
   }
   if (rota.sec === "articles" && rota.param !== "") {
@@ -2076,27 +2034,13 @@ function planla() {
   planli = setTimeout(() => { planli = null; veriGuncelle(); }, 30);
 }
 
-async function authDegisti(user) {
+function authDegisti(user) {
   durum.kullanici = user;
-  durum.adminYetkili = false;
   kullaniciVerisiniBagla(user);
   navGuncelle();
-  if (user && FS && db) {
-    const uid = user.uid;
-    try {
-      const yetki = await FS.getDoc(FS.doc(db, "admins", uid));
-      if (durum.kullanici && durum.kullanici.uid === uid) {
-        durum.adminYetkili = yetki.exists() && yetki.data().active === true;
-      }
-    } catch (e) {
-      console.error("Yönetici yetkisi doğrulanamadı:", e);
-      if (!durum.kullanici || durum.kullanici.uid === uid) durum.adminYetkili = false;
-    }
-    navGuncelle();
-  }
   if (user && durum.girisIstendi && rota.sec === "login") {
     durum.girisIstendi = false;
-    if (adminMi()) hosgeldinBildirimGoster();
+    if (adminMi()) hosgeldinBildirimGoster(user.email);
     sayfayaGit(adminMi() ? "admin" : "account");
     return;
   }
@@ -2111,10 +2055,6 @@ const islem = {
     const a = el.dataset.anahtar;
     if (durum.acik.has(a)) durum.acik.delete(a); else durum.acik.add(a);
     arsivGuncelle();
-    requestAnimationFrame(() => {
-      const yeni = document.querySelector(`.kayit-ust[data-anahtar="${CSS.escape(a)}"]`);
-      if (yeni) yeni.focus({ preventScroll: true });
-    });
   },
   tur(el) { durum.tur = el.dataset.deger; durum.limit = 50; arsivGuncelle(); },
   devir(el) { durum.devir = el.dataset.deger; durum.limit = 50; arsivGuncelle(); },
@@ -2128,19 +2068,11 @@ const islem = {
     const i = Number(el.dataset.i);
     durum.faqAcik = durum.faqAcik === i ? null : i;
     const a = $("#faq-alan"); if (a) a.innerHTML = faqListe();
-    requestAnimationFrame(() => {
-      const yeni = document.querySelector(`.faq-question[data-i="${i}"]`);
-      if (yeni) yeni.focus({ preventScroll: true });
-    });
   },
   makale(el) {
     const i = Number(el.dataset.i);
     if (durum.makaleAcik.has(i)) durum.makaleAcik.delete(i); else durum.makaleAcik.add(i);
     render({ scroll: false });
-    requestAnimationFrame(() => {
-      const yeni = document.querySelector(`button[data-action="makale"][data-i="${i}"]`);
-      if (yeni) yeni.focus({ preventScroll: true });
-    });
   },
   rastgele() { durum.rastgeleId = null; render({ scroll: false }); },
   "login-mod"(el) { durum.loginMod = el.dataset.mod; render({ scroll: false }); },
@@ -2358,8 +2290,6 @@ async function baslat() {
   rotaHazirla({ sec: "" });
   render();
   olayBagla();
-  const firebaseGereken = new Set(["home", "archive", "timeline", "genealogy", "random", "login", "admin", "account", "search"]);
-  if (!firebaseGereken.has(rota.sec)) return;
   try {
     const [appM, fsM, auM] = await Promise.all([yukle(FB("firebase-app")), yukle(FB("firebase-firestore")), yukle(FB("firebase-auth"))]);
     FS = fsM; AU = auM;
