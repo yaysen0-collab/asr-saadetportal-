@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function ownsExistingDocument() {
+      return signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    function ownsIncomingDocument() {
+      return signedIn() && request.resource.data.uid == request.auth.uid;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+
+    function validNote() {
+      return request.resource.data.keys().hasOnly([
+          'uid', 'tip', 'itemId', 'ad', 'metin', 'guncellemeTarihi'
+        ])
+        && request.resource.data.tip in ['zat', 'olay']
+        && request.resource.data.itemId is string
+        && request.resource.data.ad is string
+        && request.resource.data.metin is string
+        && request.resource.data.metin.size() <= 10000
+        && request.resource.data.guncellemeTarihi is number;
+    }
+
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /zatlar/{recordId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /olaylar/{recordId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /favoriler/{favoriteId} {
+      allow read, delete: if ownsExistingDocument();
+      allow create: if ownsIncomingDocument()
+        && request.resource.data.keys().hasOnly([
+          'uid', 'tip', 'itemId', 'ad', 'eklenmeTarihi'
+        ])
+        && request.resource.data.tip in ['zat', 'olay']
+        && request.resource.data.itemId is string
+        && request.resource.data.ad is string
+        && request.resource.data.eklenmeTarihi is number;
+      allow update: if ownsExistingDocument() && ownsIncomingDocument();
+    }
+
+    match /notlar/{noteId} {
+      allow read, delete: if ownsExistingDocument();
+      allow create: if ownsIncomingDocument() && validNote();
+      allow update: if ownsExistingDocument() && ownsIncomingDocument() && validNote();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
