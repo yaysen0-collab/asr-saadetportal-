@@ -11,7 +11,7 @@ const CONFIG = {
   collection: 'zatlar',                        // 'zatlar' mı 'people' mı? Kontrol edin
   siteUrl: 'https://asrisaadetportali.vercel.app',
   outDir: 'sahabe',                            // sayfalar /sahabe/ altına yazılır
-  cssHref: '/css/style.css',                   // sitenizin gerçek CSS yolu
+  cssHref: '/style.css',                   // sitenizin gerçek CSS yolu
   nameFields: ['ad', 'isim', 'name'],          // isim hangi alandaysa o (sırayla denenir)
   bioField: 'bilgi',
   sourceField: null,                           // kaynak alanı varsa adı, yoksa null
