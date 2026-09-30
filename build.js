@@ -11,7 +11,8 @@ const CONFIG = {
   collection: 'zatlar',                        // 'zatlar' mı 'people' mı? Kontrol edin
   siteUrl: 'https://asrisaadetportali.vercel.app',
   outDir: 'sahabe',                            // sayfalar /sahabe/ altına yazılır
-  cssHref: '/style.css',                   // sitenizin gerçek CSS yolu
+  cssHref: '/style.css',                       // sitenizin CSS dosyaları (kökte)
+  premiumHref: '/premium.css',
   nameFields: ['ad', 'isim', 'name'],          // isim hangi alandaysa o (sırayla denenir)
   bioField: 'bilgi',
   sourceField: null,                           // kaynak alanı varsa adı, yoksa null
@@ -86,6 +87,7 @@ function slugify(text) {
   const map = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u', Ç: 'c', Ğ: 'g', İ: 'i', I: 'i', Ö: 'o', Ş: 's', Ü: 'u', Â: 'a', Î: 'i', Û: 'u' };
   return text
     .replace(/\(.*?\)/g, '')            // (ra) gibi ekleri at
+    .replace(/['’‘´`ʿʾʻ]/g, '')         // apostrof/ayın işaretlerini sil (Mus’ab → musab)
     .replace(/[çğıöşüâîûÇĞİIÖŞÜÂÎÛ]/g, (c) => map[c])
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -163,25 +165,86 @@ function renderPage(p, ctx) {
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${url}">
+<meta name="theme-color" content="#f3efe5">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="${CONFIG.cssHref}">
+<link rel="stylesheet" href="${CONFIG.premiumHref}">
+<style>
+.person-page{width:min(820px,100%);margin:0 auto;padding:clamp(2rem,5vw,4rem) clamp(1.25rem,4vw,2rem) clamp(3rem,6vw,5rem)}
+.person-crumbs{margin:0 0 1.5rem;color:var(--muted);font-size:.74rem;letter-spacing:.04em}
+.person-crumbs a{color:var(--brass-text);text-decoration:none}
+.person-crumbs a:hover{text-decoration:underline}
+.person-page h1{margin:0 0 1.5rem;color:var(--forest);font-family:var(--display);font-size:clamp(2rem,5vw,3.2rem);font-weight:600;line-height:1.15}
+.person-meta{display:grid;grid-template-columns:max-content 1fr;gap:.55rem 1.5rem;margin:0 0 2rem;padding:1.2rem 1.4rem;background:var(--paper-light);border:1px solid var(--line)}
+.person-meta dt{color:var(--brass-text);font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding-top:.2rem}
+.person-meta dd{margin:0;color:var(--ink);font-size:.92rem}
+.person-meta a,.person-bio a{color:var(--brass-text);text-underline-offset:3px}
+.person-bio p{margin:0 0 1.15rem;color:var(--ink);font-size:1rem;line-height:1.85}
+.person-back{display:inline-block;margin-top:1.5rem;color:var(--brass-text);font-size:.74rem;letter-spacing:.1em;text-decoration:none;text-transform:uppercase}
+</style>
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 <script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>
 </head>
 <body>
-<header>
-  <nav>
-    <a href="/">Ana Sayfa</a> · <a href="/archive">Arşiv</a> · <a href="/timeline">Zaman Çizelgesi</a> · <a href="/genealogy">Soyağacı</a> · <a href="/articles">Makaleler</a>
-  </nav>
+<header class="site-nav">
+  <div class="nav-row">
+    <a class="brand" href="/">
+      <span class="brand-mark"><img src="/images/logo-mark.svg" alt="" width="38" height="44"></span>
+      <span class="brand-copy"><strong>Asr-ı Saadet Portalı</strong><small>İslam tarihi ve Ashab-ı Kiram arşivi</small></span>
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="nav-links"><span></span><span></span><span></span><b>Menü</b></button>
+    <nav class="nav-links" id="nav-links" aria-label="Ana menü">
+      <a href="/">Ana Sayfa</a>
+      <a href="/archive">Arşiv</a>
+      <a href="/timeline">Zaman Çizelgesi</a>
+      <a href="/genealogy">Soyağacı</a>
+      <a href="/random">Rastgele Şahsiyet</a>
+      <a href="/articles">Makaleler</a>
+    </nav>
+  </div>
 </header>
-<main>
-  <nav aria-label="breadcrumb"><a href="/">Ana Sayfa</a> › <a href="/archive">Arşiv</a> › ${esc(name)}</nav>
+<main class="person-page">
+  <nav class="person-crumbs" aria-label="breadcrumb"><a href="/">Ana Sayfa</a> › <a href="/archive">Arşiv</a> › ${esc(name)}</nav>
   <article>
     <h1>${esc(name)}</h1>
-    ${rows.length ? `<dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>` : ''}
+    ${rows.length ? `<dl class="person-meta">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>` : ''}
+    <div class="person-bio">
     ${paragraphs || '<p>Bu şahsiyet için içerik hazırlanıyor.</p>'}
+    </div>
   </article>
+  <a class="person-back" href="/archive">← Arşive dön</a>
 </main>
-<footer><p>© 2026 Asr-ı Saadet Portalı</p></footer>
+<footer class="site-footer">
+  <div class="footer-half footer-intro">
+    <div>
+      <p class="brand">Asr-ı Saadet Portalı</p>
+      <p>Ashâb-ı Kirâm'ın hayatlarını, nesep bağlarını ve çağın izlerini belgeleyen bağımsız dijital arşiv.</p>
+    </div>
+    <small>© 2026 · Tüm hakları saklıdır</small>
+  </div>
+  <div class="footer-half footer-links">
+    <div>
+      <h3>Hızlı Erişim</h3>
+      <a href="/">Ana Sayfa</a>
+      <a href="/archive">Arşiv</a>
+      <a href="/timeline">Zaman Çizelgesi</a>
+      <a href="/genealogy">Soyağacı</a>
+      <a href="/random">Rastgele Şahsiyet</a>
+      <a href="/articles">Makaleler</a>
+      <a href="/faq">S.S.S.</a>
+    </div>
+    <div>
+      <h3>Hakkında</h3>
+      <p>Klasik İslâm kaynaklarından derlenen açık erişimli arşiv.</p>
+    </div>
+  </div>
+</footer>
+<script>
+(function(){var n=document.querySelector('.site-nav'),b=document.querySelector('.menu-toggle');
+if(n&&b)b.addEventListener('click',function(){var o=n.classList.toggle('menu-open');b.setAttribute('aria-expanded',o?'true':'false');});})();
+</script>
 </body>
 </html>`;
 }
