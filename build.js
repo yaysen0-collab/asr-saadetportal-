@@ -11,7 +11,7 @@ const CONFIG = {
   collection: 'zatlar',                        // 'zatlar' mı 'people' mı? Kontrol edin
   siteUrl: 'https://asrisaadetportali.vercel.app',
   outDir: 'sahabe',                            // sayfalar /sahabe/ altına yazılır
-  cssHref: '/style.css',                   // sitenizin gerçek CSS yolu
+  cssHref: '/css/style.css',                   // sitenizin gerçek CSS yolu
   nameFields: ['ad', 'isim', 'name'],          // isim hangi alandaysa o (sırayla denenir)
   bioField: 'bilgi',
   sourceField: null,                           // kaynak alanı varsa adı, yoksa null
@@ -20,8 +20,8 @@ const CONFIG = {
 };
 // ==========================================================================
 
-if (!CONFIG.projectId) {
-  console.error('FIREBASE_PROJECT_ID ortam değişkeni gerekli.');
+if (!CONFIG.projectId && !process.env.FIREBASE_SERVICE_ACCOUNT) {
+  console.error('FIREBASE_SERVICE_ACCOUNT veya FIREBASE_PROJECT_ID ortam değişkeni gerekli.');
   process.exit(1);
 }
 
@@ -44,6 +44,17 @@ function fromFields(fields) {
 }
 
 async function fetchAll() {
+  // Yol 1: service account varsa firebase-admin ile oku (kurallardan bağımsız)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    const admin = require('firebase-admin');
+    const creds = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({ credential: admin.credential.cert(creds) });
+    const snap = await admin.firestore().collection(CONFIG.collection).get();
+    console.log('Service account ile okundu.');
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  }
+
+  // Yol 2: herkese açık REST API
   const base = `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/databases/(default)/documents/${CONFIG.collection}`;
   const docs = [];
   let pageToken = '';
@@ -222,6 +233,8 @@ function renderPage(p, ctx) {
   console.log(`${people.length} sayfa üretildi: ${idx} index, ${people.length - idx} noindex (içerik yetersiz).`);
   console.log(`sitemap.xml: ${urls.length} URL.`);
 })().catch((e) => {
-  console.error(e);
-  process.exit(1);
+  // Build'i düşürme: sayfa üretilemezse mevcut site olduğu gibi yayınlanır.
+  console.warn('UYARI: Şahsiyet sayfaları üretilemedi, mevcut site yayınlanıyor.');
+  console.warn(String(e && e.message ? e.message : e));
+  process.exit(0);
 });
