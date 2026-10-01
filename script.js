@@ -198,6 +198,41 @@ function duzMetin(ham) {
   if (!ham) return "";
   return String(ham).replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
 }
+function listeyiHazirla(liste) {
+  return (Array.isArray(liste) ? liste : []).map((k) => ({
+    ...k,
+    _duz: k._duz || duzMetin(k.bilgi),
+    _ara: k._ara || trKucuk((k.isim || k.ad || "") + " " + (k._duz || duzMetin(k.bilgi))),
+  })).sort(adSirala);
+}
+function veriyiUygula(tur, liste, kaydet = false) {
+  const hazirListe = listeyiHazirla(liste);
+  if (tur === "zat") durum.zatlar = hazirListe; else durum.olaylar = hazirListe;
+  durum.yuklendi[tur] = true;
+  if (kaydet) {
+    try { localStorage.setItem(`asr-veri-${tur}-v1`, JSON.stringify(hazirListe)); } catch (e) { /* Önbellek doluysa canlı veri kullanılmaya devam eder. */ }
+  }
+}
+function yerelVeriyiYukle() {
+  try {
+    for (const tur of ["zat", "olay"]) {
+      const kayit = localStorage.getItem(`asr-veri-${tur}-v1`);
+      if (kayit) veriyiUygula(tur, JSON.parse(kayit));
+    }
+  } catch (e) { console.warn("Kayıtlı sayfa verisi okunamadı:", e); }
+}
+async function statikVeriyiYukle() {
+  try {
+    const yanit = await fetch("/site-data.json", { cache: "no-cache" });
+    if (!yanit.ok) return;
+    const veri = await yanit.json();
+    let degisti = false;
+    if (veri.sahabeSayfaYollari) { sahabeSayfaYollari = veri.sahabeSayfaYollari; degisti = true; }
+    if (!durum.yuklendi.zat && Array.isArray(veri.zatlar)) { veriyiUygula("zat", veri.zatlar, true); degisti = true; }
+    if (!durum.yuklendi.olay && Array.isArray(veri.olaylar)) { veriyiUygula("olay", veri.olaylar, true); degisti = true; }
+    if (degisti) veriGuncelle();
+  } catch (e) { console.warn("Önceden hazırlanan kayıtlar yüklenemedi:", e); }
+}
 function ozet(ham, n) {
   const m = duzMetin(ham);
   return m.length > n ? m.slice(0, n).trimEnd() + "…" : m;
@@ -580,7 +615,7 @@ function kayitKarti(k, tur) {
     </div>`;
   }
   const adHtml = tur === "zat" && sahabeSayfaYollari[k.id]
-    ? `<a data-profile-link href="${esc(sahabeSayfaUrl(k.id))}" target="_blank" rel="noopener noreferrer">${esc(ad)}</a>`
+    ? `<span class="profile-name-wrap"><a data-profile-link href="${esc(sahabeSayfaUrl(k.id))}" target="_blank" rel="noopener noreferrer">${esc(ad)}</a><small>Profili yeni sekmede aç ↗</small></span>`
     : esc(ad);
   return `<article class="record${tur === "zat" && kirmiziKartMi(k) ? " record-red" : ""}" id="kayit-${esc(anahtar)}">
     <div class="kayit-ust" role="button" tabindex="0" aria-expanded="${acik}" data-action="kayit" data-anahtar="${esc(anahtar)}">
@@ -2713,15 +2748,12 @@ function olayBagla() {
 function dinle(koleksiyon, tur) {
   FS.onSnapshot(FS.collection(db, koleksiyon), (snap) => {
     const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    liste.forEach((k) => { k._duz = duzMetin(k.bilgi); k._ara = trKucuk((k.isim || k.ad || "") + " " + k._duz); });
-    liste.sort(adSirala);
-    if (tur === "zat") durum.zatlar = liste; else durum.olaylar = liste;
-    durum.yuklendi[tur] = true;
+    veriyiUygula(tur, liste, true);
     planla();
   }, (err) => {
     console.error(koleksiyon + " dinleme hatası:", err);
     durum.hataKod = (err && err.code) || "";
-    durum.hata = koleksiyon + " koleksiyonu: " + ((err && err.message) || String(err));
+    if (!durum.yuklendi[tur]) durum.hata = koleksiyon + " koleksiyonu: " + ((err && err.message) || String(err));
     durum.yuklendi[tur] = true;
     planla();
   });
@@ -2766,16 +2798,14 @@ async function baslat() {
     return;
   }
   rotaHazirla({ sec: "" });
+  yerelVeriyiYukle();
   render();
   olayBagla();
+  const statikVeriYukleme = statikVeriyiYukle();
   try {
-    const sayfalar = await fetch("/sahabe-index.json", { cache: "no-cache" });
-    if (sayfalar.ok) sahabeSayfaYollari = await sayfalar.json();
-  } catch (e) {
-    console.warn("Şahıs sayfaları eşlemesi yüklenemedi:", e);
-  }
-  try {
-    const [appM, fsM, auM] = await Promise.all([yukle(FB("firebase-app")), yukle(FB("firebase-firestore")), yukle(FB("firebase-auth"))]);
+    const [appM, fsM, auM] = await Promise.all([
+      yukle(FB("firebase-app")), yukle(FB("firebase-firestore")), yukle(FB("firebase-auth")), statikVeriYukleme,
+    ]);
     FS = fsM; AU = auM;
     const uygulama = appM.initializeApp(firebaseConfig);
     await appCheckBaslat(uygulama);

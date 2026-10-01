@@ -10,6 +10,8 @@ const { article } = Astro.props;
 const canonical = `https://asrisaadetportali.vercel.app/makaleler/${article.slug}`;
 const title = `${article.baslik} | Asr-ı Saadet Portalı`;
 const description = article.ozet.slice(0, 155);
+const plainText = article.govde.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+const readingMinutes = Math.max(1, Math.ceil(plainText.split(' ').filter(Boolean).length / 220));
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -34,13 +36,64 @@ const jsonLd = {
 };
 ---
 <SiteLayout page="articles" {title} {description} {canonical} {jsonLd}>
-  <main class="person-page article-page">
-    <nav class="person-crumbs" aria-label="breadcrumb"><a href="/">Ana Sayfa</a> › <a href="/articles">Makaleler</a> › {article.baslik}</nav>
-    <article>
-      <p class="article-tag">{article.etiket}</p>
-      <h1>{article.baslik}</h1>
-      <div class="article-full" set:html={article.govde} />
-    </article>
-    <a class="person-back" href="/articles">← Makalelere dön</a>
+  <main class="article-page">
+    <nav class="article-crumbs" aria-label="breadcrumb"><a href="/">Ana Sayfa</a><span>›</span><a href="/articles">Makaleler</a><span>›</span><span aria-current="page">{article.baslik}</span></nav>
+    <header class="article-hero">
+      <div class="article-hero-image"><img src={`https://images.unsplash.com/photo-${article.image}?w=1600&q=80&auto=format&fit=crop`} alt="" fetchpriority="high" /></div>
+      <div class="article-hero-content">
+        <p class="article-kicker"><span></span>{article.etiket}</p>
+        <h1>{article.baslik}</h1>
+        <p class="article-deck">{article.ozet}</p>
+        <div class="article-byline"><span class="article-brand-mark">AS</span><span>Asr-ı Saadet Portalı</span><i></i><span>{readingMinutes} dk okuma</span></div>
+      </div>
+    </header>
+    <div class="article-reading-layout">
+      <aside class="article-aside"><div class="article-aside-card"><span class="article-aside-label">Bu yazı</span><strong>{article.etiket}</strong><span class="article-aside-rule"></span><span class="article-aside-label">Tahmini okuma</span><strong>{readingMinutes} dakika</strong><a href="/articles">Tüm makaleler <span>↗</span></a></div></aside>
+      <article class="article-body" aria-label={article.baslik}>
+        <div class="article-full" set:html={article.govde} />
+        <div class="article-endmark" aria-hidden="true"><span></span> ASR-I SAADET <span></span></div>
+        <a class="article-back" href="/articles"><span>←</span> Makalelere dön</a>
+      </article>
+    </div>
   </main>
 </SiteLayout>
+
+<style is:global>
+  .article-page { width:min(1240px,100%); margin:0 auto; padding:1.4rem clamp(1.25rem,5vw,4rem) 6rem; }
+  .article-crumbs { display:flex; align-items:center; gap:.65rem; min-height:2.4rem; margin-bottom:1.2rem; color:var(--muted); font-size:.72rem; letter-spacing:.035em; }
+  .article-crumbs a { color:var(--brass-text); text-decoration:none; } .article-crumbs a:hover { text-decoration:underline; }
+  .article-crumbs span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .article-hero { position:relative; display:flex; align-items:flex-end; min-height:clamp(390px,47vw,590px); overflow:hidden; background:#17251e; color:#f5f0e4; }
+  .article-hero-image,.article-hero-image::after { position:absolute; inset:0; }
+  .article-hero-image img { width:100%; height:100%; object-fit:cover; opacity:.58; }
+  .article-hero-image::after { content:""; background:linear-gradient(90deg,rgba(13,25,19,.94),rgba(13,25,19,.72) 49%,rgba(13,25,19,.15)),linear-gradient(0deg,rgba(13,25,19,.5),transparent 65%); }
+  .article-hero-content { position:relative; z-index:1; width:min(820px,100%); padding:clamp(2rem,7vw,5.5rem); }
+  .article-kicker { display:flex; align-items:center; gap:.65rem; margin:0 0 1.15rem; color:#d9bd7a; font-size:.7rem; font-weight:700; letter-spacing:.19em; text-transform:uppercase; }
+  .article-kicker span { width:1.8rem; height:1px; background:#d9bd7a; }
+  .article-hero h1 { max-width:760px; margin:0; color:#f7f2e8; font-family:var(--display); font-size:clamp(2.6rem,6.8vw,5.6rem); font-weight:500; letter-spacing:-.035em; line-height:.99; }
+  .article-deck { max-width:620px; margin:1.5rem 0 1.8rem; color:rgba(247,242,232,.82); font-size:clamp(.95rem,1.4vw,1.1rem); line-height:1.75; }
+  .article-byline { display:flex; align-items:center; gap:.7rem; color:rgba(247,242,232,.76); font-size:.72rem; letter-spacing:.045em; }
+  .article-brand-mark { display:grid; width:2rem; height:2rem; place-items:center; border:1px solid rgba(217,189,122,.65); border-radius:50%; color:#e1c987; font-family:var(--display); }
+  .article-byline i { width:3px; height:3px; margin:0 .25rem; border-radius:50%; background:#d9bd7a; }
+  .article-reading-layout { display:grid; grid-template-columns:190px minmax(0,720px); justify-content:center; gap:clamp(2rem,7vw,6rem); padding:clamp(3rem,7vw,6rem) 0 0; }
+  .article-aside { align-self:start; position:sticky; top:2rem; }
+  .article-aside-card { display:flex; flex-direction:column; gap:.65rem; padding:1.2rem 0; border-top:1px solid var(--brass); border-bottom:1px solid var(--line); }
+  .article-aside-label { color:var(--muted); font-size:.62rem; letter-spacing:.14em; text-transform:uppercase; }
+  .article-aside-card strong { color:var(--forest); font-family:var(--display); font-size:1.25rem; font-weight:500; }
+  .article-aside-rule { height:1px; margin:.35rem 0; background:var(--line); }
+  .article-aside-card a { display:flex; justify-content:space-between; margin-top:.65rem; padding-top:.85rem; border-top:1px solid var(--line); color:var(--brass-text); font-size:.72rem; text-decoration:none; }
+  .article-body { min-width:0; color:var(--ink); }
+  .article-full > :first-child { margin-top:0; }
+  .article-full p,.article-full li { font-size:clamp(1rem,1.3vw,1.08rem); line-height:1.95; }
+  .article-full p { margin:0 0 1.55rem; }
+  .article-full h2,.article-full h3 { margin:2.7rem 0 1rem; color:var(--forest); font-family:var(--display); font-weight:500; line-height:1.2; }
+  .article-full h2 { font-size:2rem; } .article-full h3 { font-size:1.55rem; }
+  .article-full blockquote { margin:2rem 0; padding:1.1rem 1.5rem; border-left:2px solid var(--brass); background:rgba(184,147,74,.07); color:var(--forest); font-family:var(--display); font-size:1.2rem; line-height:1.8; }
+  .article-full ul,.article-full ol { padding-left:1.35rem; } .article-full li { padding-left:.25rem; margin-bottom:.45rem; } .article-full strong { color:var(--forest); }
+  .article-full .art-son { margin-top:2rem; color:var(--brass-text); font-family:var(--display); font-size:1.3rem; }
+  .article-endmark { display:flex; align-items:center; justify-content:center; gap:1rem; margin:3.5rem 0 2rem; color:var(--brass-text); font-size:.58rem; letter-spacing:.18em; }
+  .article-endmark span { width:2.5rem; height:1px; background:var(--line); }
+  .article-back { display:inline-flex; align-items:center; gap:.65rem; padding:.8rem 1rem; border:1px solid var(--line); color:var(--forest); font-size:.72rem; text-decoration:none; transition:background .2s,color .2s; }
+  .article-back:hover { background:var(--forest); color:#fff; } .article-back span { color:var(--brass-text); font-size:1rem; }
+  @media(max-width:760px) { .article-page { padding-top:.75rem; } .article-hero { min-height:440px; } .article-hero-image::after { background:linear-gradient(0deg,rgba(13,25,19,.94),rgba(13,25,19,.38)); } .article-hero-content { padding:2rem 1.4rem; } .article-hero h1 { font-size:clamp(2.7rem,13vw,4.3rem); } .article-reading-layout { display:block; padding-top:2.5rem; } .article-aside { position:static; margin-bottom:2.7rem; } .article-aside-card { display:grid; grid-template-columns:1fr 1fr; align-items:center; column-gap:1rem; } .article-aside-rule { display:none; } .article-aside-card a { grid-column:1/-1; } }
+</style>
