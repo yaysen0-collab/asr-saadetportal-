@@ -196,11 +196,13 @@ const adSirala = (a, b) => trKucuk(a.isim || a.ad).localeCompare(trKucuk(b.isim 
 function sahsiyetKayitSayisi() {
   return durum.zatlar.length;
 }
+function olayKayitSayisi() {
+  return durum.olaylar.length;
+}
 function baglantiliKayitSayisi() {
-  if (!durum.zatlar.length) return 0;
+  if (!sahsiyetKayitSayisi()) return 0;
 
-  // Count records that actually connect to another archive record, rather than
-  // counting any non-empty relationship text (which may be unresolved).
+  // Say only records connected to another known person in the archive.
   const grafik = akrabalikGrafigi(durum.zatlar);
   const indeks = adIndeksiKur(durum.zatlar);
   return durum.zatlar.filter((z) => {
@@ -520,8 +522,8 @@ function sayfaHome() {
       <p class="lead">Kayıtlar klasik siyer ve tarih kaynaklarına dayanır. Bir şahsiyetten akrabalarına, bir olaydan zaman çizelgesindeki yerine geçebilirsiniz.</p>
       <div class="stats">
         <div class="stat"><strong>${n(sahsiyetKayitSayisi())}</strong><span>Şahsiyet</span></div>
-        <div class="stat"><strong>${n(durum.olaylar.length)}</strong><span>Olay</span></div>
-        <div class="stat"><strong>${n(bagli)}</strong><span>Bağlantılı kayıt</span></div>
+        <div class="stat"><strong>${n(olayKayitSayisi())}</strong><span>Olay</span></div>
+        <div class="stat"><strong>${n(bagli)}</strong><span>Bağlantılı şahsiyet</span></div>
       </div>
       <div class="actions">
         <a class="button primary" href="#archive">Arşivi Keşfet</a>
@@ -663,9 +665,9 @@ function arsivGuncelle() {
 
   const ist = $("#arsiv-istatistik");
   if (ist) ist.innerHTML = `<h3>Arşiv durumu</h3>
-    <div class="mini-stat"><span>Şahsiyet</span><strong>${durum.zatlar.length}</strong></div>
-    <div class="mini-stat"><span>Olay</span><strong>${durum.olaylar.length}</strong></div>
-    <div class="mini-stat"><span>Gösterilen</span><strong>${hepsi.length}</strong></div>`;
+    <div class="mini-stat"><span>Şahsiyet</span><strong>${sahsiyetKayitSayisi()}</strong></div>
+    <div class="mini-stat"><span>Olay</span><strong>${olayKayitSayisi()}</strong></div>
+    <div class="mini-stat"><span>Eşleşen kayıt</span><strong>${hepsi.length}</strong></div>`;
 
   const dm = durumMesaji();
   if (dm) { alan.innerHTML = dm; return; }
@@ -945,7 +947,7 @@ function adminSekmeleriGuncelle() {
   const s = durum.admin.sekme;
   el.innerHTML = `<div class="admin-tabs-label"><span>Kayıt türü</span><strong>${s === "zat" ? "Şahsiyet kayıtları" : "Olay kayıtları"}</strong></div>
     <button type="button" class="tab-btn${s === "zat" ? " active" : ""}" data-action="admin-sekme" data-sekme="zat">Şahsiyetler (${sahsiyetKayitSayisi()})</button>
-    <button type="button" class="tab-btn${s === "olay" ? " active" : ""}" data-action="admin-sekme" data-sekme="olay">Olaylar (${durum.olaylar.length})</button>`;
+    <button type="button" class="tab-btn${s === "olay" ? " active" : ""}" data-action="admin-sekme" data-sekme="olay">Olaylar (${olayKayitSayisi()})</button>`;
 }
 
 function adminOzetGuncelle() {
@@ -958,8 +960,8 @@ function adminOzetGuncelle() {
   const n = (deger) => hazir ? deger : "…";
   el.innerHTML = `
     <div class="admin-stat"><span>Şahsiyet</span><strong>${n(sahsiyetKayitSayisi())}</strong></div>
-    <div class="admin-stat"><span>Olay</span><strong>${n(durum.olaylar.length)}</strong></div>
-    <div class="admin-stat"><span>Bağlantılı kayıt</span><strong>${n(baglantili)}</strong></div>
+    <div class="admin-stat"><span>Olay</span><strong>${n(olayKayitSayisi())}</strong></div>
+    <div class="admin-stat"><span>Bağlantılı şahsiyet</span><strong>${n(baglantili)}</strong></div>
     <div class="admin-stat${hazir && eksik ? " needs-attention" : ""}"><span>Eksik içerik/kaynak</span><strong>${n(eksik)}</strong></div>`;
   const yedek = document.querySelector('[data-action="admin-yedek"]');
   if (yedek) {
