@@ -1,0 +1,15 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+import articles from '../data/articles.json';
+const title = 'Siyer, Sahabe ve İslam Tarihi Makaleleri | Asr-ı Saadet';
+const description = 'Siyer, sahabe hayatları, Kur’an eğitimi ve İslam ilim geleneği üzerine hazırlanmış makaleleri okuyun.';
+const canonical = 'https://asrisaadetportali.vercel.app/articles';
+---
+<SiteLayout page="articles" {title} {description} {canonical}>
+  <main id="app">
+    <section class="split"><div class="half visual"><img src="https://images.unsplash.com/photo-1720701574998-d68020bce2bd?w=1100&q=62&auto=format&fit=crop" alt="Eski bir Arapça el yazması" /><div class="visual-content"><p class="eyebrow">Temel Okumalar</p><h1>Siyer ve ilim geleneği üzerine makaleler</h1><div class="brass-rule"></div></div></div>
+      <div class="half content"><p class="lead">Ashab-ı Kiram, İslam tarihi ve ilim geleneği üzerine hazırlanan yazıları okuyun.</p><div class="record-list">{articles.map((article, index) => <a id={`makale-${index}`} class="record" href={`/makaleler/${article.slug}`}><div class="record-head"><h2>{article.baslik}</h2><span class="title">{article.etiket}</span></div><p>{article.ozet}</p><span class="text-link">Makaleyi oku →</span></a>)}</div></div>
+    </section>
+  </main>
+</SiteLayout>
+
