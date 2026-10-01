@@ -10,14 +10,15 @@ const CONFIG = {
   projectId: process.env.FIREBASE_PROJECT_ID, // Firebase proje kimliği
   collection: 'zatlar',                        // 'zatlar' mı 'people' mı? Kontrol edin
   siteUrl: 'https://asrisaadetportali.vercel.app',
-  outDir: 'sahabe',                            // sayfalar /sahabe/ altına yazılır
+  outDir: 'public/sahabe',                     // statik sayfalar Astro public alanına yazılır
+  urlPath: 'sahabe',                           // canlı URL yolu
   cssHref: '/style.css',                       // sitenizin CSS dosyaları (kökte)
   premiumHref: '/premium.css',
   nameFields: ['ad', 'isim', 'name'],          // isim hangi alandaysa o (sırayla denenir)
   bioField: 'bilgi',
   sourceField: null,                           // kaynak alanı varsa adı, yoksa null
   minWords: 80,                                // bu kadar kelimeden azsa noindex
-  staticPages: ['/', '/archive', '/timeline', '/genealogy', '/articles', '/faq'],
+  staticPages: ['/', '/archive', '/timeline', '/genealogy', '/articles', '/faq', '/sources'],
 };
 // ==========================================================================
 
@@ -105,13 +106,13 @@ const shorten = (s, n) => (s.length <= n ? s : s.slice(0, n - 1).replace(/\s+\S*
 function renderPage(p, ctx) {
   const name = p._name;
   const bio = clean(p[CONFIG.bioField]);
-  const url = `${CONFIG.siteUrl}/${CONFIG.outDir}/${p._slug}`;
+  const url = `${CONFIG.siteUrl}/${CONFIG.urlPath}/${p._slug}`;
   const title = `${name.replace(/\s*\(.*?\)\s*/g, ' ').trim()}: Hayatı ve Nesebi | Asr-ı Saadet Portalı`;
   const description = shorten(bio || `${name} hakkında Asr-ı Saadet Portalı'nda bilgi.`, 155);
 
   const link = (id, fallbackText) => {
     const rel = id && ctx.byId.get(id);
-    if (rel) return `<a href="/${CONFIG.outDir}/${rel._slug}">${esc(rel._name)}</a>`;
+    if (rel) return `<a href="/${CONFIG.urlPath}/${rel._slug}">${esc(rel._name)}</a>`;
     return fallbackText ? esc(fallbackText) : '';
   };
   const list = (ids) =>
@@ -272,6 +273,12 @@ if(n&&b)b.addEventListener('click',function(){var o=n.classList.toggle('menu-ope
     p._indexable = wordCount(bio) >= CONFIG.minWords && hasSource;
   }
 
+  // İstemci arşivindeki kayıt kimliklerini bu statik biyografi sayfalarına bağlar.
+  fs.mkdirSync('public', { recursive: true });
+  fs.writeFileSync(path.join('public', 'sahabe-index.json'), JSON.stringify(
+    Object.fromEntries(people.map((p) => [p.id, p._slug]))
+  ));
+
   const ctx = { byId: new Map(people.map((p) => [p.id, p])) };
 
   fs.rmSync(CONFIG.outDir, { recursive: true, force: true });
@@ -282,22 +289,25 @@ if(n&&b)b.addEventListener('click',function(){var o=n.classList.toggle('menu-ope
 
   // sitemap.xml — sadece yeterli içeriği olan sayfalar
   const today = new Date().toISOString().slice(0, 10);
+  const articles = require('./src/data/articles.json');
   const urls = [
     ...CONFIG.staticPages.map((u) => CONFIG.siteUrl + u),
-    ...people.filter((p) => p._indexable).map((p) => `${CONFIG.siteUrl}/${CONFIG.outDir}/${p._slug}`),
+    ...articles.map((article) => `${CONFIG.siteUrl}/makaleler/${article.slug}`),
+    ...people.filter((p) => p._indexable).map((p) => `${CONFIG.siteUrl}/${CONFIG.urlPath}/${p._slug}`),
   ];
   const sitemap =
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     urls.map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join('\n') +
     `\n</urlset>\n`;
-  fs.writeFileSync('sitemap.xml', sitemap);
+  fs.mkdirSync('public', { recursive: true });
+  fs.writeFileSync(path.join('public', 'sitemap.xml'), sitemap);
 
   const idx = people.filter((p) => p._indexable).length;
   console.log(`${people.length} sayfa üretildi: ${idx} index, ${people.length - idx} noindex (içerik yetersiz).`);
   console.log(`sitemap.xml: ${urls.length} URL.`);
 })().catch((e) => {
-  // Build'i düşürme: sayfa üretilemezse mevcut site olduğu gibi yayınlanır.
-  console.warn('UYARI: Şahsiyet sayfaları üretilemedi, mevcut site yayınlanıyor.');
+  // Firebase verisi okunamadıysa eksik sitemap ve biyografi sayfaları yayımlama.
+  console.warn('UYARI: Şahsiyet sayfaları üretilemedi; eksik sürümün yayımlanmasını önlemek için derleme durduruluyor.');
   console.warn(String(e && e.message ? e.message : e));
-  process.exit(0);
+  process.exit(1);
 });

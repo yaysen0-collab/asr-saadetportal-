@@ -42,6 +42,11 @@ const APPCHECK_SAGLAYICI = "enterprise";
 
 /* Firebase nesneleri baslat() içinde doldurulur */
 let FS = null, AU = null, db = null, auth = null;
+let sahabeSayfaYollari = {};
+function sahabeSayfaUrl(id) {
+  const slug = sahabeSayfaYollari[id];
+  return slug ? `/sahabe/${encodeURIComponent(slug)}` : `#archive/zat-${encodeURIComponent(id)}`;
+}
 
 /* ---------- Sabit içerik ---------- */
 const FOTO = {
@@ -428,7 +433,9 @@ function gorselYari({ f, alt, sticky = false, ortada = false, icerik, oncelik = 
 function linkKart(k, tur) {
   const ad = tur === "zat" ? k.isim : k.ad;
   const tarih = tur === "zat" ? zatTarih(k) : olayTarih(k);
-  return `<a class="record" href="#archive/${tur}-${esc(k.id)}">
+  const href = tur === "zat" ? sahabeSayfaUrl(k.id) : `#archive/${tur}-${esc(k.id)}`;
+  const yeniSekme = tur === "zat" && sahabeSayfaYollari[k.id] ? ` target="_blank" rel="noopener noreferrer"` : "";
+  return `<a class="record" href="${esc(href)}"${yeniSekme}>
     <div class="record-head"><h3>${esc(ad)}</h3><span class="title">${esc(devirOf(k))}</span></div>
     <p>${esc(bos(k.bilgi) ? "Bu kayıt için henüz bilgi girilmemiş." : ozet(k.bilgi, 140))}</p>
     ${tarih ? `<small>${esc(tarih)}</small>` : ""}
@@ -572,9 +579,12 @@ function kayitKarti(k, tur) {
       ${kisiselAlan(tur, k)}
     </div>`;
   }
+  const adHtml = tur === "zat" && sahabeSayfaYollari[k.id]
+    ? `<a data-profile-link href="${esc(sahabeSayfaUrl(k.id))}" target="_blank" rel="noopener noreferrer">${esc(ad)}</a>`
+    : esc(ad);
   return `<article class="record${tur === "zat" && kirmiziKartMi(k) ? " record-red" : ""}" id="kayit-${esc(anahtar)}">
     <div class="kayit-ust" role="button" tabindex="0" aria-expanded="${acik}" data-action="kayit" data-anahtar="${esc(anahtar)}">
-      <div class="record-head"><h3>${esc(ad)}${durum.favoriler[favAnahtar(tur, k.id)] ? ` <span class="fav-isaret" title="Favorilerinizde">★</span>` : ""}</h3><span class="era">${esc(devirOf(k))}</span></div>
+      <div class="record-head"><h3>${adHtml}${durum.favoriler[favAnahtar(tur, k.id)] ? ` <span class="fav-isaret" title="Favorilerinizde">★</span>` : ""}</h3><span class="era">${esc(devirOf(k))}</span></div>
       ${acik ? "" : `<p>${esc(bos(k.bilgi) ? "Bu kayıt için henüz bilgi girilmemiş." : ozet(k.bilgi, 150))}</p>`}
       ${tarih ? `<small>${esc(tarih)}</small>` : ""}
     </div>
@@ -634,7 +644,7 @@ function sayfaCizelge() {
       ${dm || (ogeler.length ? `<div class="timeline">${ogeler.map((i) => `
         <div class="event">
           <time>M. ${i.y} · ${i.etiket}</time>
-          <h3><a href="#archive/${i.tur}-${esc(i.id)}">${esc(i.ad)}</a></h3>
+          <h3><a href="${i.tur === "zat" ? esc(sahabeSayfaUrl(i.id)) : `#archive/${i.tur}-${esc(i.id)}`}"${i.tur === "zat" && sahabeSayfaYollari[i.id] ? ` target="_blank" rel="noopener noreferrer"` : ""}>${esc(i.ad)}</a></h3>
           ${!bos(i.bilgi) ? `<p>${esc(ozet(i.bilgi, 160))}</p>` : ""}
         </div>`).join("")}</div>` : `<div class="empty">Henüz miladi tarihi girilmiş kayıt yok.</div>`)}
     </div>
@@ -2370,10 +2380,10 @@ const BASLIKLAR = {
 };
 
 const SAYFA_DOSYALARI = {
-  home: "index.html", archive: "archive.html", timeline: "timeline.html", genealogy: "genealogy.html",
-  random: "random.html", articles: "articles.html", faq: "faq.html", login: "login.html", admin: "admin.html",
-  account: "account.html", search: "search.html", privacy: "privacy.html", sources: "sources.html",
-  contribute: "contribute.html", changelog: "changelog.html",
+  home: "index.html", archive: "archive", timeline: "timeline", genealogy: "genealogy",
+  random: "random", articles: "articles", faq: "faq", login: "login", admin: "admin",
+  account: "account", search: "search", privacy: "privacy", sources: "sources",
+  contribute: "contribute", changelog: "changelog",
 };
 const DOSYADAN_SAYFA = Object.fromEntries(Object.entries(SAYFA_DOSYALARI).map(([sayfa, dosya]) => [dosya, sayfa]));
 
@@ -2479,7 +2489,7 @@ function render(secenek) {
   }
   navGuncelle();
   cokSayfaliLinkleriDuzenle(document);
-  document.title = `${BASLIKLAR[sec]} | Asr-ı Saadet Portalı`;
+  document.title = document.body.dataset.seoTitle || `${BASLIKLAR[sec]} | Asr-ı Saadet Portalı`;
 }
 
 /* Veri değişince: yazı yazılan sayfalarda sadece ilgili bölümü güncelle */
@@ -2611,6 +2621,7 @@ const islem = {
 
 function olayBagla() {
   document.addEventListener("click", (e) => {
+    if (e.target.closest && e.target.closest("[data-profile-link]")) return;
     const baglanti = e.target.closest ? e.target.closest('a[href^="#"]') : null;
     if (baglanti) {
       const hedef = eskiHashRotasi(baglanti.getAttribute("href"));
@@ -2757,6 +2768,12 @@ async function baslat() {
   rotaHazirla({ sec: "" });
   render();
   olayBagla();
+  try {
+    const sayfalar = await fetch("/sahabe-index.json", { cache: "no-cache" });
+    if (sayfalar.ok) sahabeSayfaYollari = await sayfalar.json();
+  } catch (e) {
+    console.warn("Şahıs sayfaları eşlemesi yüklenemedi:", e);
+  }
   try {
     const [appM, fsM, auM] = await Promise.all([yukle(FB("firebase-app")), yukle(FB("firebase-firestore")), yukle(FB("firebase-auth"))]);
     FS = fsM; AU = auM;
