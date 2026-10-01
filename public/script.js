@@ -193,15 +193,26 @@ const bos = (v) => v == null || String(v).trim() === "" || String(v).trim() === 
 const trKucuk = (s) => String(s || "").toLocaleLowerCase("tr");
 const devirOf = (k) => k.devir || "Asr-ı Saadet";
 const adSirala = (a, b) => trKucuk(a.isim || a.ad).localeCompare(trKucuk(b.isim || b.ad), "tr");
-function iliskiBilgisiVar(z) {
-  return [z.anne, z.baba, z.es, z.cocuklar, z.baglar, z.anneId, z.babaId].some((v) => !bos(v)) ||
-    [z.esIds, z.cocukIds].some((v) => Array.isArray(v) && v.length > 0);
-}
 function sahsiyetKayitSayisi() {
   return durum.zatlar.length;
 }
 function baglantiliKayitSayisi() {
-  return durum.zatlar.filter(iliskiBilgisiVar).length;
+  if (!durum.zatlar.length) return 0;
+
+  // Count records that actually connect to another archive record, rather than
+  // counting any non-empty relationship text (which may be unresolved).
+  const grafik = akrabalikGrafigi(durum.zatlar);
+  const indeks = adIndeksiKur(durum.zatlar);
+  return durum.zatlar.filter((z) => {
+    const kisi = grafik.get(z.id);
+    if (kisi && (kisi.ebeveynler.size || kisi.cocuklar.size || kisi.es.size)) return true;
+
+    return baglariAyir(z.baglar).some((bag) => {
+      if (trKucuk(bag.tur) === "çocuk") return false;
+      const eslesen = adCozumle(bag.ad, indeks, true);
+      return !!(eslesen.kayit && eslesen.kayit.id !== z.id);
+    });
+  }).length;
 }
 
 function duzMetin(ham) {
