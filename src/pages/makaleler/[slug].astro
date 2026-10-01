@@ -1,0 +1,46 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import articles from '../../data/articles.json';
+
+export function getStaticPaths() {
+  return articles.map((article) => ({ params: { slug: article.slug }, props: { article } }));
+}
+
+const { article } = Astro.props;
+const canonical = `https://asrisaadetportali.vercel.app/makaleler/${article.slug}`;
+const title = `${article.baslik} | Asr-ı Saadet Portalı`;
+const description = article.ozet.slice(0, 155);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Article',
+      headline: article.baslik,
+      description,
+      articleSection: article.etiket,
+      mainEntityOfPage: canonical,
+      publisher: { '@type': 'Organization', name: 'Asr-ı Saadet Portalı', url: 'https://asrisaadetportali.vercel.app/' },
+      image: `https://images.unsplash.com/photo-${article.image}?w=1100&q=62&auto=format&fit=crop`,
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: 'https://asrisaadetportali.vercel.app/' },
+        { '@type': 'ListItem', position: 2, name: 'Makaleler', item: 'https://asrisaadetportali.vercel.app/articles' },
+        { '@type': 'ListItem', position: 3, name: article.baslik, item: canonical },
+      ],
+    },
+  ],
+};
+---
+<SiteLayout page="articles" {title} {description} {canonical} {jsonLd}>
+  <main class="person-page article-page">
+    <nav class="person-crumbs" aria-label="breadcrumb"><a href="/">Ana Sayfa</a> › <a href="/articles">Makaleler</a> › {article.baslik}</nav>
+    <article>
+      <p class="article-tag">{article.etiket}</p>
+      <h1>{article.baslik}</h1>
+      <div class="article-full" set:html={article.govde} />
+    </article>
+    <a class="person-back" href="/articles">← Makalelere dön</a>
+  </main>
+</SiteLayout>
