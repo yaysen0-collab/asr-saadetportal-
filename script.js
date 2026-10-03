@@ -193,29 +193,6 @@ const bos = (v) => v == null || String(v).trim() === "" || String(v).trim() === 
 const trKucuk = (s) => String(s || "").toLocaleLowerCase("tr");
 const devirOf = (k) => k.devir || "Asr-ı Saadet";
 const adSirala = (a, b) => trKucuk(a.isim || a.ad).localeCompare(trKucuk(b.isim || b.ad), "tr");
-function sahsiyetKayitSayisi() {
-  return durum.zatlar.length;
-}
-function olayKayitSayisi() {
-  return durum.olaylar.length;
-}
-function baglantiliKayitSayisi() {
-  if (!sahsiyetKayitSayisi()) return 0;
-
-  // Say only records connected to another known person in the archive.
-  const grafik = akrabalikGrafigi(durum.zatlar);
-  const indeks = adIndeksiKur(durum.zatlar);
-  return durum.zatlar.filter((z) => {
-    const kisi = grafik.get(z.id);
-    if (kisi && (kisi.ebeveynler.size || kisi.cocuklar.size || kisi.es.size)) return true;
-
-    return baglariAyir(z.baglar).some((bag) => {
-      if (trKucuk(bag.tur) === "çocuk") return false;
-      const eslesen = adCozumle(bag.ad, indeks, true);
-      return !!(eslesen.kayit && eslesen.kayit.id !== z.id);
-    });
-  }).length;
-}
 
 function duzMetin(ham) {
   if (!ham) return "";
@@ -504,7 +481,7 @@ function linkKart(k, tur) {
 function sayfaHome() {
   const hazir = durum.yuklendi.zat && durum.yuklendi.olay && !durum.hata;
   const n = (x) => (hazir ? x : "…");
-  const bagli = baglantiliKayitSayisi();
+  const bagli = durum.zatlar.filter((z) => !bos(z.baba) || !bos(z.anne) || !bos(z.cocuklar) || !bos(z.baglar)).length;
   const one = durum.zatlar.filter((z) => !bos(z.bilgi))
     .map((z) => [z, duzMetin(z.bilgi).length]).sort((a, b) => b[1] - a[1]).slice(0, 5).map((x) => x[0]);
   const yeni = durum.olaylar.slice().sort((a, b) => (b.eklenmeTarihi || 0) - (a.eklenmeTarihi || 0)).slice(0, 3);
@@ -521,9 +498,9 @@ function sayfaHome() {
       <h2 class="content-title">Ashab-ı Kiram'ın hayatlarını, nesep bağlarını ve dönemin olaylarını tek yerde okuyun.</h2>
       <p class="lead">Kayıtlar klasik siyer ve tarih kaynaklarına dayanır. Bir şahsiyetten akrabalarına, bir olaydan zaman çizelgesindeki yerine geçebilirsiniz.</p>
       <div class="stats">
-        <div class="stat"><strong>${n(sahsiyetKayitSayisi())}</strong><span>Şahsiyet</span></div>
-        <div class="stat"><strong>${n(olayKayitSayisi())}</strong><span>Olay</span></div>
-        <div class="stat"><strong>${n(bagli)}</strong><span>Bağlantılı şahsiyet</span></div>
+        <div class="stat"><strong>${n(durum.zatlar.length)}</strong><span>Şahsiyet</span></div>
+        <div class="stat"><strong>${n(durum.olaylar.length)}</strong><span>Olay</span></div>
+        <div class="stat"><strong>${n(bagli)}</strong><span>Bağlantı</span></div>
       </div>
       <div class="actions">
         <a class="button primary" href="#archive">Arşivi Keşfet</a>
@@ -638,7 +615,7 @@ function kayitKarti(k, tur) {
     </div>`;
   }
   const adHtml = tur === "zat" && sahabeSayfaYollari[k.id]
-    ? `<a class="profile-name-link" data-profile-link href="${esc(sahabeSayfaUrl(k.id))}" target="_blank" rel="noopener noreferrer">${esc(ad)}</a>`
+    ? `<span class="profile-name-wrap"><a data-profile-link href="${esc(sahabeSayfaUrl(k.id))}" target="_blank" rel="noopener noreferrer">${esc(ad)}</a><small>Profili yeni sekmede aç ↗</small></span>`
     : esc(ad);
   return `<article class="record${tur === "zat" && kirmiziKartMi(k) ? " record-red" : ""}" id="kayit-${esc(anahtar)}">
     <div class="kayit-ust" role="button" tabindex="0" aria-expanded="${acik}" data-action="kayit" data-anahtar="${esc(anahtar)}">
@@ -665,9 +642,9 @@ function arsivGuncelle() {
 
   const ist = $("#arsiv-istatistik");
   if (ist) ist.innerHTML = `<h3>Arşiv durumu</h3>
-    <div class="mini-stat"><span>Şahsiyet</span><strong>${sahsiyetKayitSayisi()}</strong></div>
-    <div class="mini-stat"><span>Olay</span><strong>${olayKayitSayisi()}</strong></div>
-    <div class="mini-stat"><span>Eşleşen kayıt</span><strong>${hepsi.length}</strong></div>`;
+    <div class="mini-stat"><span>Şahsiyet</span><strong>${durum.zatlar.length}</strong></div>
+    <div class="mini-stat"><span>Olay</span><strong>${durum.olaylar.length}</strong></div>
+    <div class="mini-stat"><span>Gösterilen</span><strong>${hepsi.length}</strong></div>`;
 
   const dm = durumMesaji();
   if (dm) { alan.innerHTML = dm; return; }
@@ -946,8 +923,8 @@ function adminSekmeleriGuncelle() {
   if (!el) return;
   const s = durum.admin.sekme;
   el.innerHTML = `<div class="admin-tabs-label"><span>Kayıt türü</span><strong>${s === "zat" ? "Şahsiyet kayıtları" : "Olay kayıtları"}</strong></div>
-    <button type="button" class="tab-btn${s === "zat" ? " active" : ""}" data-action="admin-sekme" data-sekme="zat">Şahsiyetler (${sahsiyetKayitSayisi()})</button>
-    <button type="button" class="tab-btn${s === "olay" ? " active" : ""}" data-action="admin-sekme" data-sekme="olay">Olaylar (${olayKayitSayisi()})</button>`;
+    <button type="button" class="tab-btn${s === "zat" ? " active" : ""}" data-action="admin-sekme" data-sekme="zat">Şahsiyetler (${durum.zatlar.length})</button>
+    <button type="button" class="tab-btn${s === "olay" ? " active" : ""}" data-action="admin-sekme" data-sekme="olay">Olaylar (${durum.olaylar.length})</button>`;
 }
 
 function adminOzetGuncelle() {
@@ -956,12 +933,12 @@ function adminOzetGuncelle() {
   const hazir = durum.yuklendi.zat && durum.yuklendi.olay && !durum.hata;
   const tumu = [...durum.zatlar, ...durum.olaylar];
   const eksik = tumu.filter((k) => bos(k.bilgi) || bos(k.kaynak)).length;
-  const baglantili = baglantiliKayitSayisi();
+  const baglantili = durum.zatlar.filter((z) => !bos(z.anne) || !bos(z.baba) || !bos(z.es) || !bos(z.cocuklar) || !bos(z.baglar)).length;
   const n = (deger) => hazir ? deger : "…";
   el.innerHTML = `
-    <div class="admin-stat"><span>Şahsiyet</span><strong>${n(sahsiyetKayitSayisi())}</strong></div>
-    <div class="admin-stat"><span>Olay</span><strong>${n(olayKayitSayisi())}</strong></div>
-    <div class="admin-stat"><span>Bağlantılı şahsiyet</span><strong>${n(baglantili)}</strong></div>
+    <div class="admin-stat"><span>Şahsiyet</span><strong>${n(durum.zatlar.length)}</strong></div>
+    <div class="admin-stat"><span>Olay</span><strong>${n(durum.olaylar.length)}</strong></div>
+    <div class="admin-stat"><span>Bağlantılı kayıt</span><strong>${n(baglantili)}</strong></div>
     <div class="admin-stat${hazir && eksik ? " needs-attention" : ""}"><span>Eksik içerik/kaynak</span><strong>${n(eksik)}</strong></div>`;
   const yedek = document.querySelector('[data-action="admin-yedek"]');
   if (yedek) {
@@ -1057,8 +1034,6 @@ function adminKisiListesiniGuncelle() {
 /* Anne/baba/eş/çocuk alanlarının altında, yazılan ismin hangi kayda bağlandığını gösterir */
 function adminBagDurumuGuncelle() {
   const ix = adIndeksiKur(durum.zatlar.filter((z) => z.id !== durum.admin.duzenleId));
-  const alanIdleri = { "f-anne": "anneId", "f-baba": "babaId", "f-es": "esIds", "f-cocuklar": "cocukIds" };
-  const duzenlenen = durum.zatlar.find((z) => z.id === durum.admin.duzenleId);
   ["f-anne", "f-baba", "f-es", "f-cocuklar"].forEach((id) => {
     const alan = $("#" + id);
     if (!alan) return;
@@ -1067,9 +1042,6 @@ function adminBagDurumuGuncelle() {
     const coklu = id === "f-es" || id === "f-cocuklar";
     const adlar = coklu ? esListesiniAyir(alan.value) : (bos(alan.value) ? [] : [alan.value.trim()]);
     el.innerHTML = adlar.map((ad) => {
-      const eskiAdaylar = mevcutBagAdaylari(duzenlenen, ad, alanIdleri[id]);
-      if (eskiAdaylar.length === 1) return "✓ " + esc(eskiAdaylar[0].isim) + " (mevcut bağ korunur)";
-      if (eskiAdaylar.length > 1) return "✓ " + esc(ad) + " (mevcut aynı isimli bağlar korunur)";
       const s = adCozumle(ad, ix, true);
       if (s.kayit) return "✓ " + esc(s.kayit.isim);
       if (s.durum === "belirsiz") return `⚠ “${esc(ad)}” birden fazla kayıtla eşleşiyor`;
@@ -1182,9 +1154,9 @@ function adminFormuKur() {
   adminKirliAyarla(false);
 }
 
-function formMesaj(metin, hata, uyari = false) {
+function formMesaj(metin, hata) {
   const el = $("#f-mesaj");
-  if (el) el.innerHTML = metin ? `<p class="${hata ? "form-error" : uyari ? "form-warning" : "form-ok"}">${esc(metin)}</p>` : "";
+  if (el) el.innerHTML = metin ? `<p class="${hata ? "form-error" : "form-ok"}">${esc(metin)}</p>` : "";
 }
 
 function adminFormuDoldur(k) {
@@ -1243,13 +1215,6 @@ const dugumAdi = (n) => (n.kayit ? n.kayit.isim : n.ad);
 
 const idListesi = (v) => (Array.isArray(v) ? v.filter(Boolean) : []);
 const baglarGocMu = (z) => ["anneId", "babaId", "esIds", "cocukIds"].some((a) => a in z);
-function mevcutBagAdaylari(kayit, ad, idAlan) {
-  if (!kayit || bos(ad)) return [];
-  const ids = Array.isArray(kayit[idAlan]) ? kayit[idAlan] : [kayit[idAlan]];
-  return [...new Set(ids.filter(Boolean))]
-    .map((id) => durum.zatlar.find((z) => z.id === id))
-    .filter((z) => z && adAnahtar(z.isim) === adAnahtar(ad));
-}
 /* "Hz. Ali (ra)" ve "Ali" aynı anahtara iner */
 const hzsiz = (ad) => adAnahtar(ad).replace(/^(hz|hazreti)\.?\s+/, "");
 
@@ -1650,7 +1615,6 @@ async function adminKaydet() {
   const q = (x) => (x === "" || x == null ? "?" : x);
   const editor = $("#f-bilgi");
   const bilgi = editor && duzMetin(editor.innerHTML) ? temizHtml(editor.innerHTML) : "";
-  const iliskiUyarilari = [];
 
   try {
     if (zat) {
@@ -1670,29 +1634,16 @@ async function adminKaydet() {
       }
       /* Anne/baba/eş/çocuk: tam eşleşen kayıtlar ID ile bağlanır, kanonik adla saklanır */
       const ix = adIndeksiKur(durum.zatlar.filter((z) => z.id !== id));
-      const eskiKayit = id ? durum.zatlar.find((z) => z.id === id) : null;
-      const eskiBagAdaylari = (ham, idAlan) => mevcutBagAdaylari(eskiKayit, ham, idAlan);
-      const coz1 = (ham, alan, idAlan) => {
+      const coz1 = (ham) => {
         if (bos(ham)) return { ad: "?", id: "" };
-        const eskiAdaylar = eskiBagAdaylari(ham, idAlan);
-        if (eskiAdaylar.length === 1) return { ad: eskiAdaylar[0].isim, id: eskiAdaylar[0].id };
         const s = adCozumle(ham, ix, true);
-        if (s.kayit) return { ad: s.kayit.isim, id: s.kayit.id };
-        iliskiUyarilari.push(`${alan}: ${ham} (${s.durum === "belirsiz" ? "aynı isimli birden fazla kayıt var" : "arşivde ayrı kayıt yok"})`);
-        return { ad: baslikBuyut(ham), id: "" };
+        return s.kayit ? { ad: s.kayit.isim, id: s.kayit.id } : { ad: baslikBuyut(ham), id: "" };
       };
-      const coz2 = (ham, alan, idAlan) => {
-        const l = esListesiniAyir(ham).flatMap((ad) => {
-          const eskiAdaylar = eskiBagAdaylari(ad, idAlan);
-          return eskiAdaylar.length
-            ? eskiAdaylar.map((z) => ({ ad: z.isim, id: z.id }))
-            : [coz1(ad, alan, idAlan)];
-        });
-        const adlar = [...new Map(l.map((x) => [adAnahtar(x.ad), x.ad])).values()];
-        return { ad: esListesiniBirlestir(adlar), ids: [...new Set(l.map((x) => x.id).filter(Boolean))] };
+      const coz2 = (ham) => {
+        const l = esListesiniAyir(ham).map(coz1);
+        return { ad: esListesiniBirlestir(l.map((x) => x.ad)), ids: [...new Set(l.map((x) => x.id).filter(Boolean))] };
       };
-      const anne = coz1(v("f-anne"), "Anne", "anneId"), baba = coz1(v("f-baba"), "Baba", "babaId"), es = coz2(v("f-es"), "Eş", "esIds"), cocuk = coz2(v("f-cocuklar"), "Çocuk", "cocukIds");
-      if (!bos(v("f-cocuklar")) && !v("f-cinsiyet")) iliskiUyarilari.push("Cinsiyet belirtilmedi; çocuk kayıtlarındaki anne/baba rolü otomatik belirlenemeyebilir");
+      const anne = coz1(v("f-anne")), baba = coz1(v("f-baba")), es = coz2(v("f-es")), cocuk = coz2(v("f-cocuklar"));
       const obj = {
         isim: ad, isimAnahtar: adAnahtar(ad), devir: v("f-devir"),
         anne: anne.ad, anneId: anne.id, baba: baba.ad, babaId: baba.id,
@@ -1701,6 +1652,7 @@ async function adminKaydet() {
         d_hicri: q(v("f-d-hicri")), d_miladi: q(v("f-d-miladi")), v_hicri: q(v("f-v-hicri")), v_miladi: q(v("f-v-miladi")),
         bilgi, kaynak: q(v("f-kaynak")), kirmiziKart: !raIsaretli, guncellemeTarihi: Date.now(),
       };
+      const eskiKayit = id ? durum.zatlar.find((z) => z.id === id) : null;
       let kaydedilenId = id;
       if (id) { await FS.updateDoc(FS.doc(db, "zatlar", id), obj); }
       else { const yeniRef = await FS.addDoc(FS.collection(db, "zatlar"), obj); kaydedilenId = yeniRef.id; }
@@ -1723,11 +1675,7 @@ async function adminKaydet() {
     if (zat && Array.isArray(otomatikGuncellenenler) && otomatikGuncellenenler.length) {
       mesaj += ` (+ ${otomatikGuncellenenler.length} kayıtta bu isim değişikliği de güncellendi: ${otomatikGuncellenenler.slice(0, 8).join(", ")}${otomatikGuncellenenler.length > 8 ? "…" : ""})`;
     }
-    const benzersizUyarilar = [...new Set(iliskiUyarilari)];
-    if (zat && benzersizUyarilar.length) {
-      mesaj += ` İlişki kontrolü: ${benzersizUyarilar.slice(0, 5).join("; ")}${benzersizUyarilar.length > 5 ? `; ve ${benzersizUyarilar.length - 5} uyarı daha` : ""}. Bu alanlar metin olarak saklandı; eşleşmeyenler soyağacına otomatik bağlanmaz.`;
-    }
-    formMesaj(mesaj, false, zat && benzersizUyarilar.length > 0);
+    formMesaj(mesaj, false);
   } catch (e) {
     console.error("kaydetme hatası:", e);
     formMesaj("Kaydedilemedi: " + (e && e.message ? e.message : e) + " (Firestore yazma izinlerini kontrol edin.)", true);
