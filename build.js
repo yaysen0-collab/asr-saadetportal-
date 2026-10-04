@@ -9,7 +9,8 @@ const path = require('path');
 const CONFIG = {
   projectId: process.env.FIREBASE_PROJECT_ID || 'tarihizatlar', // Açık koleksiyon; gerekirse Vercel değişkeniyle geçersiz kılınabilir
   collection: 'zatlar',                        // 'zatlar' mı 'people' mı? Kontrol edin
-  siteUrl: 'https://asrisaadetportali.vercel.app',
+  // Site adresi tek yerden gelir: site.config.json (veya Vercel'de SITE_URL ortam değişkeni).
+  siteUrl: (process.env.SITE_URL || require('./site.config.json').siteUrl).replace(/\/+$/, ''),
   outDir: 'public/sahabe',                     // statik sayfalar Astro public alanına yazılır
   urlPath: 'sahabe',                           // canlı URL yolu
   cssHref: '/style.css',                       // sitenizin CSS dosyaları (kökte)
@@ -49,8 +50,10 @@ async function fetchAll(collection = CONFIG.collection) {
   // Yol 1: service account varsa firebase-admin ile oku (kurallardan bağımsız)
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     const admin = require('firebase-admin');
-    const creds = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    admin.initializeApp({ credential: admin.credential.cert(creds) });
+    if (!admin.apps.length) {
+      const creds = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      admin.initializeApp({ credential: admin.credential.cert(creds) });
+    }
     const snap = await admin.firestore().collection(collection).get();
     console.log('Service account ile okundu.');
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -83,6 +86,33 @@ const clean = (s) => {
 };
 const esc = (s) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function bioText(s) {
+  return String(s || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'").replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/\s+/g, ' ').trim();
+}
+function bioHtml(s) {
+  const source = clean(s);
+  if (!source) return '';
+  if (!/<\/?[a-z][^>]*>/i.test(source)) {
+    return source.split(/\n+/).filter(Boolean).map((line) => `<p>${esc(line)}</p>`).join('\n');
+  }
+  const allowed = new Set(['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li', 'blockquote', 'h3', 'h4', 'span', 'div', 'a']);
+  return source
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<(script|style|iframe|object|embed|svg|math)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
+    .replace(/<(script|style|iframe|object|embed|svg|math)\b[^>]*\/?>/gi, '')
+    .replace(/<\/?([a-z][a-z0-9]*)\b([^>]*)>/gi, (tagText, rawName, attrs) => {
+      const tag = rawName.toLowerCase();
+      if (!allowed.has(tag)) return '';
+      if (tag === 'br') return '<br>';
+      if (tagText.startsWith('</')) return `</${tag}>`;
+      if (tag !== 'a') return `<${tag}>`;
+      const hrefMatch = attrs.match(/\bhref\s*=\s*(["'])(.*?)\1/i);
+      if (!hrefMatch) return '<a>';
+      const href = hrefMatch[2].trim();
+      if (!/^(https?:\/\/|mailto:|\/|#)/i.test(href)) return '<a>';
+      return `<a href="${esc(href)}" rel="noopener noreferrer">`;
+    });
+}
 
 function slugify(text) {
   const map = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u', Ç: 'c', Ğ: 'g', İ: 'i', I: 'i', Ö: 'o', Ş: 's', Ü: 'u', Â: 'a', Î: 'i', Û: 'u' };
@@ -106,9 +136,10 @@ const shorten = (s, n) => (s.length <= n ? s : s.slice(0, n - 1).replace(/\s+\S*
 function renderPage(p, ctx) {
   const name = p._name;
   const bio = clean(p[CONFIG.bioField]);
+  const readableBio = bioText(bio);
   const url = `${CONFIG.siteUrl}/${CONFIG.urlPath}/${p._slug}`;
   const title = `${name.replace(/\s*\(.*?\)\s*/g, ' ').trim()}: Hayatı ve Nesebi | Asr-ı Saadet Portalı`;
-  const description = shorten(bio || `${name} hakkında Asr-ı Saadet Portalı'nda bilgi.`, 155);
+  const description = shorten(readableBio || `${name} hakkında Asr-ı Saadet Portalı'nda bilgi.`, 155);
 
   const link = (id, fallbackText) => {
     const rel = id && ctx.byId.get(id);
@@ -129,11 +160,7 @@ function renderPage(p, ctx) {
     ['Çocuklar', list(p.cocukIds)],
   ].filter(([, v]) => v);
 
-  const paragraphs = bio
-    .split(/\n+/)
-    .filter(Boolean)
-    .map((t) => `<p>${esc(t)}</p>`)
-    .join('\n');
+  const paragraphs = bioHtml(bio);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -246,6 +273,7 @@ function renderPage(p, ctx) {
 (function(){var n=document.querySelector('.site-nav'),b=document.querySelector('.menu-toggle');
 if(n&&b)b.addEventListener('click',function(){var o=n.classList.toggle('menu-open');b.setAttribute('aria-expanded',o?'true':'false');});})();
 </script>
+<script defer src="/metin-duzelt.js"></script>
 </body>
 </html>`;
 }
@@ -271,7 +299,7 @@ if(n&&b)b.addEventListener('click',function(){var o=n.classList.toggle('menu-ope
 
     const bio = clean(p[CONFIG.bioField]);
     const hasSource = CONFIG.sourceField ? !!clean(p[CONFIG.sourceField]) : true;
-    p._indexable = wordCount(bio) >= CONFIG.minWords && hasSource;
+    p._indexable = wordCount(bioText(bio)) >= CONFIG.minWords && hasSource;
   }
 
   // İstemci arşivindeki kayıt kimliklerini bu statik biyografi sayfalarına bağlar.
@@ -307,6 +335,7 @@ if(n&&b)b.addEventListener('click',function(){var o=n.classList.toggle('menu-ope
     `\n</urlset>\n`;
   fs.mkdirSync('public', { recursive: true });
   fs.writeFileSync(path.join('public', 'sitemap.xml'), sitemap);
+  fs.writeFileSync(path.join('public', 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${CONFIG.siteUrl}/sitemap.xml\n`);
 
   const idx = people.filter((p) => p._indexable).length;
   console.log(`${people.length} sayfa üretildi: ${idx} index, ${people.length - idx} noindex (içerik yetersiz).`);

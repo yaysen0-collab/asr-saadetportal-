@@ -326,10 +326,8 @@ p {
   font-weight: 500;
 }
 
-.profile-name-wrap { display: inline-flex; flex-direction: column; align-items: flex-start; gap: .22rem; }
-.profile-name-wrap a { color: inherit; text-decoration: underline; text-decoration-color: rgba(184, 147, 74, .55); text-underline-offset: 4px; }
-.profile-name-wrap a:hover { color: var(--brass-text); }
-.profile-name-wrap small { color: var(--brass-text); font-family: "Manrope", sans-serif; font-size: .58rem; letter-spacing: .06em; }
+.profile-name-link { color: inherit; text-decoration: underline; text-decoration-color: rgba(184, 147, 74, .55); text-underline-offset: 4px; }
+.profile-name-link:hover { color: var(--brass-text); }
 
 .record .title,
 .article-tag {
@@ -1072,6 +1070,16 @@ p {
   background: rgba(140, 61, 47, 0.08);
   border-left: 2px solid #8c3d2f;
   font-size: 0.78rem;
+}
+
+.form-warning {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.85rem;
+  color: #795716;
+  background: rgba(184, 147, 74, 0.12);
+  border-left: 2px solid var(--brass);
+  font-size: 0.78rem;
+  line-height: 1.6;
 }
 
 .form-actions {

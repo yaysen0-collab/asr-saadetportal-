@@ -12,5 +12,11 @@
   "dependencies": {
     "astro": "^6.0.0",
     "firebase-admin": "^13.0.0"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "sharp": true,
+    "@firebase/util": true,
+    "protobufjs": true
   }
 }
