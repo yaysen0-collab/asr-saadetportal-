@@ -34,6 +34,35 @@ if (!CONFIG.projectId && !process.env.FIREBASE_SERVICE_ACCOUNT) {
   process.exit(1);
 }
 
+// GitHub web sitesinden "Upload files" ile dosya seçerek yükleme yapılırsa klasörler kaybolur ve
+// bütün dosyalar kök dizine düşer. Derleme sunucusunda (yalnızca Vercel'in geçici kopyasında, GitHub'daki
+// dosyalara dokunmadan) dosyaları doğru klasörlerine geri taşıyarak derlemeyi kurtarırız.
+const PROJE_DUZENI = [ "public/extra.css", "public/googleaac4de83a69f4b73.html", "public/images/apple-touch-icon.png", "public/images/favicon-16.png", "public/images/favicon-192.png", "public/images/favicon-32.png", "public/images/favicon-512.png", "public/images/favicon.ico", "public/images/favicon.svg", "public/images/logo-mark.svg", "public/images/logo.png", "public/metin-duzelt.js", "public/preferences.js", "public/premium.css", "public/robots.txt", "public/script.js", "public/site.webmanifest", "public/sitemap.xml", "public/style.css", "public/ui.js", "src/components/LegacyPage.astro", "src/data/articles.json", "src/data/faq.json", "src/data/makaleler.mjs", "src/layouts/SiteLayout.astro", "src/pages/account.astro", "src/pages/admin.astro", "src/pages/archive.astro", "src/pages/articles.astro", "src/pages/changelog.astro", "src/pages/contribute.astro", "src/pages/faq.astro", "src/pages/genealogy.astro", "src/pages/index.astro", "src/pages/login.astro", "src/pages/makaleler/[slug].astro", "src/pages/privacy.astro", "src/pages/random.astro", "src/pages/search.astro", "src/pages/sources.astro", "src/pages/timeline.astro" ];
+(function klasorleriOnar() {
+  if (fs.existsSync(path.join(__dirname, 'src', 'pages'))) return;
+  let tasinan = 0;
+  for (const hedef of PROJE_DUZENI) {
+    const kaynak = path.join(__dirname, path.basename(hedef));
+    const yeni = path.join(__dirname, hedef);
+    if (!fs.existsSync(kaynak) || fs.existsSync(yeni)) continue;
+    fs.mkdirSync(path.dirname(yeni), { recursive: true });
+    fs.renameSync(kaynak, yeni);
+    tasinan++;
+  }
+  console.warn(`UYARI: Dosyalar GitHub'a klasörsüz yüklenmiş. Derleme için ${tasinan} dosya doğru klasöre taşındı.`);
+  console.warn('       Site çalışır; yine de bir sonraki yüklemede klasörleri (src/, public/) sürükleyip bırakın.');
+})();
+
+// Onarımdan sonra hâlâ eksik varsa ne yapılacağını söyleyerek dur.
+for (const gerekli of ['src/pages', 'src/layouts', 'src/data/articles.json', 'public/script.js']) {
+  if (!fs.existsSync(path.join(__dirname, gerekli))) {
+    console.error(`HATA: "${gerekli}" bulunamadı. Proje GitHub'a klasör yapısı olmadan (tüm dosyalar kök dizinde) yüklenmiş.`);
+    console.error('      Çözüm: zip içindeki src/ ve public/ KLASÖRLERİNİ olduğu gibi yükleyin (GitHub → Add file → Upload files → klasörleri sürükleyip bırakın)');
+    console.error('      ya da değişiklikleri git ile gönderin. Ayrıntı: README.md');
+    process.exit(1);
+  }
+}
+
 // ---- Firestore REST değerlerini düz JS'e çevir ----
 function fromValue(v) {
   if ('stringValue' in v) return v.stringValue;

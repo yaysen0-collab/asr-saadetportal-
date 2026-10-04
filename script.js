@@ -3503,7 +3503,11 @@ async function baslat() {
     if (sayfa === "login") { yonlendirmeSonucunuKontrolEt(); setTimeout(() => googleDugmesiniGuncelle(true), 8000); }
   }
   if (!veriGerek) return;
-  if (statik && statik.generatedAt && oturumIpucu() !== "yonetici" && sayfa !== "admin") degisiklikleriDinle(statik.generatedAt);
+  /* "Yalnızca değişenler" modu, derleme verisi doğrudan Firestore'dan alındıysa güvenlidir. Derleme yedek
+     veriyle (canlı sitenin eski site-data.json'u) yapıldıysa arada silinen kayıtlar bilinemez; o durumda
+     ziyaretçi de tam canlı veriyi okur ki ana sayfa ve yönetici paneli AYNI sayıları göstersin. */
+  const guvenliStatik = statik && statik.generatedAt && statik.kaynak === "firestore";
+  if (guvenliStatik && oturumIpucu() !== "yonetici" && sayfa !== "admin") degisiklikleriDinle(statik.generatedAt);
   else tamDinle();
   if (MAKALE_SAYFALARI.has(sayfa)) makaleleriDinle(false);
   /* App Check hiç cevap vermezse Google düğmesi sonsuza dek beklemesin */
@@ -3532,6 +3536,18 @@ function degisiklikleriDinle(esik) {
       planla();
     }, (err) => console.warn(kol + " değişiklikleri alınamadı (derleme verisi gösteriliyor):", err && err.code));
   });
+  /* Güvenlik ağı: sunucudaki kayıt SAYISI (1 okuma) eldekiyle tutmuyorsa (ör. Firebase konsolundan
+     silinen kayıt) tam canlı veriye geç. Böylece ana sayfa ile yönetici paneli hiçbir zaman ayrışmaz. */
+  setTimeout(async () => {
+    if (durum.canliMod !== "degisiklik" || typeof FS.getCountFromServer !== "function") return;
+    try {
+      const [z, o] = await Promise.all([FS.getCountFromServer(FS.collection(db, "zatlar")), FS.getCountFromServer(FS.collection(db, "olaylar"))]);
+      if (z.data().count !== durum.zatlar.length || o.data().count !== durum.olaylar.length) {
+        console.info("Kayıt sayısı derleme verisinden farklı; tam canlı veriye geçiliyor.");
+        tamDinle();
+      }
+    } catch (e) { /* sayım yapılamazsa derleme verisi + değişikliklerle devam */ }
+  }, 2500);
   FS.onSnapshot(FS.query(FS.collection(db, "silinenler"), FS.where("tarih", ">", sinir)), (snap) => {
     if (durum.canliMod !== "degisiklik" || snap.empty) return;
     const ids = { zat: [], olay: [] };
