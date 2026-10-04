@@ -1,6 +1,12 @@
-// build.js — Firestore'dan statik şahsiyet sayfaları + sitemap.xml üretir.
-// Gereksinim: Node 18+ (yerleşik fetch). Ek paket gerekmez.
-// Çalıştırma: FIREBASE_PROJECT_ID=xxx node build.js
+// build.js — Firestore'dan statik şahsiyet sayfaları, site-data.json, makale verisi ve sitemap.xml üretir.
+// Gereksinim: Node 18+ (yerleşik fetch).
+//
+// Veri kaynağı sırası (ilk çalışan kullanılır):
+//   1. FIREBASE_SERVICE_ACCOUNT  → firebase-admin (App Check ve kurallardan etkilenmez — ÖNERİLEN)
+//   2. Firestore REST API        → App Check "Enforce" açıksa 403 verir
+//   3. Canlı sitedeki /site-data.json (önceki başarılı derlemenin verisi)
+//   4. Hiçbiri olmazsa derleme YİNE DE tamamlanır; şahsiyet sayfaları atlanır, site verileri
+//      tarayıcıda doğrudan Firestore'dan okur. (Eskiden derleme tamamen duruyordu.)
 
 const fs = require('fs');
 const path = require('path');
@@ -154,11 +160,9 @@ function renderPage(p, ctx) {
 
   const rows = [
     ['Dönem', esc(clean(p.devir))],
-    ['Baba', link(p.babaId, clean(p.baba))],
-    ['Anne', link(p.anneId, clean(p.anne))],
-    ['Eş(ler)', list(p.esIds) || esc(clean(p.es))],
-    ['Çocuklar', list(p.cocukIds)],
+    ...kinRows(p, ctx.family, (id) => link(id)),
   ].filter(([, v]) => v);
+  void list;
 
   const paragraphs = bioHtml(bio);
 
@@ -199,6 +203,7 @@ function renderPage(p, ctx) {
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="${CONFIG.cssHref}">
 <link rel="stylesheet" href="${CONFIG.premiumHref}">
+<link rel="stylesheet" href="/fixes.css">
 <style>
 .person-page{width:min(820px,100%);margin:0 auto;padding:clamp(2rem,5vw,4rem) clamp(1.25rem,4vw,2rem) clamp(3rem,6vw,5rem)}
 .person-crumbs{margin:0 0 1.5rem;color:var(--muted);font-size:.74rem;letter-spacing:.04em}
@@ -242,7 +247,7 @@ function renderPage(p, ctx) {
     ${paragraphs || '<p>Bu şahsiyet için içerik hazırlanıyor.</p>'}
     </div>
   </article>
-  <a class="person-back" href="/archive">← Arşive dön</a>
+  <p class="person-links"><a class="person-back" href="/genealogy#${encodeURIComponent(p.id)}">Soyağacında gör →</a> <a class="person-back" href="/archive">← Arşive dön</a></p>
 </main>
 <footer class="site-footer">
   <div class="footer-half footer-intro">
@@ -278,11 +283,143 @@ if(n&&b)b.addEventListener('click',function(){var o=n.classList.toggle('menu-ope
 </html>`;
 }
 
+// ---- Veri kaynağı: Firestore → canlı site yedeği → boş ----
+async function liveSnapshot() {
+  const url = process.env.FALLBACK_DATA_URL || `${CONFIG.siteUrl}/site-data.json`;
+  const res = await fetch(url, { headers: { 'cache-control': 'no-cache' } });
+  if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
+  const json = await res.json();
+  if (!Array.isArray(json.zatlar) || !json.zatlar.length) throw new Error(`${url} boş veya geçersiz`);
+  return json;
+}
+async function loadData() {
+  try {
+    const [zatlar, olaylar] = await Promise.all([fetchAll(), fetchAll('olaylar')]);
+    let makaleler = [];
+    try { makaleler = await fetchAll('makaleler'); } catch (e) { console.warn('Makaleler okunamadı (önemsiz):', String(e.message || e).slice(0, 160)); }
+    return { kaynak: 'firestore', zatlar, olaylar, makaleler, generatedAt: Date.now() };
+  } catch (e) {
+    console.warn('UYARI: Firestore okunamadı → ' + String(e.message || e).replace(/\s+/g, ' ').slice(0, 220));
+    console.warn('       Kalıcı çözüm: Vercel → Settings → Environment Variables → FIREBASE_SERVICE_ACCOUNT ekleyin (README §4).');
+  }
+  try {
+    const snap = await liveSnapshot();
+    const zamanlar = [...snap.zatlar, ...(snap.olaylar || [])].map((d) => Number(d.guncellemeTarihi) || 0);
+    console.warn(`       Yedek olarak canlı sitenin verisi kullanıldı (${snap.zatlar.length} şahsiyet).`);
+    return {
+      kaynak: 'canli-site', zatlar: snap.zatlar, olaylar: snap.olaylar || [], makaleler: snap.makaleler || [],
+      generatedAt: snap.generatedAt || Math.max(0, ...zamanlar),
+    };
+  } catch (e) {
+    console.warn('UYARI: Canlı site verisi de alınamadı → ' + String(e.message || e).slice(0, 160));
+  }
+  return { kaynak: 'yok', zatlar: [], olaylar: [], makaleler: [], generatedAt: 0 };
+}
+
+// ---- Akrabalık (statik sayfalar için ID tabanlı, sade sürüm; sitedeki tam hesap script.js'te) ----
+const cinsiyetNorm = (z) => {
+  const c = String((z && z.cinsiyet) || '').toLocaleLowerCase('tr').replace('ı', 'i');
+  if (c === 'erkek' || c === 'kadin') return c;
+  const ad = ' ' + String((z && (z.isim || z.ad)) || '') + ' ';
+  if (/\s(binti|bint|bintü)\s/i.test(ad) || /^\s*(hz\.?\s*)?ümm/i.test(ad)) return 'kadin';
+  if (/\s(bin|ibn|ibni|ibn-i)\s/i.test(ad) || /^\s*(hz\.?\s*)?ebu/i.test(ad)) return 'erkek';
+  return null;
+};
+function buildFamily(people) {
+  const byId = new Map(people.map((p) => [p.id, p]));
+  const fam = new Map(people.map((p) => [p.id, { parents: new Map(), children: new Set(), spouses: new Set() }]));
+  const ids = (v) => (Array.isArray(v) ? v : v ? [v] : []).filter((id) => byId.has(id));
+  const link = (child, parent, role) => {
+    if (!child || !parent || child === parent || !fam.has(child) || !fam.has(parent)) return;
+    const f = fam.get(child);
+    if (role && [...f.parents.values()].includes(role) && f.parents.get(parent) !== role) return;
+    if (!f.parents.has(parent) && f.parents.size >= 2) return;
+    if (!f.parents.get(parent)) f.parents.set(parent, role || null);
+    fam.get(parent).children.add(child);
+  };
+  for (const p of people) {
+    ids(p.babaId).forEach((id) => link(p.id, id, 'baba'));
+    ids(p.anneId).forEach((id) => link(p.id, id, 'anne'));
+  }
+  for (const p of people) {
+    const g = cinsiyetNorm(p);
+    ids(p.cocukIds).forEach((id) => link(id, p.id, g === 'erkek' ? 'baba' : g === 'kadin' ? 'anne' : null));
+    ids(p.esIds).forEach((id) => { if (id !== p.id) { fam.get(p.id).spouses.add(id); fam.get(id).spouses.add(p.id); } });
+  }
+  const siblings = (id) => {
+    const out = new Set();
+    fam.get(id).parents.forEach((_, pid) => fam.get(pid).children.forEach((c) => { if (c !== id) out.add(c); }));
+    return out;
+  };
+  return { byId, fam, siblings };
+}
+function kinRows(p, F, link) {
+  const f = F.fam.get(p.id);
+  if (!f) return [];
+  const g = (id) => cinsiyetNorm(F.byId.get(id));
+  const lab = (id, e, k, b) => (g(id) === 'erkek' ? e : g(id) === 'kadin' ? k : b);
+  const parentOf = (role) => [...f.parents].find(([, r]) => r === role);
+  const sib = [...F.siblings(p.id)];
+  const uncles = [];
+  f.parents.forEach((role, pid) => F.siblings(pid).forEach((u) => {
+    if (f.parents.has(u)) return;
+    uncles.push(link(u) + ` (${role === 'baba' ? lab(u, 'Amca', 'Hala', 'Babasının kardeşi') : role === 'anne' ? lab(u, 'Dayı', 'Teyze', 'Annesinin kardeşi') : 'Ebeveyninin kardeşi'})`);
+  }));
+  const grand = [];
+  f.parents.forEach((role, pid) => F.fam.get(pid).parents.forEach((_, gid) => grand.push(link(gid) + ` (${lab(gid, 'Dede', 'Nine', 'Dede / nine')}${role ? (role === 'baba' ? ', baba tarafı' : ', anne tarafı') : ''})`)));
+  const baba = parentOf('baba'), anne = parentOf('anne');
+  return [
+    ['Baba', baba ? link(baba[0]) : esc(clean(p.baba))],
+    ['Anne', anne ? link(anne[0]) : esc(clean(p.anne))],
+    ['Eş(ler)', [...f.spouses].map(link).join(', ') || esc(clean(p.es))],
+    ['Çocuklar', [...f.children].map(link).join(', ') || esc(clean(p.cocuklar))],
+    ['Kardeşler', sib.map(link).join(', ')],
+    ['Amca, hala, dayı, teyze', uncles.join(', ')],
+    ['Dede ve nineler', grand.join(', ')],
+  ].filter(([, v]) => v && v !== 'Undefined');
+}
+
+// ---- Makaleler: src/data/articles.json + Firestore 'makaleler' (yayında olanlar) ----
+function mergeArticles(base, fromDb) {
+  const out = new Map(base.map((a) => [a.slug, a]));
+  for (const m of fromDb || []) {
+    if (!m || m.yayinda === false || !m.slug || !m.baslik) continue;
+    out.set(m.slug, {
+      slug: m.slug, baslik: m.baslik, etiket: m.etiket || 'Makale', ozet: m.ozet || '', govde: m.govde || '',
+      image: m.image || '', gorsel: m.gorsel || '', kaynaklar: m.kaynaklar || '', tarih: m.tarih || m.guncellemeTarihi || null,
+    });
+  }
+  return [...out.values()];
+}
+
+// Yüklenen kapak görselleri Firestore'da data: URL olarak durur. Derlemede dosyaya çıkarılır ki
+// site-data.json ve statik sayfalar şişmesin; görseller CDN'den önbellekli gelir.
+function extractArticleImages(list) {
+  const dir = path.join('public', 'makale-gorsel');
+  fs.rmSync(dir, { recursive: true, force: true });
+  return (list || []).map((m) => {
+    const match = m && typeof m.gorsel === 'string' && m.gorsel.match(/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/);
+    if (!match || !m.slug) return m;
+    fs.mkdirSync(dir, { recursive: true });
+    const ext = match[1] === 'jpeg' ? 'jpg' : match[1];
+    const file = `${String(m.slug).replace(/[^a-z0-9-]/g, '')}.${ext}`;
+    fs.writeFileSync(path.join(dir, file), Buffer.from(match[2], 'base64'));
+    return { ...m, gorsel: `/makale-gorsel/${file}` };
+  });
+}
+
 // ---- Ana akış ----
 (async () => {
-  const docs = await fetchAll();
-  const events = await fetchAll('olaylar');
-  console.log(`${docs.length} kayıt okundu.`);
+  const veri = await loadData();
+  veri.makaleler = extractArticleImages(veri.makaleler);
+  const docs = veri.zatlar;
+  const events = veri.olaylar;
+  console.log(`${docs.length} şahsiyet, ${events.length} olay, ${veri.makaleler.length} makale okundu (kaynak: ${veri.kaynak}).`);
+
+  // Makaleler Astro'dan önce hazırlanır: src/data/articles.generated.json (git'e girmez)
+  const baseArticles = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'data', 'articles.json'), 'utf8'));
+  const allArticles = mergeArticles(baseArticles, veri.makaleler);
+  fs.writeFileSync(path.join(__dirname, 'src', 'data', 'articles.generated.json'), JSON.stringify(allArticles, null, 1));
 
   const people = docs.filter((d) => getName(d));
   const skipped = docs.length - people.length;
@@ -307,13 +444,20 @@ if(n&&b)b.addEventListener('click',function(){var o=n.classList.toggle('menu-ope
   fs.writeFileSync(path.join('public', 'sahabe-index.json'), JSON.stringify(
     Object.fromEntries(people.map((p) => [p.id, p._slug]))
   ));
-  fs.writeFileSync(path.join('public', 'site-data.json'), JSON.stringify({
-    zatlar: docs,
-    olaylar: events,
-    sahabeSayfaYollari: Object.fromEntries(people.map((p) => [p.id, p._slug])),
-  }));
+  if (docs.length) {
+    fs.writeFileSync(path.join('public', 'site-data.json'), JSON.stringify({
+      generatedAt: veri.generatedAt,
+      kaynak: veri.kaynak,
+      zatlar: docs.map(({ _name, _indexable, ...z }) => z),
+      olaylar: events,
+      makaleler: (veri.makaleler || []).filter((m) => m && m.yayinda !== false),
+      sahabeSayfaYollari: Object.fromEntries(people.map((p) => [p.id, p._slug])),
+    }));
+  } else {
+    fs.rmSync(path.join('public', 'site-data.json'), { force: true });
+  }
 
-  const ctx = { byId: new Map(people.map((p) => [p.id, p])) };
+  const ctx = { byId: new Map(people.map((p) => [p.id, p])), family: buildFamily(people) };
 
   fs.rmSync(CONFIG.outDir, { recursive: true, force: true });
   fs.mkdirSync(CONFIG.outDir, { recursive: true });
@@ -323,7 +467,7 @@ if(n&&b)b.addEventListener('click',function(){var o=n.classList.toggle('menu-ope
 
   // sitemap.xml — sadece yeterli içeriği olan sayfalar
   const today = new Date().toISOString().slice(0, 10);
-  const articles = require('./src/data/articles.json');
+  const articles = allArticles;
   const urls = [
     ...CONFIG.staticPages.map((u) => CONFIG.siteUrl + u),
     ...articles.map((article) => `${CONFIG.siteUrl}/makaleler/${article.slug}`),
@@ -341,8 +485,6 @@ if(n&&b)b.addEventListener('click',function(){var o=n.classList.toggle('menu-ope
   console.log(`${people.length} sayfa üretildi: ${idx} index, ${people.length - idx} noindex (içerik yetersiz).`);
   console.log(`sitemap.xml: ${urls.length} URL.`);
 })().catch((e) => {
-  // Firebase verisi okunamadıysa eksik sitemap ve biyografi sayfaları yayımlama.
-  console.warn('UYARI: Şahsiyet sayfaları üretilemedi; eksik sürümün yayımlanmasını önlemek için derleme durduruluyor.');
-  console.warn(String(e && e.message ? e.message : e));
+  console.error('HATA: build.js beklenmedik şekilde durdu:', e);
   process.exit(1);
 });

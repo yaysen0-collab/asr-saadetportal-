@@ -6,6 +6,8 @@ rules_version = '2';
 //
 // Özet:
 //   zatlar, olaylar      → herkes okuyabilir, sadece yöneticiler yazabilir
+//   makaleler            → herkes yayındakileri okur, yöneticiler hepsini okur/yazar
+//   silinenler           → silme izleri (herkes okur, yönetici yazar)
 //   favoriler, notlar    → her kullanıcı yalnızca kendi kayıtlarını görür/düzenler
 //   admins/{uid}         → Console'dan elle eklenen ek yöneticiler (active: true)
 //   diğer her şey        → kapalı
@@ -79,6 +81,24 @@ service cloud.firestore {
     match /olaylar/{recordId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
+    }
+
+    // Makaleler: herkes YAYINDAKİLERİ okuyabilir (sorgu where('yayinda','==',true) içermeli),
+    // yöneticiler taslaklar dahil hepsini okur ve yazar.
+    match /makaleler/{articleId} {
+      allow read: if resource.data.yayinda == true || isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.baslik is string && request.resource.data.baslik.size() > 0
+        && request.resource.data.slug is string && request.resource.data.slug.matches('^[a-z0-9-]{1,80}$')
+        && request.resource.data.yayinda is bool;
+      allow delete: if isAdmin();
+    }
+
+    // Silme izleri: ziyaretçiler derlemedeki veriyi kullandığı için, silinen kayıtların
+    // onların ekranından da kalkmasını sağlar. İçinde yalnızca tür, kayıt kimliği ve tarih var.
+    match /silinenler/{tombstoneId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /favoriler/{favoriteId} {

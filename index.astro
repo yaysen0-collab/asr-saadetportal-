@@ -1,6 +1,7 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
-import articles from '../data/articles.json';
+import { makaleleriGetir } from '../data/makaleler.mjs';
+const articles = makaleleriGetir();
 const title = 'Sahabe Hayatları ve İslam Tarihi | Asr-ı Saadet Portalı';
 const description = 'Sahabe hayatlarını, akrabalık bağlarını ve Asr-ı Saadet dönemindeki önemli olayları güvenilir siyer kaynaklarıyla keşfedin.';
 const canonical = new URL('/', Astro.site).href;

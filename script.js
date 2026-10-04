@@ -80,7 +80,7 @@ const SSS = [
 
 const MAKALELER = [
   {
-    etiket: "İtikat", foto: "manuscript",
+    etiket: "İtikat", foto: "manuscript", slug: "ashab-i-kiram-in-izinde", image: "1720701574998-d68020bce2bd", yerlesik: true,
     baslik: "Ashab-ı Kiram'ın İzinde",
     ozet: "İslam’ın kuvvetli olduğu zamanlarda doğduk. Kuran-ı Kerim'i bize öğretenler oldu. Maalesef ki yeni nesil elimizden kayıp gidiyor...",
     govde: `<p>İslam’ın kuvvetli olduğu zamanlarda doğduk. Kuran-ı Kerim'i bize öğretenler oldu. Maalesef ki yeni nesil elimizden kayıp gidiyor. Bunları nerede kaybettik? Hangi mezhebe ait olduğunu bilmeyen, peygamberimizi tanımayan birine nasıl namaz kıl diyebiliriz?</p>
@@ -92,7 +92,7 @@ const MAKALELER = [
 <p class="art-son">Hazreti Allah bu yol üzerine bizleri daim etsin.</p>`,
   },
   {
-    etiket: "İlim", foto: "calligraphy",
+    etiket: "İlim", foto: "calligraphy", slug: "neden-bu-ilimleri-ogreniyoruz", image: "1696513553729-17129c427356", yerlesik: true,
     baslik: "Neden Bu İlimleri Öğreniyoruz?",
     ozet: "İslam dini, okuyup ilim sahibi olmaya çok önem vermiştir. Hatta Peygamber Efendimize indirilen ilk ayeti kerime “Oku” emri ile başlar...",
     govde: `<p>İslam dini, okuyup ilim sahibi olmaya çok önem vermiştir. Hatta Peygamber Efendimize indirilen ilk ayeti kerime “Oku” emri ile başlar. Cenabı Hak Kuran-ı Keriminde; <em>“Ey Habibim! Yaratan Rabbinin adı ile oku”</em> buyurmuştur.</p>
@@ -107,7 +107,7 @@ const MAKALELER = [
 <p class="art-son">Hiç kimse hakikati anlayacak ilimle doğmamıştır. Bu yüzden bu ilimleri okumaya ve anlamaya önem göstermeliyiz.</p>`,
   },
   {
-    etiket: "Siyer", foto: "ornate",
+    etiket: "Siyer", foto: "ornate", slug: "rasulullah-sevgisi-ve-kur-an-egitimi", image: "1720700955600-a21cd215d1a3", yerlesik: true,
     baslik: "Rasulullah Sevgisi ve Kur'an Eğitimi",
     ozet: "Resulullah efendimiz bir hadisi şeriflerinde şöyle buyuruyor; \"Evlatlarınızı üç haslet üzerine edeplendiriniz...\"",
     govde: `<p>Resulullah efendimiz bir hadisi şeriflerinde şöyle buyuruyor;</p>
@@ -183,6 +183,11 @@ const durum = {
   hesap: { sekme: "tumu", arama: "", tur: "tumu" },
   favoriler: {}, notlar: {}, notTaslak: {}, kullaniciDinleyici: [], kisiselHata: null,
   genelArama: "", kaydirId: null, yavas: false, appCheck: null,
+  /* Firestore 'makaleler' (yayımlanmış + yöneticiye taslaklar) ve statik derlemeden gelenler */
+  makaleler: [], statikMakaleler: [], makaleAcikSlug: null,
+  /* Veri her değiştiğinde artar; akrabalık grafiği bu sürüme göre önbelleğe alınır */
+  veriSurum: 0, canliMod: null, googleHazir: false,
+  mk: { duzenleId: null, gorsel: "", kirli: false },
 };
 
 /* ---------- Yardımcılar ---------- */
@@ -200,15 +205,17 @@ function sahsiyetKayitSayisi() {
 function olayKayitSayisi() {
   return durum.olaylar.length;
 }
+/* "Bağlantılı şahsiyet": arşivdeki EN AZ BİR başka şahsiyetle anne/baba, çocuk, eş, kardeş
+   ya da "Diğer bağlar" üzerinden ilişkilendirilmiş kayıt. Ana sayfa ve yönetici paneli
+   aynı fonksiyonu kullanır; sayılar her zaman aynıdır. */
+let bagliSayiOnbellek = { surum: -1, sayi: 0 };
 function baglantiliKayitSayisi() {
   if (!sahsiyetKayitSayisi()) return 0;
-
-  // Say only records connected to another known person in the archive.
-  const grafik = akrabalikGrafigi(durum.zatlar);
-  const indeks = adIndeksiKur(durum.zatlar);
-  return durum.zatlar.filter((z) => {
+  if (bagliSayiOnbellek.surum === durum.veriSurum) return bagliSayiOnbellek.sayi;
+  const { g: grafik, ix: indeks } = grafikAl();
+  const sayi = durum.zatlar.filter((z) => {
     const kisi = grafik.get(z.id);
-    if (kisi && (kisi.ebeveynler.size || kisi.cocuklar.size || kisi.es.size)) return true;
+    if (kisi && (kisi.ebeveynler.size || kisi.cocuklar.size || kisi.es.size || kisi.kardes.size)) return true;
 
     return baglariAyir(z.baglar).some((bag) => {
       if (trKucuk(bag.tur) === "çocuk") return false;
@@ -216,6 +223,8 @@ function baglantiliKayitSayisi() {
       return !!(eslesen.kayit && eslesen.kayit.id !== z.id);
     });
   }).length;
+  bagliSayiOnbellek = { surum: durum.veriSurum, sayi };
+  return sayi;
 }
 
 function duzMetin(ham) {
@@ -233,6 +242,7 @@ function veriyiUygula(tur, liste, kaydet = false) {
   const hazirListe = listeyiHazirla(liste);
   if (tur === "zat") durum.zatlar = hazirListe; else durum.olaylar = hazirListe;
   durum.yuklendi[tur] = true;
+  durum.veriSurum++;
   if (kaydet) {
     try { localStorage.setItem(`asr-veri-${tur}-v1`, JSON.stringify(hazirListe)); } catch (e) { /* Önbellek doluysa canlı veri kullanılmaya devam eder. */ }
   }
@@ -248,14 +258,25 @@ function yerelVeriyiYukle() {
 async function statikVeriyiYukle() {
   try {
     const yanit = await fetch("/site-data.json", { cache: "no-cache" });
-    if (!yanit.ok) return;
+    if (!yanit.ok) return null;
     const veri = await yanit.json();
     let degisti = false;
+    if (Array.isArray(veri.makaleler)) { durum.statikMakaleler = veri.makaleler; degisti = true; }
     if (veri.sahabeSayfaYollari) { sahabeSayfaYollari = veri.sahabeSayfaYollari; degisti = true; }
-    if (!durum.yuklendi.zat && Array.isArray(veri.zatlar)) { veriyiUygula("zat", veri.zatlar, true); degisti = true; }
-    if (!durum.yuklendi.olay && Array.isArray(veri.olaylar)) { veriyiUygula("olay", veri.olaylar, true); degisti = true; }
+    /* Sunucudaki derleme verisi tarayıcı önbelleğinden daha günceldir; canlı tam veri geldiyse ona dokunma */
+    if (!durum.canliTam && Array.isArray(veri.zatlar) && veri.zatlar.length) { veriyiUygula("zat", veri.zatlar, true); degisti = true; }
+    if (!durum.canliTam && Array.isArray(veri.olaylar)) { veriyiUygula("olay", veri.olaylar, true); degisti = true; }
     if (degisti) veriGuncelle();
-  } catch (e) { console.warn("Önceden hazırlanan kayıtlar yüklenemedi:", e); }
+    return veri;
+  } catch (e) { console.warn("Önceden hazırlanan kayıtlar yüklenemedi:", e); return null; }
+}
+/* Canlı değişiklikleri mevcut listeye işler (ziyaretçi modunda yalnızca değişen kayıtlar gelir) */
+function veriBirlestir(tur, degisenler, silinenIdler = []) {
+  const eski = tur === "zat" ? durum.zatlar : durum.olaylar;
+  const m = new Map(eski.map((k) => [k.id, k]));
+  degisenler.forEach((k) => m.set(k.id, { ...k, _duz: undefined, _ara: undefined }));
+  silinenIdler.forEach((id) => m.delete(id));
+  veriyiUygula(tur, [...m.values()].map(({ _duz, _ara, ...k }) => k), true);
 }
 function ozet(ham, n) {
   const m = duzMetin(ham);
@@ -497,7 +518,7 @@ function gorselYari({ f, alt, sticky = false, ortada = false, icerik, oncelik = 
 function linkKart(k, tur) {
   const ad = tur === "zat" ? k.isim : k.ad;
   const tarih = tur === "zat" ? zatTarih(k) : olayTarih(k);
-  const href = tur === "zat" ? sahabeSayfaUrl(k.id) : `#archive/${tur}-${esc(k.id)}`;
+  const href = kayitUrl(tur, k.id);
   const yeniSekme = tur === "zat" && sahabeSayfaYollari[k.id] ? ` target="_blank" rel="noopener noreferrer"` : "";
   return `<a class="record" href="${esc(href)}"${yeniSekme}>
     <div class="record-head"><h3>${esc(ad)}</h3><span class="title">${esc(devirOf(k))}</span></div>
@@ -563,17 +584,106 @@ function sayfaHome() {
   <section class="split short">
     <div class="half content dark-content">
       <p class="eyebrow">Temel Okumalar</p>
-      <h2 class="serif-title">Ashab-ı Kiram'ı ve ilim geleneğini anlatan üç okuma.</h2>
+      <h2 class="serif-title">Ashab-ı Kiram'ı ve ilim geleneğini anlatan okumalar.</h2>
       <p class="lead">İtikat, ilim ve Kur'an eğitimi üzerine hazırlanmış kısa yazılar.</p>
       <a class="text-link" href="#articles">Makaleleri oku →</a>
     </div>
     ${gorselYari({ f: "manuscript2", alt: "Eski bir Arapça el yazması", icerik: `
-      <div class="article-lines">${MAKALELER.map((m) => `<div class="article-line"><span class="article-tag">${esc(m.etiket)}</span><p>${esc(m.baslik)}</p></div>`).join("")}</div>` })}
+      <div class="article-lines">${tumMakaleler().slice(0, 4).map((m) => `<div class="article-line"><span class="article-tag">${esc(m.etiket)}</span><p><a href="${esc(makaleUrl(m))}">${esc(m.baslik)}</a></p></div>`).join("")}</div>` })}
+  </section>`;
+}
+
+/* ---------- Bağlantı adresleri ---------- */
+function kayitUrl(tur, id) {
+  if (tur === "zat") return sahabeSayfaUrl(id);
+  return `#archive/olay-${encodeURIComponent(id)}`;
+}
+function arsivDetayUrl(tur, id) { return `#archive/${tur}-${encodeURIComponent(id)}`; }
+
+/* ---------- Akrabalık bloğu (arşiv detayı, kayıt sayfası, yönetici önizlemesi) ---------- */
+function akrabaBlokHtml(g, key, { baslik = "Akrabalık bağları", bosMetin = "", linkTur = "genealogy" } = {}) {
+  const d = g.get(key);
+  if (!d) return bosMetin ? `<div class="akraba-blok"><h3>${esc(baslik)}</h3><p class="akraba-not">${esc(bosMetin)}</p></div>` : "";
+  const link = (k) => {
+    const n = g.get(k);
+    const ad = esc(adTemiz(dugumAdi(n)) || dugumAdi(n));
+    const href = linkTur === "archive" ? arsivDetayUrl("zat", k) : `#genealogy/${encodeURIComponent(k)}`;
+    return `<a class="akraba-ad" href="${esc(href)}">${ad}</a>`;
+  };
+  const satirlar = [];
+  const ebv = [...d.ebeveynler.entries()];
+  const ebeveynSatiri = (rol, ad) => {
+    const e = ebv.find(([, r]) => r === rol);
+    if (e) satirlar.push([ad, [`<span class="akraba-oge">${link(e[0])}${d.cikarim.has(e[0]) ? ` <span class="akraba-cikarim" title="Kardeşinin kaydından otomatik çıkarıldı">otomatik</span>` : ""}</span>`]]);
+  };
+  ebeveynSatiri("baba", "Baba");
+  ebeveynSatiri("anne", "Anne");
+  ebv.filter(([, r]) => !r).forEach(([pk]) => satirlar.push(["Ebeveyn", [`<span class="akraba-oge">${link(pk)}</span>`]]));
+  akrabalikHesapla(g, key).forEach((gr) => {
+    satirlar.push([gr.baslik, gr.ogeler.map((o) => `<span class="akraba-oge">${link(o.key)}${gr.goster && o.etiket && o.etiket !== "Kardeş" ? ` <span class="akraba-etiket">(${esc(o.etiket.replace(/\s*\((.+)\)$/, ", $1"))})</span>` : ""}</span>`)]);
+  });
+  if (!satirlar.length) return bosMetin ? `<div class="akraba-blok"><h3>${esc(baslik)}</h3><p class="akraba-not">${esc(bosMetin)}</p></div>` : "";
+  return `<div class="akraba-blok"><h3>${esc(baslik)}</h3>
+    ${satirlar.map(([e, ogeler]) => `<div class="akraba-satir"><span>${esc(e)}</span><div class="akraba-ogeler">${ogeler.join('<span aria-hidden="true">·</span>')}</div></div>`).join("")}
+    <p class="akraba-not">Kardeş, amca, hala, dayı, teyze, dede ve kuzen bağları anne/baba bilgilerinden otomatik hesaplanır.</p>
+  </div>`;
+}
+
+/* ---------- Tek kayıt görünümü: /archive#olay-ID veya /archive#zat-ID ---------- */
+function arsivDetayParam() {
+  const m = String(rota.param || "").match(/^(zat|olay)-(.+)$/);
+  return m ? { tur: m[1], id: m[2] } : null;
+}
+function sayfaKayitDetay(tur, id) {
+  const k = (tur === "zat" ? durum.zatlar : durum.olaylar).find((x) => x.id === id);
+  const crumbs = `<nav class="page-crumbs" aria-label="breadcrumb"><a href="#home">Ana Sayfa</a><span>›</span><a href="./archive">Arşiv</a><span>›</span><span aria-current="page">${k ? esc(tur === "zat" ? k.isim : k.ad) : "Kayıt"}</span></nav>`;
+  if (!k) {
+    const yukleniyor = !(durum.yuklendi.zat && durum.yuklendi.olay);
+    return `<section class="kayit-sayfa">${crumbs}${yukleniyor ? durumMesaji() || `<div class="loading">Kayıt yükleniyor…</div>` : `<div class="kayit-bulunamadi">Bu kayıt bulunamadı; silinmiş veya adresi değişmiş olabilir. <a class="text-link" href="./archive">Arşive dön →</a></div>`}</section>`;
+  }
+  const ad = tur === "zat" ? k.isim : k.ad;
+  const olayZamani = (o) => [!bos(o.hicri) ? `Hicri ${o.hicri}` : "", !bos(o.miladi) ? `Miladi ${o.miladi}` : ""].filter(Boolean).join(" · ");
+  const ust = [devirOf(k), tur === "zat" ? zatTarih(k) : olayZamani(k), tur === "zat" ? "Şahsiyet" : "Olay"].filter((x) => !bos(x));
+  /* Akrabalık bloğunda zaten bağlantı olarak görünen isimleri metin olarak tekrar gösterme */
+  let satirlar = [];
+  if (tur === "zat") {
+    const { g, ix } = grafikAl();
+    const d = g.get(k.id);
+    const bagli = new Set();
+    if (d) {
+      d.ebeveynler.forEach((_, pk) => bagli.add(pk)); d.es.forEach((x) => bagli.add(x)); d.cocuklar.forEach((x) => bagli.add(x));
+      akrabalikHesapla(g, k.id).forEach((gr) => gr.ogeler.forEach((o) => bagli.add(o.key)));
+    }
+    const eksik = (metin) => esListesiniAyir(metin).filter((ad) => { const r = adCozumle(ad, ix, true); return !(r.kayit && bagli.has(r.kayit.id)); });
+    satirlar = [["Anne", k.anne], ["Baba", k.baba], ["Eşi / Eşleri", k.es], ["Çocukları", k.cocuklar]]
+      .filter(([, v]) => !bos(v) && v !== "Undefined")
+      .map(([a, v]) => [a, eksik(v).join(", ")]).filter(([, v]) => v);
+    const digerBag = baglariAyir(k.baglar).filter((b) => { const r = adCozumle(b.ad, ix, true); return !(r.kayit && bagli.has(r.kayit.id)); });
+    if (digerBag.length) satirlar.push(["Diğer bağlar", digerBag.map((b) => b.ad + (b.tur ? ` (${b.tur})` : "")).join(", ")]);
+  }
+  const profil = tur === "zat" && sahabeSayfaYollari[k.id] ? `<a class="button" href="${esc(sahabeSayfaUrl(k.id))}">Biyografi sayfası</a>` : "";
+  return `<section class="kayit-sayfa">
+    ${crumbs}
+    <p class="page-eyebrow"><span></span>${tur === "zat" ? "Şahsiyet kaydı" : "Tarihî olay"}</p>
+    <h1>${esc(ad)}</h1>
+    <div class="kayit-ust-bilgi">${ust.map((x) => `<span>${esc(x)}</span>`).join("")}</div>
+    <div class="kayit-metin">${bilgiHtml(k.bilgi)}</div>
+    ${!bos(k.kaynak) ? `<p class="kayit-kaynak"><strong>Kaynak:</strong> ${esc(k.kaynak)}</p>` : ""}
+    ${tur === "zat" ? akrabaBlokHtml(grafikAl().g, k.id, { linkTur: "archive" }) : ""}
+    ${satirlar.length ? `<div class="kayit-metin-bilgi"><h3>Arşivde ayrı kaydı olmayan isimler</h3><dl class="kayit-bilgi">${satirlar.map(([a, v]) => `<div><dt>${a}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl></div>` : ""}
+    <div class="kayit-eylemler">
+      <a class="button primary" href="./archive">← Tüm arşiv</a>
+      ${tur === "zat" ? `<a class="button" href="#genealogy/${esc(k.id)}">Soyağacında gör</a>` : `<a class="button" href="#timeline">Zaman çizelgesi</a>`}
+      ${profil}
+    </div>
+    ${kisiselAlan(tur, k)}
   </section>`;
 }
 
 /* ---------- ARŞİV ---------- */
 function sayfaArsiv() {
+  const detay = arsivDetayParam();
+  if (detay) return sayfaKayitDetay(detay.tur, detay.id);
   return `
   <section class="split">
     ${gorselYari({ f: "manuscript", alt: "Eski bir el yazması", sticky: true, icerik: `
@@ -639,7 +749,8 @@ function kayitKarti(k, tur) {
       <div class="kayit-metin">${bilgiHtml(k.bilgi)}</div>
       ${satirlar.length ? `<dl class="kayit-bilgi">${satirlar.map(([a, v]) => `<div><dt>${a}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
       ${!bos(k.kaynak) ? `<small>Kaynak: ${esc(k.kaynak)}</small>` : ""}
-      ${tur === "zat" ? `<a class="text-link" href="#genealogy/${esc(k.id)}">Soyağacında gör →</a>` : ""}
+      ${tur === "zat" ? akrabaBlokHtml(grafikAl().g, k.id, { linkTur: "archive" }) : ""}
+      ${tur === "zat" ? `<a class="text-link" href="#genealogy/${esc(k.id)}">Soyağacında gör →</a>` : `<a class="text-link" href="${esc(arsivDetayUrl("olay", k.id))}">Kaydı ayrı sayfada aç →</a>`}
       ${kisiselAlan(tur, k)}
     </div>`;
   }
@@ -708,7 +819,7 @@ function sayfaCizelge() {
       ${dm || (ogeler.length ? `<div class="timeline">${ogeler.map((i) => `
         <div class="event">
           <time>M. ${i.y} · ${i.etiket}</time>
-          <h3><a href="${i.tur === "zat" ? esc(sahabeSayfaUrl(i.id)) : `#archive/${i.tur}-${esc(i.id)}`}"${i.tur === "zat" && sahabeSayfaYollari[i.id] ? ` target="_blank" rel="noopener noreferrer"` : ""}>${esc(i.ad)}</a></h3>
+          <h3><a href="${esc(kayitUrl(i.tur, i.id))}"${i.tur === "zat" && sahabeSayfaYollari[i.id] ? ` target="_blank" rel="noopener noreferrer"` : ""}>${esc(i.ad)}</a></h3>
           ${!bos(i.bilgi) ? `<p>${esc(ozet(i.bilgi, 160))}</p>` : ""}
         </div>`).join("")}</div>` : `<div class="empty">Henüz miladi tarihi girilmiş kayıt yok.</div>`)}
     </div>
@@ -731,8 +842,7 @@ function baglariAyir(baglar) {
 }
 
 function soyAgaci(k) {
-  const ix = adIndeksiKur(durum.zatlar);
-  const g = akrabalikGrafigi(durum.zatlar);
+  const { g, ix } = grafikAl();
   const d = g.get(k.id);
   const kisi = (n) => `<a href="#genealogy/${esc(n.kayit.id)}">${esc(adTemiz(n.kayit.isim))}</a>`;
   const ebv = d ? [...d.ebeveynler.entries()] : [];
@@ -771,7 +881,7 @@ function soyAgaci(k) {
       ${satirlar.join("")}
       ${!baskaBagVar ? `<div class="family-detail"><span>Bağlantı</span><strong>Başka bağlantı kaydı yok</strong></div>` : ""}
     </div>
-    <a class="text-link" href="#archive/zat-${esc(k.id)}">Tam kaydı arşivde oku →</a>`;
+    <a class="text-link" href="${esc(arsivDetayUrl("zat", k.id))}">Tam kaydı oku →</a>`;
 }
 
 function sayfaSoy(param) {
@@ -830,16 +940,82 @@ function sayfaRastgele() {
 }
 
 /* ---------- MAKALELER ---------- */
-function sayfaMakaleler() {
-  return MAKALELER.map((m, i) => {
-    const acik = durum.makaleAcik.has(i);
-    const gorsel = gorselYari({ f: m.foto, alt: m.baslik, icerik: `<span class="article-tag">${esc(m.etiket)}</span><h2>${esc(m.baslik)}</h2>` });
-    const icerik = `<div class="half content">
-      ${acik ? `<div class="article-full">${m.govde}</div>` : `<p>${esc(m.ozet)}</p>`}
-      <button type="button" class="text-link" data-action="makale" data-i="${i}">${acik ? "Daha az göster ↑" : "Devamını oku →"}</button>
-    </div>`;
-    return `<section class="split article-section" id="makale-${i}">${i % 2 === 0 ? gorsel + icerik : icerik + gorsel}</section>`;
-  }).join("");
+/* ---------- MAKALELER ----------
+   Kaynaklar: (1) koddaki yerleşik makaleler, (2) son derlemede site-data.json'a giren
+   Firestore makaleleri (bunların /makaleler/<slug> statik sayfası vardır), (3) canlı Firestore.
+   Aynı slug'a sahip makalede en güncel kaynak kazanır. */
+function makaleSlug(metin) {
+  const map = { ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u", â: "a", î: "i", û: "u" };
+  return trKucuk(metin).replace(/['’‘´`]/g, "").replace(/[çğıöşüâîû]/g, (c) => map[c])
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70).replace(/-+$/, "");
+}
+function tumMakaleler() {
+  const m = new Map();
+  MAKALELER.forEach((a) => m.set(a.slug, { ...a, _statik: true }));
+  durum.statikMakaleler.forEach((a) => { if (a && a.slug && a.yayinda !== false) m.set(a.slug, { ...a, _statik: true }); });
+  durum.makaleler.forEach((a) => {
+    if (!a || !a.slug) return;
+    if (a.yayinda === false && !adminMi()) return;
+    const onceki = m.get(a.slug);
+    m.set(a.slug, { ...a, _statik: !!(onceki && onceki._statik) });
+  });
+  return [...m.values()].sort((a, b) => (a.yerlesik === b.yerlesik ? (b.tarih || 0) - (a.tarih || 0) : a.yerlesik ? 1 : -1));
+}
+function makaleUrl(m) { return m._statik ? `/makaleler/${encodeURIComponent(m.slug)}` : `#articles/${encodeURIComponent(m.slug)}`; }
+function makaleGorseli(m, w = 1100) {
+  if (m.gorsel) return m.gorsel;
+  const id = m.image || (m.foto && FOTO[m.foto]) || FOTO.manuscript;
+  return `https://images.unsplash.com/photo-${id}?w=${w}&q=70&auto=format&fit=crop`;
+}
+function sayfaMakaleler(param) {
+  const liste = tumMakaleler();
+  const secili = param ? liste.find((m) => m.slug === param) : null;
+  if (secili) return makaleDetayHtml(secili);
+  return `
+  <section class="page-hero">
+    <nav class="page-crumbs" aria-label="breadcrumb"><a href="#home">Ana Sayfa</a><span>›</span><span aria-current="page">Makaleler</span></nav>
+    <p class="page-eyebrow"><span></span>Temel Okumalar</p>
+    <h1>Siyer ve ilim geleneği üzerine makaleler</h1>
+    <p class="page-lead">Ashab-ı Kiram, İslam tarihi ve ilim geleneği üzerine hazırlanan yazıları okuyun.</p>
+  </section>
+  <section class="article-grid" aria-label="Makale listesi">
+    ${liste.length ? liste.map((m) => `<a class="article-card" href="${esc(makaleUrl(m))}">
+      <span class="article-card-image"><img src="${esc(makaleGorseli(m, 900))}" alt="" loading="lazy"></span>
+      <span class="article-card-body">
+        <span class="article-card-tag">${esc(m.etiket || "Makale")}</span>
+        ${m.yayinda === false ? `<span class="article-card-badge">Taslak — yalnızca yöneticiler görür</span>` : ""}
+        <span class="article-card-title">${esc(m.baslik)}</span>
+        <span class="article-card-text">${esc(m.ozet || ozet(m.govde, 180))}</span>
+        <span class="article-card-more">Makaleyi oku →</span>
+      </span>
+    </a>`).join("") : `<div class="article-empty">Henüz makale yok.</div>`}
+  </section>`;
+}
+function makaleDetayHtml(m) {
+  const duz = duzMetin(m.govde);
+  const dakika = Math.max(1, Math.ceil(duz.split(/\s+/).filter(Boolean).length / 220));
+  const kaynaklar = String(m.kaynaklar || "").split(/\n+/).map((x) => x.trim()).filter(Boolean);
+  return `<div class="article-page">
+    <nav class="article-crumbs" aria-label="breadcrumb"><a href="#home">Ana Sayfa</a><span>›</span><a href="./articles">Makaleler</a><span>›</span><span aria-current="page">${esc(m.baslik)}</span></nav>
+    <header class="article-hero">
+      <div class="article-hero-image"><img src="${esc(makaleGorseli(m, 1600))}" alt=""></div>
+      <div class="article-hero-content">
+        <p class="article-kicker"><span></span>${esc(m.etiket || "Makale")}</p>
+        <h1>${esc(m.baslik)}</h1>
+        ${m.ozet ? `<p class="article-deck">${esc(m.ozet)}</p>` : ""}
+        <div class="article-byline"><span class="article-brand-mark">AS</span><span>Asr-ı Saadet Portalı</span><i></i><span>${dakika} dk okuma</span></div>
+      </div>
+    </header>
+    <div class="article-reading-layout">
+      <aside class="article-aside"><div class="article-aside-card"><span class="article-aside-label">Bu yazı</span><strong>${esc(m.etiket || "Makale")}</strong><span class="article-aside-rule"></span><span class="article-aside-label">Tahmini okuma</span><strong>${dakika} dakika</strong><a href="./articles">Tüm makaleler <span>↗</span></a></div></aside>
+      <article class="article-body" aria-label="${esc(m.baslik)}">
+        <div class="article-full">${temizHtml(m.govde || "")}</div>
+        ${kaynaklar.length ? `<section class="article-sources" aria-label="Kaynaklar"><h2>Kaynaklar</h2><ol>${kaynaklar.map((k) => `<li>${esc(k)}</li>`).join("")}</ol></section>` : ""}
+        <div class="article-endmark" aria-hidden="true"><span></span> ASR-I SAADET <span></span></div>
+        <a class="article-back" href="./articles"><span>←</span> Makalelere dön</a>
+      </article>
+    </div>
+  </div>`;
 }
 
 /* ---------- S.S.S. ve İLETİŞİM ---------- */
@@ -945,6 +1121,7 @@ function sayfaAdmin() {
       </div>
     </div>
     <div class="admin-overview" id="admin-ozet"></div>
+    <div id="admin-uyarilar"></div>
     <div class="admin-create-callout">
       <div><span>Hızlı kayıt</span><strong>Arşive yeni bir içerik ekleyin</strong><p>Olaylar için tarih, dönem, açıklama ve kaynak; şahsiyetler için nesep ve hayat bilgilerini kaydedebilirsiniz.</p></div>
       <div class="admin-create-actions">
@@ -964,9 +1141,10 @@ function adminSekmeleriGuncelle() {
   const el = $("#admin-sekmeler");
   if (!el) return;
   const s = durum.admin.sekme;
-  el.innerHTML = `<div class="admin-tabs-label"><span>Kayıt türü</span><strong>${s === "zat" ? "Şahsiyet kayıtları" : "Olay kayıtları"}</strong></div>
+  el.innerHTML = `<div class="admin-tabs-label"><span>Kayıt türü</span><strong>${s === "zat" ? "Şahsiyet kayıtları" : s === "olay" ? "Olay kayıtları" : "Makaleler"}</strong></div>
     <button type="button" class="tab-btn${s === "zat" ? " active" : ""}" data-action="admin-sekme" data-sekme="zat">Şahsiyetler (${sahsiyetKayitSayisi()})</button>
-    <button type="button" class="tab-btn${s === "olay" ? " active" : ""}" data-action="admin-sekme" data-sekme="olay">Olaylar (${olayKayitSayisi()})</button>`;
+    <button type="button" class="tab-btn${s === "olay" ? " active" : ""}" data-action="admin-sekme" data-sekme="olay">Olaylar (${olayKayitSayisi()})</button>
+    <button type="button" class="tab-btn${s === "makale" ? " active" : ""}" data-action="admin-sekme" data-sekme="makale">Makaleler (${tumMakaleler().length})</button>`;
 }
 
 function adminOzetGuncelle() {
@@ -982,6 +1160,11 @@ function adminOzetGuncelle() {
     <div class="admin-stat"><span>Olay</span><strong>${n(olayKayitSayisi())}</strong></div>
     <div class="admin-stat"><span>Bağlantılı şahsiyet</span><strong>${n(baglantili)}</strong></div>
     <div class="admin-stat${hazir && eksik ? " needs-attention" : ""}"><span>Eksik içerik/kaynak</span><strong>${n(eksik)}</strong></div>`;
+  const uy = $("#admin-uyarilar");
+  if (uy) {
+    const liste = hazir ? (grafikAl().g.uyarilar || []) : [];
+    uy.innerHTML = liste.length ? `<details class="veri-uyarilari"><summary>Veri uyarıları (${liste.length}) — akrabalık hesabını bozan çelişkiler</summary><ul>${liste.map((u) => `<li>${esc(u.metin)} <button type="button" class="btn-small" data-action="admin-kayit-ac" data-id="${esc(u.ids[0])}">Kaydı aç</button></li>`).join("")}</ul></details>` : "";
+  }
   const yedek = document.querySelector('[data-action="admin-yedek"]');
   if (yedek) {
     yedek.disabled = !hazir;
@@ -1026,6 +1209,7 @@ function adminListeGuncelle() {
   if (!el) return;
   adminSekmeleriGuncelle();
   adminOzetGuncelle();
+  if (durum.admin.sekme === "makale") { mkListeGuncelle(); return; }
   adminKisiListesiniGuncelle();
   adminKopyaUyarisiGuncelle();
   if (durum.hata) { el.innerHTML = `<div class="admin-liste-bos">Kayıtlar yüklenemedi: ${esc(durum.hata)}</div>`; return; }
@@ -1141,6 +1325,7 @@ function adminFormuKur() {
   const el = $("#admin-form");
   if (!el) return;
   durum.admin.duzenleId = null;
+  if (durum.admin.sekme === "makale") { mkFormuKur(null); return; }
   const devirSecenek = DEVIRLER.map((d) => `<option value="${esc(d)}">${esc(d)}</option>`).join("");
   if (durum.admin.sekme === "zat") {
     el.innerHTML = `<div class="admin-form">
@@ -1160,7 +1345,8 @@ function adminFormuKur() {
       <div class="form-field"><label for="f-es">Eşi / Eşleri</label><input id="f-es" type="text"><p class="form-hint">Birden fazla ise virgülle ayırın. Karşı tarafta ayrıca yazmanız gerekmez.</p></div>
       <div class="form-field"><label for="f-cocuklar">Çocukları</label><input id="f-cocuklar" type="text"><p class="form-hint">Virgülle ayırın. Çocuğun kaydında anne/baba yazmasa da bu kişi onun ebeveyni sayılır (cinsiyeti seçiliyse anne veya baba olarak).</p></div>
       <div class="form-field"><label for="f-baglar">Diğer bağlar</label><input id="f-baglar" type="text" placeholder="Örn. Ali (Süt kardeşi)">
-        <p class="form-hint">Yalnızca otomatik bulunamayan istisnalar için. Kardeş, dede, nine, torun, amca, dayı, hala, teyze, yeğen ve kuzenler anne/baba/eş/çocuk bilgilerinden otomatik hesaplanır. Biçim: İsim (Tür).</p></div>
+        <p class="form-hint">Kardeş, dede, nine, torun, amca, dayı, hala, teyze, yeğen ve kuzenler anne/baba/eş/çocuk bilgilerinden otomatik hesaplanır. Anne/baba bilinmiyorsa kardeşi buraya “İsim (Kardeş)” diye yazın: kardeşin anne/babası bu kayda da uygulanır. Süt kardeşlik nesep sayılmaz. Biçim: İsim (Tür), virgülle ayırın.</p></div>
+      <div id="f-akraba-onizleme" class="admin-akraba-onizleme" aria-live="polite"></div>
       <div class="form-row">
         <div class="form-field"><label for="f-d-hicri">Doğum (Hicri)</label><input id="f-d-hicri" type="text"></div>
         <div class="form-field"><label for="f-d-miladi">Doğum (Miladi)</label><input id="f-d-miladi" type="text"></div>
@@ -1207,6 +1393,8 @@ function formMesaj(metin, hata, uyari = false) {
 }
 
 function adminFormuDoldur(k) {
+  if (durum.admin.sekme === "makale") { mkFormuKur(k); return; }
+  setTimeout(adminAkrabaOnizleme, 0);
   const zat = durum.admin.sekme === "zat";
   const set = (id, v) => { const e = $("#" + id); if (e) e.value = bos(v) ? "" : v; };
   durum.admin.duzenleId = k.id;
@@ -1255,8 +1443,21 @@ function esListesiniBirlestir(liste) {
   return liste.length ? liste.join(", ") : "?";
 }
 function cinsiyetOf(z) {
-  const c = String((z && z.cinsiyet) || "").toLowerCase();
+  /* "Kadın", "KADIN", "kadin", "Erkek" … hepsi aynı kabul edilir */
+  const c = String((z && z.cinsiyet) || "").toLocaleLowerCase("tr").replace(/ı/g, "i").trim();
   return c === "erkek" || c === "kadin" ? c : null;
+}
+/* Cinsiyet girilmemişse isimden tahmin (yalnızca etiketler için: Amca/Hala, Oğlu/Kızı…) */
+const KADIN_ADLARI = new Set(["ayşe", "aişe", "aise", "ayse", "fatıma", "fatima", "fatımatüz", "hatice", "zeynep", "zeyneb", "rukiyye", "rukayye", "rukıyye", "hafsa", "esma", "sevde", "meymune", "safiyye", "cüveyriye", "amine", "halime", "şeyma", "sümeyye", "hind", "ümame", "nesibe", "berre", "hamne", "hansa", "mariye", "ümmü", "ummu", "cemile", "atike", "erva", "selma", "leyla", "rabia", "naile", "sehle", "seleme"]);
+const ERKEK_ADLARI = new Set(["ali", "ömer", "omer", "osman", "hasan", "hüseyin", "huseyin", "muhammed", "ahmed", "hamza", "abbas", "cafer", "akil", "abdullah", "abdurrahman", "abdülmüttalip", "abdulmuttalip", "kasım", "kasim", "ibrahim", "zeyd", "halid", "said", "saad", "sa'd", "talha", "zübeyr", "bilal", "enes", "ebu", "ebû", "muaviye", "amr", "haris", "muaz", "mus'ab", "musab", "cabir", "ubeyde", "selman", "ammar", "yasir", "ikrime", "usame", "üsame", "affan", "hattab", "vehb", "huveylid", "rafi", "safvan", "lebid", "hatıb", "ahnes", "rifaa", "sa'lebe", "salebe"]);
+function cinsiyetTahmin(z) {
+  const ad = trKucuk(adTemiz((z && (z.isim || z.ad)) || "")).replace(/^(hz|hazreti|hazret-i)\.?\s*/, "");
+  if (!ad) return null;
+  if (/\s(binti|bint|bintü)\s/.test(" " + ad + " ")) return "kadin";
+  const ilk = ad.split(/[\s'-]+/)[0];
+  if (KADIN_ADLARI.has(ilk)) return "kadin";
+  if (/\s(bin|ibn|ibni|ibn-i|ibnü)\s/.test(" " + ad + " ") || ERKEK_ADLARI.has(ilk)) return "erkek";
+  return null;
 }
 const dugumAdi = (n) => (n.kayit ? n.kayit.isim : n.ad);
 
@@ -1321,7 +1522,7 @@ function akrabalikGrafigi(zatlar) {
   const dugumler = new Map();
   zatlar.forEach((z) => {
     const c = cinsiyetOf(z);
-    dugumler.set(z.id, { key: z.id, ad: adTemiz(z.isim), kayit: z, cinsiyet: c, kesin: !!c, ebeveynler: new Map(), cocuklar: new Set(), es: new Set() });
+    dugumler.set(z.id, { key: z.id, ad: adTemiz(z.isim), kayit: z, cinsiyet: c || cinsiyetTahmin(z), kesin: !!c, tahmin: !c, ebeveynler: new Map(), cocuklar: new Set(), es: new Set(), kardes: new Map(), cikarim: new Set() });
   });
   const baglar = new Map(zatlar.map((z) => [z.id, baglariCoz(z, idx, ix)]));
 
@@ -1344,8 +1545,9 @@ function akrabalikGrafigi(zatlar) {
   /* 1. tur: kişinin KENDİ kaydındaki anne / baba (ve bunlardan cinsiyet çıkarımı) */
   zatlar.forEach((z) => {
     const d = dugumler.get(z.id), b = baglar.get(z.id);
-    if (b.baba) { const p = dugumler.get(b.baba); ebeveynBagla(d, p, "baba"); if (p && !p.kesin && !p.cinsiyet) p.cinsiyet = "erkek"; }
-    if (b.anne) { const p = dugumler.get(b.anne); ebeveynBagla(d, p, "anne"); if (p && !p.kesin && !p.cinsiyet) p.cinsiyet = "kadin"; }
+    /* Anne/baba olarak yazılmak, isimden yapılan tahminden daha güçlü bir bilgidir */
+    if (b.baba) { const p = dugumler.get(b.baba); ebeveynBagla(d, p, "baba"); if (p && !p.kesin) { p.cinsiyet = "erkek"; p.tahmin = false; } }
+    if (b.anne) { const p = dugumler.get(b.anne); ebeveynBagla(d, p, "anne"); if (p && !p.kesin) { p.cinsiyet = "kadin"; p.tahmin = false; } }
   });
   /* 2. tur: çocuk listeleri ve eşler */
   zatlar.forEach((z) => {
@@ -1357,7 +1559,92 @@ function akrabalikGrafigi(zatlar) {
       if (q && q.key !== d.key) { d.es.add(q.key); q.es.add(d.key); }
     });
   });
+  /* Eşlerden biri biliniyorsa diğerinin cinsiyeti (yalnızca bilinmiyorsa) */
+  dugumler.forEach((d) => {
+    if (d.cinsiyet || !d.es.size) return;
+    const bilinen = [...d.es].map((k) => dugumler.get(k)).find((e) => e && e.cinsiyet);
+    if (bilinen) { d.cinsiyet = bilinen.cinsiyet === "erkek" ? "kadin" : "erkek"; d.tahmin = true; }
+  });
+
+  /* 3. tur: "Diğer bağlar" alanına elle yazılmış kardeşlikler — ör. "Abbas (Kardeş)".
+     Soy bilgisiyle çelişen kardeşlik (ör. aslında yeğen olan biri) kullanılmaz, uyarı olarak raporlanır. */
+  const uyarilar = [];
+  const ustler = (key, derinlik = 4) => {
+    const out = new Set(); let sinir = [key];
+    for (let i = 0; i < derinlik; i++) {
+      const sonraki = [];
+      sinir.forEach((k) => { const n = dugumler.get(k); if (n) n.ebeveynler.forEach((_, pk) => { if (!out.has(pk)) { out.add(pk); sonraki.push(pk); } }); });
+      sinir = sonraki;
+    }
+    return out;
+  };
+  const altlar = (key, derinlik = 4) => {
+    const out = new Set(); let sinir = [key];
+    for (let i = 0; i < derinlik; i++) {
+      const sonraki = [];
+      sinir.forEach((k) => { const n = dugumler.get(k); if (n) n.cocuklar.forEach((ck) => { if (!out.has(ck)) { out.add(ck); sonraki.push(ck); } }); });
+      sinir = sonraki;
+    }
+    return out;
+  };
+  const ortakEbeveyn = (a, b) => [...a.ebeveynler.keys()].some((k) => b.ebeveynler.has(k));
+  const kardesAdaylari = [];
+  zatlar.forEach((z) => {
+    baglariAyir(z.baglar).forEach((bg) => {
+      const tur = trKucuk(bg.tur);
+      if (!/karde[şs]/.test(tur) || /süt|sut/.test(tur)) return; /* süt kardeşlik nesep bağı değildir */
+      const s = adCozumle(bg.ad, ix, true);
+      if (s.kayit && s.kayit.id !== z.id) kardesAdaylari.push([z.id, s.kayit.id, tur]);
+    });
+  });
+  kardesAdaylari.forEach(([ak, bk, tur]) => {
+    const a = dugumler.get(ak), b = dugumler.get(bk);
+    if (!a || !b || ortakEbeveyn(a, b)) return;
+    const aUst = ustler(ak), bUst = ustler(bk);
+    const nesilFarki = aUst.has(bk) || bUst.has(ak) || altlar(ak).has(bk)
+      || [...b.ebeveynler.keys()].some((pk) => { const p = dugumler.get(pk); return p && [...a.ebeveynler.keys()].some((ak2) => p.ebeveynler.has(ak2)); })
+      || [...a.ebeveynler.keys()].some((pk) => { const p = dugumler.get(pk); return p && [...b.ebeveynler.keys()].some((bk2) => p.ebeveynler.has(bk2)); });
+    if (nesilFarki) {
+      uyarilar.push({ tur: "kardes", ids: [ak, bk], metin: `${a.ad} ↔ ${b.ad}: “${tur}” olarak yazılmış ama anne/baba bilgilerine göre farklı kuşaktan. Bu bağ kullanılmadı; “Diğer bağlar” alanını kontrol edin.` });
+      return;
+    }
+    if (!a.kardes.has(bk)) a.kardes.set(bk, tur);
+    if (!b.kardes.has(ak)) b.kardes.set(ak, tur);
+  });
+  /* Tam kardeşlerde eksik ebeveyni tamamla (ör. Ali'nin babası girilmişse, kardeşi Akil'e de aynı baba) */
+  dugumler.forEach((d) => {
+    d.kardes.forEach((tur, sk) => {
+      if (!/^(kardeş|kardes|kız kardeş|erkek kardeş|abla|ağabey)$/.test(tur)) return;
+      const s = dugumler.get(sk);
+      s.ebeveynler.forEach((rol, pk) => {
+        if (!rol || d.ebeveynler.has(pk) || pk === d.key) return;
+        if ([...d.ebeveynler.values()].includes(rol)) return;
+        if (ustler(pk).has(d.key) || altlar(d.key).has(pk)) return;
+        d.ebeveynler.set(pk, rol); dugumler.get(pk).cocuklar.add(d.key); d.cikarim.add(pk);
+      });
+    });
+  });
+  /* Cinsiyet çelişkileri: kayıtta "Erkek" yazıp birinin annesi olarak geçen vb. */
+  dugumler.forEach((d) => {
+    if (!d.kesin) return;
+    d.cocuklar.forEach((ck) => {
+      const rol = dugumler.get(ck).ebeveynler.get(d.key);
+      if ((rol === "anne" && d.cinsiyet === "erkek") || (rol === "baba" && d.cinsiyet === "kadin")) {
+        uyarilar.push({ tur: "cinsiyet", ids: [d.key, ck], metin: `${d.ad}: cinsiyeti “${d.cinsiyet === "erkek" ? "Erkek" : "Kadın"}” girilmiş ama ${dugumler.get(ck).ad} kaydında ${rol} olarak geçiyor.` });
+      }
+    });
+  });
+  dugumler.uyarilar = [...new Map(uyarilar.map((u) => [u.tur + [...u.ids].sort().join("|"), u])).values()];
   return dugumler;
+}
+
+/* Akrabalık grafiği pahalıdır; veri değişmedikçe yeniden kurulmaz */
+let grafikOnbellek = { surum: -1, g: null, ix: null };
+function grafikAl() {
+  if (grafikOnbellek.surum !== durum.veriSurum || !grafikOnbellek.g) {
+    grafikOnbellek = { surum: durum.veriSurum, g: akrabalikGrafigi(durum.zatlar), ix: adIndeksiKur(durum.zatlar) };
+  }
+  return grafikOnbellek;
 }
 
 /* Bir kişinin (key) tüm akrabalarını gruplar hâlinde döndürür:
@@ -1383,6 +1670,7 @@ function akrabalikHesapla(g, key) {
       const p = g.get(pk);
       if (p) p.cocuklar.forEach((ck) => { if (ck !== n.key) m.set(ck, (m.get(ck) || 0) + 1); });
     });
+    if (n.kardes) n.kardes.forEach((_, sk) => { if (sk !== n.key && !m.has(sk)) m.set(sk, 2); });
     return m;
   };
   const cins = (n, e, k, b) => (n.cinsiyet === "erkek" ? e : n.cinsiyet === "kadin" ? k : b);
@@ -1406,7 +1694,9 @@ function akrabalikHesapla(g, key) {
   benimKardeslerim.forEach((sayi, sk) => {
     const s = g.get(sk);
     let etiket = "Kardeş";
-    if (d.ebeveynler.size >= 2 && s.ebeveynler.size >= 2 && sayi === 1) {
+    const elle = d.kardes && d.kardes.get(sk);
+    if (elle && /ana bir|baba bir|üvey/.test(elle)) etiket = elle.replace(/^./, (h) => h.toLocaleUpperCase("tr"));
+    else if (d.ebeveynler.size >= 2 && s.ebeveynler.size >= 2 && sayi === 1) {
       const ortak = [...d.ebeveynler.keys()].find((pk) => s.ebeveynler.has(pk));
       const rol = d.ebeveynler.get(ortak);
       etiket = rol === "baba" ? "Baba bir kardeş" : rol === "anne" ? "Ana bir kardeş" : "Yarı kardeş";
@@ -1529,7 +1819,8 @@ async function kbGuncellemeleriYaz(guncellemeler) {
   for (let i = 0; i < guncellemeler.length; i += 400) {
     const parca = guncellemeler.slice(i, i + 400);
     const batch = FS.writeBatch(db);
-    parca.forEach((g) => batch.update(FS.doc(db, "zatlar", g.id), g.veri));
+    const zaman = Date.now();
+    parca.forEach((g) => batch.update(FS.doc(db, "zatlar", g.id), { ...g.veri, guncellemeTarihi: zaman }));
     await batch.commit();
   }
 }
@@ -1760,6 +2051,9 @@ async function adminSil(id) {
   const silinenKayit = kol === "zatlar" ? durum.zatlar.find((z) => z.id === id) : null;
   try {
     await FS.deleteDoc(FS.doc(db, kol, id));
+    /* Ziyaretçiler derleme verisini kullanır; silinen kaydın onlardan da kalkması için iz bırak */
+    FS.setDoc(FS.doc(db, "silinenler", `${kol}_${id}`), { tur: kol === "zatlar" ? "zat" : "olay", kayitId: id, tarih: Date.now() })
+      .catch((e) => console.warn("Silme izi yazılamadı (firestore.rules güncel mi?):", e && e.code));
     if (durum.admin.duzenleId === id) adminFormuKur();
     if (silinenKayit && !bos(silinenKayit.isim)) {
       const temizlenenler = await adminSilinenReferanslariTemizle(id, silinenKayit.isim);
@@ -1771,6 +2065,172 @@ async function adminSil(id) {
   } catch (e) {
     console.error("silme hatası:", e);
     formMesaj("Silinemedi: " + (e && e.message ? e.message : e), true);
+  }
+}
+
+/* ---------- Yönetici: kaydetmeden önce akrabalık önizlemesi ---------- */
+let onizlemeZamanlayici = null;
+function adminAkrabaOnizleme() {
+  clearTimeout(onizlemeZamanlayici);
+  onizlemeZamanlayici = setTimeout(() => {
+    const el = $("#f-akraba-onizleme");
+    if (!el || durum.admin.sekme !== "zat") return;
+    const v = (i) => { const e = $("#" + i); return e ? e.value.trim() : ""; };
+    const id = durum.admin.duzenleId || "__onizleme__";
+    const digerleri = durum.zatlar.filter((z) => z.id !== id);
+    const ix = adIndeksiKur(digerleri);
+    const bir = (ad) => { if (bos(ad)) return ""; const r = adCozumle(ad, ix, true); return r.kayit ? r.kayit.id : ""; };
+    const cok = (ad) => esListesiniAyir(ad).map(bir).filter(Boolean);
+    const eski = durum.zatlar.find((z) => z.id === id) || {};
+    const gecici = {
+      ...eski, id, isim: v("f-isim") || eski.isim || "Bu kayıt", cinsiyet: v("f-cinsiyet") || "",
+      anne: v("f-anne"), baba: v("f-baba"), es: v("f-es"), cocuklar: v("f-cocuklar"), baglar: v("f-baglar"),
+      anneId: bir(v("f-anne")), babaId: bir(v("f-baba")), esIds: cok(v("f-es")), cocukIds: cok(v("f-cocuklar")),
+    };
+    const g = akrabalikGrafigi([...digerleri, gecici]);
+    el.innerHTML = akrabaBlokHtml(g, id, {
+      baslik: "Kaydedince oluşacak akrabalıklar (önizleme)",
+      bosMetin: "Anne, baba, eş, çocuk veya “İsim (Kardeş)” girildiğinde kardeş, amca/hala, dayı/teyze, dede ve kuzen bağları burada otomatik görünür.",
+    });
+  }, 250);
+}
+
+/* ---------- Yönetici: MAKALE YÖNETİMİ (Firestore 'makaleler') ---------- */
+function mkBirakabilir() { return !durum.mk.kirli || confirm("Kaydedilmemiş makale değişiklikleri silinsin mi?"); }
+function mkListeGuncelle() {
+  const el = $("#admin-liste");
+  if (!el) return;
+  const liste = tumMakaleler();
+  el.innerHTML = `<div class="admin-list-toolbar"><button type="button" class="button primary" data-action="mk-yeni">Yeni makale</button><small>${liste.length} makale</small></div>
+    <div class="mk-liste">${liste.map((m) => `<div class="mk-oge">
+      <div><h4>${esc(m.baslik)}${m.yayinda === false ? `<span class="mk-durum taslak">Taslak</span>` : ""}${m.yerlesik && !m.id ? `<span class="mk-durum">Yerleşik</span>` : ""}</h4>
+      <small>${esc(m.etiket || "Makale")}${m.tarih ? " · " + esc(hesapTarih(m.tarih, "")) : ""}</small></div>
+      <div class="admin-list-actions">
+        <a class="btn-small" href="${esc(makaleUrl(m))}" target="_blank" rel="noopener">Gör</a>
+        <button type="button" class="btn-small" data-action="mk-duzenle" data-id="${esc(m.id || m.slug)}">Düzenle</button>
+        ${m.id ? `<button type="button" class="btn-small btn-danger" data-action="mk-sil" data-id="${esc(m.id)}">Sil</button>` : ""}
+      </div></div>`).join("")}</div>
+    <p class="form-hint" style="margin-top:.8rem">Yeni makaleler kaydedildiği anda sitede görünür. Arama motorları için ayrı sayfası (/makaleler/…) bir sonraki yayınlamada (Vercel deploy) oluşur.</p>`;
+}
+function mkFormuKur(m) {
+  const el = $("#admin-form");
+  if (!el) return;
+  durum.mk = { duzenleId: m && m.id ? m.id : null, kaynakSlug: m ? m.slug : null, gorsel: m ? (m.gorsel || "") : "", image: m ? (m.image || "") : "", kirli: false };
+  const deger = (x) => esc(x == null ? "" : x);
+  el.innerHTML = `<div class="admin-form mk-form">
+    <div class="admin-form-heading"><span>Makale</span><h3>${m ? (m.id ? "Makaleyi düzenle" : "Yerleşik makaleyi düzenle") : "Yeni makale"}</h3>
+      <p>${m && !m.id ? "Kaydettiğinizde düzenlenmiş kopya yerleşik makalenin yerine geçer." : "Başlık, kısa özet, metin, kaynaklar ve kapak görseli ekleyin."}</p></div>
+    <div id="mk-mesaj"></div>
+    <div class="form-field"><label for="mk-baslik">Başlık <span class="required-mark">Zorunlu</span></label><input id="mk-baslik" type="text" value="${deger(m && m.baslik)}" autocomplete="off"></div>
+    <div class="mk-satir">
+      <div class="form-field"><label for="mk-etiket">Kategori</label><input id="mk-etiket" type="text" list="mk-etiketler" value="${deger(m && m.etiket)}" placeholder="Örn. Siyer"><datalist id="mk-etiketler">${[...new Set(tumMakaleler().map((x) => x.etiket).filter(Boolean))].map((x) => `<option value="${esc(x)}">`).join("")}</datalist></div>
+      <div class="form-field"><label for="mk-slug">Adres (isteğe bağlı)</label><input id="mk-slug" type="text" value="${deger(m && m.slug)}" placeholder="baslik-otomatik-olusur" ${m && m.slug ? "readonly" : ""}><p class="form-hint">/makaleler/… bölümü. Boş bırakılırsa başlıktan üretilir; sonradan değişmez.</p></div>
+    </div>
+    <div class="form-field"><label for="mk-ozet">Kısa özet</label><textarea id="mk-ozet" rows="3" placeholder="Listede ve arama sonuçlarında görünen 1-2 cümle">${deger(m && m.ozet)}</textarea></div>
+    ${EDITOR_HTML.replace("<label>Bilgi</label>", "<label>Makale metni</label>").replace('id="f-bilgi"', 'id="mk-govde"')}
+    <div class="form-field"><label for="mk-kaynaklar">Kaynaklar</label><textarea id="mk-kaynaklar" rows="4" placeholder="Her satıra bir kaynak: Eser adı, yazar, cilt/sayfa">${deger(m && m.kaynaklar)}</textarea></div>
+    <div class="form-field"><label for="mk-gorsel-dosya">Kapak görseli</label>
+      <input id="mk-gorsel-dosya" type="file" accept="image/*">
+      <input id="mk-gorsel-url" type="url" placeholder="veya görsel adresi: https://…" value="${deger(m && m.gorsel && !String(m.gorsel).startsWith("data:") ? m.gorsel : "")}" style="margin-top:.5rem">
+      <div class="mk-gorsel-onizleme" id="mk-gorsel-onizleme"></div>
+      <p class="form-hint">Yüklenen görsel otomatik küçültülür (en fazla 1400 px, ~300 KB) ve makaleyle birlikte saklanır.</p></div>
+    <label class="mk-yayin"><input id="mk-yayinda" type="checkbox" ${!m || m.yayinda !== false ? "checked" : ""}> Yayında (işaret kaldırılırsa taslak olarak yalnızca yöneticiler görür)</label>
+    <div class="form-actions">
+      <button type="button" class="button primary" data-action="mk-kaydet">Kaydet</button>
+      <button type="button" class="button" data-action="mk-yeni">Temizle</button>
+    </div>
+  </div>`;
+  const ed = $("#mk-govde");
+  if (ed && m && m.govde) ed.innerHTML = temizHtml(m.govde);
+  adminKirliAyarla(false);
+  mkGorselOnizle();
+}
+function mkMesaj(metin, hata) {
+  const el = $("#mk-mesaj");
+  if (el) el.innerHTML = metin ? `<p class="${hata ? "form-error" : "form-ok"}">${esc(metin)}</p>` : "";
+}
+function mkGorselOnizle() {
+  const el = $("#mk-gorsel-onizleme");
+  if (!el) return;
+  const src = durum.mk.gorsel || (durum.mk.image ? `https://images.unsplash.com/photo-${durum.mk.image}?w=400&q=60&auto=format&fit=crop` : "");
+  el.innerHTML = src ? `<img src="${esc(src)}" alt="Kapak önizlemesi"><div><small>${durum.mk.gorsel.startsWith("data:") ? `Yüklendi · ${Math.round(durum.mk.gorsel.length * 0.75 / 1024)} KB` : "Mevcut görsel"}</small><br><button type="button" class="btn-small" data-action="mk-gorsel-kaldir">Görseli kaldır</button></div>` : `<small>Görsel seçilmedi; varsayılan kapak kullanılır.</small>`;
+}
+/* Görseli tarayıcıda küçültüp JPEG'e çevirir (Firestore belge sınırı 1 MB) */
+async function mkGorselSec(input) {
+  const dosya = input.files && input.files[0];
+  if (!dosya) return;
+  if (!/^image\//.test(dosya.type)) return mkMesaj("Lütfen bir görsel dosyası seçin.", true);
+  mkMesaj("Görsel hazırlanıyor…");
+  try {
+    const url = URL.createObjectURL(dosya);
+    const img = await new Promise((ok, hata) => { const i = new Image(); i.onload = () => ok(i); i.onerror = hata; i.src = url; });
+    let w = img.naturalWidth, h = img.naturalHeight;
+    const oran = Math.min(1, 1400 / w);
+    w = Math.round(w * oran); h = Math.round(h * oran);
+    const tuval = document.createElement("canvas");
+    tuval.width = w; tuval.height = h;
+    tuval.getContext("2d").drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+    let kalite = 0.8, veri = tuval.toDataURL("image/jpeg", kalite);
+    while (veri.length > 420000 && kalite > 0.4) { kalite -= 0.1; veri = tuval.toDataURL("image/jpeg", kalite); }
+    durum.mk.gorsel = veri; durum.mk.kirli = true;
+    const u = $("#mk-gorsel-url"); if (u) u.value = "";
+    mkGorselOnizle(); mkMesaj("");
+  } catch (e) {
+    console.error("Görsel hazırlanamadı:", e);
+    mkMesaj("Görsel okunamadı. Başka bir dosya deneyin.", true);
+  }
+}
+async function mkKaydet() {
+  if (!adminMi()) return mkMesaj("Bu işlem için yönetici hesabıyla giriş yapmalısınız.", true);
+  if (!FS || !db) return mkMesaj("Veritabanı bağlantısı hazır değil. Sayfayı yenileyin.", true);
+  const v = (i) => { const e = $("#" + i); return e ? e.value.trim() : ""; };
+  const baslik = v("mk-baslik");
+  if (!baslik) return mkMesaj("Başlık boş bırakılamaz.", true);
+  const ed = $("#mk-govde");
+  const govde = ed && duzMetin(ed.innerHTML) ? temizHtml(ed.innerHTML) : "";
+  if (!govde) return mkMesaj("Makale metni boş olamaz.", true);
+  const id = durum.mk.duzenleId;
+  const mevcut = id ? durum.makaleler.find((m) => m.id === id) : null;
+  let slug = durum.mk.kaynakSlug || makaleSlug(v("mk-slug") || baslik);
+  if (!slug) return mkMesaj("Geçerli bir adres üretilemedi; başlığa harf ekleyin.", true);
+  if (!durum.mk.kaynakSlug) {
+    const kullanilan = new Set(tumMakaleler().map((m) => m.slug));
+    let aday = slug, n = 2;
+    while (kullanilan.has(aday)) aday = `${slug}-${n++}`;
+    slug = aday;
+  }
+  const obj = {
+    baslik, slug, etiket: v("mk-etiket") || "Makale", ozet: v("mk-ozet") || ozet(govde, 180), govde,
+    kaynaklar: v("mk-kaynaklar"), gorsel: durum.mk.gorsel || "", image: durum.mk.gorsel ? "" : (durum.mk.image || ""),
+    yayinda: !!($("#mk-yayinda") && $("#mk-yayinda").checked),
+    tarih: (mevcut && mevcut.tarih) || Date.now(), guncellemeTarihi: Date.now(),
+    yazar: (durum.kullanici && durum.kullanici.email) || "",
+  };
+  const boyut = new Blob([JSON.stringify(obj)]).size;
+  if (boyut > 950000) return mkMesaj(`Makale çok büyük (${Math.round(boyut / 1024)} KB). Görseli küçültün veya metni bölün (sınır ~950 KB).`, true);
+  mkMesaj("Kaydediliyor…");
+  try {
+    if (id) await FS.setDoc(FS.doc(db, "makaleler", id), obj);
+    else { const ref = await FS.addDoc(FS.collection(db, "makaleler"), obj); durum.mk.duzenleId = ref.id; }
+    durum.mk.kirli = false; durum.mk.kaynakSlug = slug; adminKirliAyarla(false);
+    mkMesaj(obj.yayinda ? "Kaydedildi ve yayımlandı." : "Taslak olarak kaydedildi.");
+    const s = $("#mk-slug"); if (s) { s.value = slug; s.readOnly = true; }
+  } catch (e) {
+    console.error("makale kaydetme hatası:", e);
+    mkMesaj("Kaydedilemedi: " + (e && e.code === "permission-denied" ? "izin yok — firestore.rules dosyasındaki 'makaleler' kuralı yayımlandı mı?" : (e && e.message) || e), true);
+  }
+}
+async function mkSil(id) {
+  if (!adminMi() || !id) return;
+  const m = durum.makaleler.find((x) => x.id === id);
+  if (!confirm(`“${m ? m.baslik : "Bu makale"}” kalıcı olarak silinsin mi?`)) return;
+  try {
+    await FS.deleteDoc(FS.doc(db, "makaleler", id));
+    if (durum.mk.duzenleId === id) mkFormuKur(null);
+  } catch (e) {
+    console.error("makale silme hatası:", e);
+    mkMesaj("Silinemedi: " + ((e && e.message) || e), true);
   }
 }
 
@@ -1823,11 +2283,11 @@ function hesapKayitSatiri(x) {
     <div class="account-entry-mark" aria-hidden="true">${x.turu === "favori" ? "F" : "N"}</div>
     <div class="account-entry-main">
       <div class="account-entry-meta"><span>${turAdi}</span><i></i><span>${tipAdi}</span><i></i><time>${hesapTarih(x.zaman, "Tarih yok")}</time></div>
-      <h3>${var_ ? `<a href="#archive/${x.veri.tip}-${esc(x.veri.itemId)}">${esc(x.ad)}</a>` : esc(x.ad)}</h3>
+      <h3>${var_ ? `<a href="${esc(arsivDetayUrl(x.veri.tip, x.veri.itemId))}">${esc(x.ad)}</a>` : esc(x.ad)}</h3>
       ${x.turu === "not" ? `<p>${esc(x.veri.metin)}</p>` : `<p>${var_ ? "Okumak veya not eklemek için kaydı açın." : "Bu kayıt arşivden kaldırılmış."}</p>`}
     </div>
     <div class="account-entry-actions">
-      ${var_ ? `<a class="btn-small" href="#archive/${x.veri.tip}-${esc(x.veri.itemId)}">${x.turu === "not" ? "Notu düzenle" : "Kaydı aç"}</a>` : ""}
+      ${var_ ? `<a class="btn-small" href="${esc(arsivDetayUrl(x.veri.tip, x.veri.itemId))}">${x.turu === "not" ? "Notu düzenle" : "Kaydı aç"}</a>` : ""}
       <button type="button" class="btn-small btn-danger" data-action="${x.turu === "favori" ? "fav" : "not-sil"}" data-tip="${x.veri.tip}" data-id="${esc(x.veri.itemId)}">${x.turu === "favori" ? "Favoriden çıkar" : "Notu sil"}</button>
     </div>
   </article>`;
@@ -2011,22 +2471,22 @@ function aramaYap(q) {
     const duz = z._duz != null ? z._duz : duzMetin(z.bilgi);
     const icerik = [duz, z.anne, z.baba, z.es, z.cocuklar, z.baglar].filter((x) => !bos(x)).join(" ");
     const p = puanla(z.isim, icerik, terimler);
-    if (p) grup.zat.push({ p, ad: z.isim || "", icerik, ozet: duz, href: `#archive/zat-${z.id}`, etiket: devirOf(z) });
+    if (p) grup.zat.push({ p, ad: z.isim || "", icerik, ozet: duz, href: arsivDetayUrl("zat", z.id), etiket: devirOf(z) });
   });
   durum.olaylar.forEach((o) => {
     const duz = o._duz != null ? o._duz : duzMetin(o.bilgi);
     const icerik = [duz, o.hicri, o.miladi].filter((x) => !bos(x)).join(" ");
     const p = puanla(o.ad, icerik, terimler);
-    if (p) grup.olay.push({ p, ad: o.ad || "", icerik, ozet: duz, href: `#archive/olay-${o.id}`, etiket: devirOf(o) });
+    if (p) grup.olay.push({ p, ad: o.ad || "", icerik, ozet: duz, href: arsivDetayUrl("olay", o.id), etiket: devirOf(o) });
   });
-  MAKALELER.forEach((m, i) => {
+  tumMakaleler().forEach((m) => {
     const duz = duzMetin(m.govde);
     const p = puanla(m.baslik, duz, terimler);
-    if (p) grup.makale.push({ p, ad: m.baslik, icerik: duz, ozet: m.ozet, href: `#articles/${i}`, etiket: m.etiket });
+    if (p) grup.makale.push({ p, ad: m.baslik, icerik: duz, ozet: m.ozet, href: makaleUrl(m), etiket: m.etiket });
   });
   SSS.forEach(([soru, cevap], i) => {
     const p = puanla(soru, cevap, terimler);
-    if (p) grup.sss.push({ p, ad: soru, icerik: cevap, ozet: cevap, href: `#faq/${i}`, etiket: "S.S.S." });
+    if (p) grup.sss.push({ p, ad: soru, icerik: cevap, ozet: cevap, href: `/faq#sss-${i}`, etiket: "S.S.S." });
   });
   Object.values(grup).forEach((g) => g.sort((a, b) => b.p - a.p || a.ad.localeCompare(b.ad, "tr")));
   return { terimler, grup };
@@ -2058,6 +2518,7 @@ function aramaGuncelle() {
       <div class="record-list">${g.slice(0, ARAMA_LIMIT).map((r) => sonucKart(r, terimler)).join("")}</div>
       ${g.length > ARAMA_LIMIT && (k === "zat" || k === "olay") ? `<button type="button" class="text-link" data-action="arsivde-ara" data-tur="${k}">Arşivde tümünü gör (${g.length}) →</button>` : ""}`;
   }).join("");
+  cokSayfaliLinkleriDuzenle(alan);
 }
 
 function sayfaAra() {
@@ -2206,9 +2667,12 @@ function arayuzuGenislet() {
   const kucuk = $(".footer-intro small");
   if (kucuk) kucuk.textContent = kucuk.textContent.replace(/v\d+\.\d+\.\d+/, "v" + SURUM);
   const kolonlar = document.querySelectorAll(".footer-links > div");
+  /* Astro düzeni bu bağlantıların çoğunu zaten içeriyor: aynı sayfaya ikinci bağlantı ekleme */
+  const anahtar = (h) => String(h || "").replace(/^[#./]+/, "").replace(/\.html$/, "").replace(/[#?].*$/, "") || "home";
+  const mevcut = new Set([...document.querySelectorAll(".footer-links a")].map((a) => anahtar(a.getAttribute("href"))));
   const ekle = (kolon, liste, once) => {
     if (!kolon || kolon.querySelector(".ek-link")) return;
-    liste.forEach(([ad, href]) => {
+    liste.filter(([, href]) => !mevcut.has(anahtar(href))).forEach(([ad, href]) => {
       const a = document.createElement("a");
       a.className = "ek-link"; a.href = href; a.textContent = ad;
       if (once) kolon.insertBefore(a, once); else kolon.appendChild(a);
@@ -2216,7 +2680,7 @@ function arayuzuGenislet() {
   };
   ekle(kolonlar[0], [["Portalda Ara", "#search"]], kolonlar[0] ? kolonlar[0].querySelector('a[href="#login"], a[href$="login.html"]') : null);
   const hakkinda = [["Kaynakça", "#sources"], ["Katkıda Bulun", "#contribute"], ["Gizlilik Politikası", "#privacy"], ["Sürüm Notları", "#changelog"]];
-  if (!document.querySelector('.footer-links a[href="#faq"], .footer-links a[href$="faq.html"]')) hakkinda.unshift(["Sıkça Sorulan Sorular", "#faq"]);
+  hakkinda.unshift(["Sıkça Sorulan Sorular", "#faq"]);
   ekle(kolonlar[1], hakkinda);
 }
 
@@ -2248,8 +2712,15 @@ function hataMetni(err) {
     case "auth/operation-not-supported-in-this-environment": case "auth/web-storage-unsupported":
       return `Bu ortamda Google girişi çalışmıyor (dosyadan açılmış sayfa, uygulama içi tarayıcı veya çerezleri kapalı tarayıcı olabilir). Siteyi Chrome ya da Safari'de https adresinden açın. (${kod})`;
     case "auth/internal-error": case "auth/invalid-api-key": case "auth/app-not-authorized":
+      if (/app ?check/i.test((err && err.message) || "")) return `Güvenlik doğrulaması (App Check) başarısız oldu. Reklam engelleyiciyi kapatıp sayfayı yenileyin; sorun sürerse yöneticiye bildirin. (${kod})`;
       return `Firebase yapılandırma hatası. (${kod})`;
+    case "auth/account-exists-with-different-credential":
+      return "Bu e-posta adresiyle daha önce şifreli hesap açılmış. Önce e-posta ve şifrenizle giriş yapın.";
+    case "auth/user-disabled": return "Bu hesap devre dışı bırakılmış.";
+    case "auth/firebase-app-check-token-is-invalid":
+      return `Güvenlik doğrulaması (App Check) başarısız oldu. Sayfayı yenileyip tekrar deneyin. (${kod})`;
     default:
+      if (/app ?check/i.test((err && err.message) || "")) return `Güvenlik doğrulaması (App Check) başarısız oldu. Sayfayı yenileyip tekrar deneyin. (${kod || "app-check"})`;
       return ((err && err.message) || "Bir hata oluştu.") + (kod ? ` (${kod})` : "");
   }
 }
@@ -2276,19 +2747,46 @@ async function kayitOl() {
   try { await AU.createUserWithEmailAndPassword(auth, eposta, sifre); }
   catch (err) { durum.girisIstendi = false; girisMesaji(hataMetni(err)); }
 }
+/* Google penceresi tıklamadan hemen sonra açılmalıdır; tarayıcılar (özellikle Safari ve mobil)
+   birkaç saniye beklenen pencereyi engeller. Bu yüzden düğme, App Check belgesi hazır olana dek
+   "Hazırlanıyor…" durumunda bekler. */
+function googleDugmesiniGuncelle(hazir) {
+  if (hazir) durum.googleHazir = true;
+  const b = document.querySelector('[data-action="google"]');
+  if (!b) return;
+  b.disabled = !durum.googleHazir;
+  b.textContent = durum.googleHazir ? "Google ile devam et" : "Google hazırlanıyor…";
+}
+function googleSaglayici() {
+  const saglayici = new AU.GoogleAuthProvider();
+  saglayici.setCustomParameters({ prompt: "select_account" });
+  return saglayici;
+}
+async function yonlendirmeSonucunuKontrolEt() {
+  try {
+    const sonuc = await AU.getRedirectResult(auth);
+    if (sonuc && sonuc.user) { durum.girisIstendi = true; authDegisti(sonuc.user); }
+  } catch (err) {
+    console.error("Google yönlendirme hatası:", err && err.code, err);
+    girisMesaji(hataMetni(err));
+  }
+}
 async function googleGiris() {
   if (typeof location !== "undefined" && location.protocol === "file:")
     return girisMesaji("Google girişi dosyadan açılan sayfada çalışmaz. Siteyi https adresinden açın.");
-  if (!AU) return girisMesaji("Kimlik doğrulama servisi yüklenemedi. Sayfayı yenileyin.");
+  if (!AU || !auth) return girisMesaji("Kimlik doğrulama servisi yüklenemedi. Sayfayı yenileyin.");
   girisMesaji("Google penceresi açılıyor…", true);
   durum.girisIstendi = true;
   try {
-    const saglayici = new AU.GoogleAuthProvider();
-    saglayici.setCustomParameters({ prompt: "select_account" });
-    await AU.signInWithPopup(auth, saglayici);
+    await AU.signInWithPopup(auth, googleSaglayici());
   } catch (err) {
-    durum.girisIstendi = false;
     console.error("Google giriş hatası:", err && err.code, err);
+    if (err && (err.code === "auth/popup-blocked" || err.code === "auth/operation-not-supported-in-this-environment")) {
+      girisMesaji("Açılır pencere engellendi; Google sayfasına yönlendiriliyorsunuz…", true);
+      try { await AU.signInWithRedirect(auth, googleSaglayici()); return; }
+      catch (err2) { console.error("Google yönlendirme hatası:", err2); err = err2; }
+    }
+    durum.girisIstendi = false;
     girisMesaji(hataMetni(err));
   }
 }
@@ -2378,6 +2876,7 @@ function adminYedekIndir() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 async function cikisYap() {
+  oturumIpucuYaz("");
   try { if (AU) await AU.signOut(auth); } catch (e) { console.error(e); }
   if (rota.sec === "admin" || rota.sec === "account") sayfayaGit("home");
 }
@@ -2566,9 +3065,8 @@ function rotaHazirla(eski) {
     if (rota.param) durum.genelArama = rota.param;
     else if (eski.sec !== "search") durum.genelArama = "";
   }
-  if (rota.sec === "articles" && rota.param !== "") {
-    const i = Number(rota.param);
-    if (Number.isInteger(i) && MAKALELER[i]) { durum.makaleAcik.add(i); durum.kaydirId = "makale-" + i; }
+  if (rota.sec === "articles" && /^\d+$/.test(rota.param) && MAKALELER[Number(rota.param)]) {
+    rota.param = MAKALELER[Number(rota.param)].slug;
   }
   if (rota.sec === "faq" && rota.param !== "") {
     const i = Number(rota.param);
@@ -2576,10 +3074,10 @@ function rotaHazirla(eski) {
   }
   if (rota.sec === "random" && eski.sec !== "random") durum.rastgeleId = null;
   if (rota.sec === "archive") {
-    if (rota.param) {
-      durum.arama = ""; durum.devir = "tumu"; durum.tur = "tumu"; durum.limit = 100000;
+    if (rota.param && !arsivDetayParam()) {
+      durum.arama = ""; durum.devir = "tumu"; durum.tur = "tumu";
       durum.acik.add(rota.param); durum.kaydirHedef = rota.param;
-    } else if (eski.sec !== "archive") {
+    } else if (!rota.param && eski.sec !== "archive") {
       durum.limit = 50;
       const q = new URLSearchParams(location.search);
       if (q.has("q")) durum.arama = q.get("q") || "";
@@ -2614,6 +3112,7 @@ function render(secenek) {
   if (scroll) window.scrollTo(0, 0);
   if (sec === "archive") arsivGuncelle();
   if (sec === "admin" && adminMi()) { adminListeGuncelle(); adminFormuKur(); }
+  if (sec === "login") googleDugmesiniGuncelle(false);
   if (sec === "search") {
     aramaGuncelle();
     const g = $("#genel-arama");
@@ -2633,10 +3132,10 @@ function render(secenek) {
 function veriGuncelle() {
   navGuncelle();
   switch (rota.sec) {
-    case "archive": arsivGuncelle(); break;
+    case "archive": if (arsivDetayParam()) render({ scroll: false }); else arsivGuncelle(); break;
     case "admin": if (adminMi()) adminListeGuncelle(); break;
     case "search": aramaGuncelle(); break;
-    case "faq": case "login": case "articles": case "privacy": case "sources": case "contribute": case "changelog": break;
+    case "faq": case "login": case "privacy": case "sources": case "contribute": case "changelog": break;
     default: render({ scroll: false });
   }
 }
@@ -2648,6 +3147,10 @@ function planla() {
 
 function authDegisti(user) {
   durum.kullanici = user;
+  oturumIpucuYaz(user ? (adminMi() ? "yonetici" : "uye") : "");
+  /* Yönetici her zaman tam canlı veriyle çalışır; ziyaretçi/üye derleme verisi + değişikliklerle */
+  if (adminMi() && VERI_SAYFALARI.has(rota.sec) && durum.canliMod !== "tam") tamDinle();
+  if (MAKALE_SAYFALARI.has(rota.sec)) makaleleriDinle(adminMi());
   kullaniciVerisiniBagla(user);
   navGuncelle();
   if (user && durum.girisIstendi && rota.sec === "login") {
@@ -2741,12 +3244,29 @@ const islem = {
     if (k) adminFormuDoldur(k);
   },
   "admin-sil"(el) { adminSil(el.dataset.id); },
+  "admin-kayit-ac"(el) {
+    if (!adminDegisikligiBirakabilir()) return;
+    durum.admin.sekme = "zat"; durum.admin.arama = "";
+    adminListeGuncelle(); adminFormuKur();
+    const k = durum.zatlar.find((x) => x.id === el.dataset.id);
+    if (k) { adminFormuDoldur(k); const f = $("#admin-form"); if (f) f.scrollIntoView({ block: "start" }); }
+  },
+  "mk-yeni"() { if (mkBirakabilir()) mkFormuKur(null); },
+  "mk-duzenle"(el) {
+    if (!mkBirakabilir()) return;
+    const m = tumMakaleler().find((x) => (x.id || x.slug) === el.dataset.id);
+    if (m) mkFormuKur(m);
+  },
+  "mk-sil"(el) { mkSil(el.dataset.id); },
+  "mk-kaydet"() { mkKaydet(); },
+  "mk-gorsel-kaldir"() { durum.mk.gorsel = ""; durum.mk.kirli = true; mkGorselOnizle(); },
   "admin-kaydet": adminKaydet,
   "admin-iptal"() { if (adminDegisikligiBirakabilir()) adminFormuKur(); },
   "admin-yedek": adminYedekIndir,
   "admin-baglari-temizle": adminBaglariTemizle,
   komut(el) {
-    const ed = $("#f-bilgi");
+    const kap = el.closest(".editor-wrap");
+    const ed = (kap && kap.querySelector(".rich-editor")) || $("#f-bilgi");
     if (!ed) return;
     ed.focus();
     const k = el.dataset.komut;
@@ -2759,6 +3279,11 @@ const islem = {
 };
 
 function olayBagla() {
+  document.addEventListener("change", (e) => {
+    if (e.target.id === "mk-gorsel-dosya") mkGorselSec(e.target);
+    if (e.target.id === "f-cinsiyet") adminAkrabaOnizleme();
+    if (e.target.id === "mk-gorsel-url") { durum.mk.gorsel = e.target.value.trim(); durum.mk.kirli = true; mkGorselOnizle(); }
+  });
   document.addEventListener("click", (e) => {
     if (e.target.closest && e.target.closest("[data-profile-link]")) return;
     const baglanti = e.target.closest ? e.target.closest('a[href^="#"]') : null;
@@ -2802,6 +3327,8 @@ function olayBagla() {
     }
     if (e.target.id === "f-isim") adminKopyaUyarisiGuncelle();
     if (/^f-(anne|baba|es|cocuklar)$/.test(e.target.id)) adminBagDurumuGuncelle();
+    if (/^f-(anne|baba|es|cocuklar|baglar|isim)$/.test(e.target.id)) adminAkrabaOnizleme();
+    if (e.target.closest && e.target.closest(".mk-form")) durum.mk.kirli = true;
     if (e.target.closest && e.target.closest(".admin-form")) adminKirliAyarla(true);
     if (e.target.classList && e.target.classList.contains("not-alani")) durum.notTaslak[e.target.dataset.anahtar] = e.target.value;
     if (e.target.id === "genel-arama") {
@@ -2852,6 +3379,8 @@ function olayBagla() {
 function dinle(koleksiyon, tur) {
   FS.onSnapshot(FS.collection(db, koleksiyon), (snap) => {
     const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    if (snap.metadata && snap.metadata.fromCache && !liste.length) return; /* boş önbellek: sunucuyu bekle */
+    if (!(snap.metadata && snap.metadata.fromCache)) durum.canliTam = true;
     veriyiUygula(tur, liste, true);
     planla();
   }, (err) => {
@@ -2864,33 +3393,81 @@ function dinle(koleksiyon, tur) {
 }
 
 /* App Check: Firestore/Auth kullanılmadan ÖNCE başlatılmalıdır */
-async function appCheckBaslat(uygulama) {
-  if (!APPCHECK_SITE_KEY) {
-    console.warn("App Check anahtarı girilmemiş (APPCHECK_SITE_KEY). Firebase'te App Check zorunluysa kayıtlar yüklenmez.");
+let appCheckOrnegi = null, AC_MODUL = null;
+function appCheckBaslat(uygulama, AC) {
+  if (!APPCHECK_SITE_KEY || !AC) {
+    if (!APPCHECK_SITE_KEY) console.warn("App Check anahtarı girilmemiş (APPCHECK_SITE_KEY). Firebase'te App Check zorunluysa kayıtlar yüklenmez.");
+    durum.googleHazir = true;
     return;
   }
+  AC_MODUL = AC;
   try {
-    const AC = await yukle(FB("firebase-app-check"));
     /* Yerelde (localhost) test için hata ayıklama belgesi; canlı sitede etkisizdir */
     if (typeof location !== "undefined" && location.hostname === "localhost") self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
     const saglayici = APPCHECK_SAGLAYICI === "enterprise"
       ? new AC.ReCaptchaEnterpriseProvider(APPCHECK_SITE_KEY)
       : new AC.ReCaptchaV3Provider(APPCHECK_SITE_KEY);
     const ac = AC.initializeAppCheck(uygulama, { provider: saglayici, isTokenAutoRefreshEnabled: true });
+    appCheckOrnegi = ac;
     /* Belgeyi gerçekten alabildiğimizi doğrula; alamazsak nedenini ekranda göster */
     durum.appCheck = "bekliyor";
     Promise.resolve(AC.getToken(ac, false)).then((r) => {
       if (r && r.error) throw r.error;
       durum.appCheck = "ok";
+      googleDugmesiniGuncelle(true);
       planla();
     }).catch((e) => {
       durum.appCheck = { kod: (e && e.code) || "", mesaj: (e && e.message) || String(e) };
       console.error("App Check belgesi alınamadı:", e);
+      googleDugmesiniGuncelle(true);
       planla();
     });
   } catch (e) {
     console.error("App Check başlatılamadı:", e);
   }
+}
+
+/* ---------- Hangi sayfa neye ihtiyaç duyar? ----------
+   Firebase + App Check (reCAPTCHA) ağırdır: ~0,5 MB ve 1–3 sn. Veri istemeyen sayfalarda hiç
+   yüklenmez. Ziyaretçiler veriyi derlemede üretilen /site-data.json'dan alır (CDN, anında) ve
+   Firestore'dan YALNIZCA o tarihten sonra değişen kayıtları çeker. Giriş yapmış kullanıcılar
+   (yönetici, favori/not sahipleri) tam canlı veriyle çalışır. */
+const VERI_SAYFALARI = new Set(["home", "archive", "timeline", "genealogy", "random", "search", "articles", "admin", "account"]);
+const OTURUM_SAYFALARI = new Set(["login", "admin", "account"]);
+const OTURUM_ANAHTARI = "asr-oturum";
+/* Son oturumun türü: "" (yok), "uye" veya "yonetici" — Firebase yüklenmeden hangi modda başlanacağını belirler */
+function oturumIpucu() { try { return localStorage.getItem(OTURUM_ANAHTARI) || ""; } catch (e) { return ""; } }
+function oturumIpucuYaz(deger) { try { if (deger) localStorage.setItem(OTURUM_ANAHTARI, deger); else localStorage.removeItem(OTURUM_ANAHTARI); } catch (e) { /* önemsiz */ } }
+const MAKALE_SAYFALARI = new Set(["articles", "search", "admin"]);
+
+let firebaseSozu = null;
+function firebaseYukle() {
+  if (firebaseSozu) return firebaseSozu;
+  firebaseSozu = (async () => {
+    /* Modüller paralel yüklenir (eskiden App Check ayrıca, sırayla bekleniyordu) */
+    const [appM, fsM, auM, acM] = await Promise.all([
+      yukle(FB("firebase-app")), yukle(FB("firebase-firestore")), yukle(FB("firebase-auth")),
+      APPCHECK_SITE_KEY ? yukle(FB("firebase-app-check")).catch((e) => { console.error("App Check yüklenemedi:", e); return null; }) : null,
+    ]);
+    FS = fsM; AU = auM;
+    const uygulama = appM.initializeApp(firebaseConfig);
+    appCheckBaslat(uygulama, acM);
+    try {
+      /* Kalıcı önbellek (IndexedDB): sonraki ziyaretlerde kayıtlar diskten anında gelir, yalnızca
+         değişenler indirilir. Long-polling otomatik algılama VPN/güvenlik duvarı arkasında bağlantıyı korur. */
+      db = FS.initializeFirestore(uygulama, {
+        experimentalAutoDetectLongPolling: true,
+        localCache: FS.persistentLocalCache({ tabManager: FS.persistentMultipleTabManager() }),
+      });
+    } catch (e) {
+      console.warn("Firestore kalıcı önbellek olmadan başlatılıyor:", e);
+      try { db = FS.initializeFirestore(uygulama, { experimentalAutoDetectLongPolling: true }); }
+      catch (e2) { db = FS.getFirestore(uygulama); }
+    }
+    auth = AU.getAuth(uygulama);
+    return true;
+  })();
+  return firebaseSozu;
 }
 
 async function baslat() {
@@ -2905,38 +3482,76 @@ async function baslat() {
   yerelVeriyiYukle();
   render();
   olayBagla();
-  const statikVeriYukleme = statikVeriyiYukle();
-  try {
-    const [appM, fsM, auM] = await Promise.all([
-      yukle(FB("firebase-app")), yukle(FB("firebase-firestore")), yukle(FB("firebase-auth")), statikVeriYukleme,
-    ]);
-    FS = fsM; AU = auM;
-    const uygulama = appM.initializeApp(firebaseConfig);
-    await appCheckBaslat(uygulama);
-    try {
-      /* Bazı ağlarda (VPN, güvenlik duvarı, antivirüs, reklam engelleyici, zayıf bağlantı) Firestore'un canlı
-         bağlantısı zaman aşımına uğrar (ERR_TIMED_OUT). Otomatik algılama: bağlantı kurulamazsa uyumlu
-         "long polling" yöntemine geçer; kurulabiliyorsa hızlı yöntem kullanılmaya devam eder. */
-      db = FS.initializeFirestore(uygulama, { experimentalAutoDetectLongPolling: true });
-    } catch (e) {
-      console.warn("Firestore özel ayarla başlatılamadı, varsayılan ayar kullanılıyor:", e);
-      db = FS.getFirestore(uygulama);
-    }
-    auth = AU.getAuth(uygulama);
-  } catch (e) {
+  const sayfa = rota.sec;
+  const veriGerek = VERI_SAYFALARI.has(sayfa);
+  const oturumGerek = OTURUM_SAYFALARI.has(sayfa) || oturumIpucu();
+  const statik = veriGerek || sayfa === "articles" ? await statikVeriyiYukle() : null;
+  if (!veriGerek && !oturumGerek) return; /* S.S.S., gizlilik, kaynakça…: Firebase gerekmez */
+
+  try { await firebaseYukle(); }
+  catch (e) {
     console.error("Firebase yüklenemedi:", e);
-    durum.hata = "Firebase yüklenemedi (" + ((e && e.message) || e) + ")";
-    durum.yuklendi.zat = durum.yuklendi.olay = true;
+    if (!statik && !durum.zatlar.length) {
+      durum.hata = "Firebase yüklenemedi (" + ((e && e.message) || e) + ")";
+      durum.yuklendi.zat = durum.yuklendi.olay = true;
+    }
     veriGuncelle();
     return;
   }
-  AU.onAuthStateChanged(auth, authDegisti);
-  dinle("zatlar", "zat");
-  dinle("olaylar", "olay");
+  if (oturumGerek) {
+    AU.onAuthStateChanged(auth, authDegisti);
+    if (sayfa === "login") { yonlendirmeSonucunuKontrolEt(); setTimeout(() => googleDugmesiniGuncelle(true), 8000); }
+  }
+  if (!veriGerek) return;
+  if (statik && statik.generatedAt && oturumIpucu() !== "yonetici" && sayfa !== "admin") degisiklikleriDinle(statik.generatedAt);
+  else tamDinle();
+  if (MAKALE_SAYFALARI.has(sayfa)) makaleleriDinle(false);
+  /* App Check hiç cevap vermezse Google düğmesi sonsuza dek beklemesin */
+  setTimeout(() => googleDugmesiniGuncelle(true), 8000);
   /* Kayıtlar 12 saniyede gelmezse kullanıcıya bilgi ver (sayfa sessizce takılı kalmasın) */
   setTimeout(() => {
     if (!(durum.yuklendi.zat && durum.yuklendi.olay)) { durum.yavas = true; planla(); }
   }, 12000);
+}
+
+/* Tam canlı veri (yönetici ve giriş yapmış kullanıcılar) */
+function tamDinle() {
+  if (durum.canliMod === "tam") return;
+  durum.canliMod = "tam";
+  dinle("zatlar", "zat");
+  dinle("olaylar", "olay");
+}
+/* Ziyaretçi: yalnızca derlemeden SONRA değişen kayıtlar (+ silinenler) — okuma kotasını korur */
+function degisiklikleriDinle(esik) {
+  durum.canliMod = "degisiklik";
+  const sinir = Math.max(0, Number(esik) - 15 * 60 * 1000); /* saat farklarına karşı 15 dk pay */
+  [["zatlar", "zat"], ["olaylar", "olay"]].forEach(([kol, tur]) => {
+    FS.onSnapshot(FS.query(FS.collection(db, kol), FS.where("guncellemeTarihi", ">", sinir)), (snap) => {
+      if (durum.canliMod !== "degisiklik" || snap.empty) return;
+      veriBirlestir(tur, snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      planla();
+    }, (err) => console.warn(kol + " değişiklikleri alınamadı (derleme verisi gösteriliyor):", err && err.code));
+  });
+  FS.onSnapshot(FS.query(FS.collection(db, "silinenler"), FS.where("tarih", ">", sinir)), (snap) => {
+    if (durum.canliMod !== "degisiklik" || snap.empty) return;
+    const ids = { zat: [], olay: [] };
+    snap.docs.forEach((d) => { const v = d.data(); if (ids[v.tur]) ids[v.tur].push(v.kayitId || d.id); });
+    if (ids.zat.length) veriBirlestir("zat", [], ids.zat);
+    if (ids.olay.length) veriBirlestir("olay", [], ids.olay);
+    planla();
+  }, () => { /* koleksiyon yoksa veya kural izin vermiyorsa sessiz geç */ });
+}
+/* Makaleler: ziyaretçiye yalnızca yayımlananlar; yöneticiye taslaklar da */
+let makaleDinleyici = null;
+function makaleleriDinle(yonetici) {
+  if (!FS || !db) return;
+  if (makaleDinleyici) { makaleDinleyici(); makaleDinleyici = null; }
+  const kol = FS.collection(db, "makaleler");
+  const sorgu = yonetici ? kol : FS.query(kol, FS.where("yayinda", "==", true));
+  makaleDinleyici = FS.onSnapshot(sorgu, (snap) => {
+    durum.makaleler = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    planla();
+  }, (err) => console.warn("Makaleler okunamadı:", err && err.code));
 }
 
 baslat();

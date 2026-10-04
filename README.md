@@ -34,17 +34,33 @@ Never commit passwords or keys again. `.gitignore` now blocks `şifre*`, `.env*`
 
 ---
 
+### Round 2 (client feedback)
+
+| Client report | Cause | Fix |
+|---|---|---|
+| Vercel build fails: `Firestore okunamadı (403) PERMISSION_DENIED` | App Check is **enforced** on Firestore, so the build server's anonymous REST read is refused. | `build.js` now tries: service account → REST → the live site's own `/site-data.json` → and if all fail it **still finishes** (people pages skipped, the site reads Firestore in the browser). Add `FIREBASE_SERVICE_ACCOUNT` (§4) for the permanent fix. |
+| Clicking an **event** opens the wrong place / no info | Event links went to the archive, which rendered all ~330 records and tried to scroll to one; the scroll landed somewhere else. | Events (and people without a biography page) now open a **dedicated record page**: `/archive#olay-<id>`. |
+| **Search** results don't open correctly | Article results pointed at `#articles/1` and FAQ results at `#faq/3` on pages that are now static, so nothing opened. | Results link to the real targets: record page, `/makaleler/<slug>`, `/faq#sss-<n>` (the question opens automatically). Links are real URLs (open in new tab works). |
+| Article list overlaps a line, links look wrong; FAQ broken | Static Astro pages used classes that had no CSS for links (`a.record`) and no page padding. | New **article card grid** and a **redesigned FAQ** (numbered accordion + contact box), shared styles in `public/extra.css`, dark mode included. |
+| Slow load / slow refresh | Every page loaded Firebase + reCAPTCHA (~0.5 MB, 1–3 s for the App Check token) and **every visit downloaded every record from Firestore** (≈330 reads per page view; the free plan's 50,000 reads/day ≈ 150 page views). | Pages render instantly from `/site-data.json` (CDN). Visitors only fetch records **changed since the last deploy** (+ deletions via `silinenler`), admins get full live data. FAQ/Privacy/Sources/Contribute/Changelog don't load Firebase at all. Firestore uses a persistent IndexedDB cache; SDK modules load in parallel. |
+| Admin shows 62 connections, home shows 55 | Two different formulas (one counted spouses, one didn't). | One shared, cached function for “Bağlantılı şahsiyet” used everywhere. |
+| Family tree: parents → siblings; father's sibling → uncle/aunt | Relatives were only computed on the genealogy page; explicit “(Kardeş)” entries were ignored; gender was unknown for most records (“Kadın” wasn't even recognised). | Siblings, amca/hala, dayı/teyze, dede/nine, kuzen are shown on every record page, on the static biography pages, and **live in the admin form before saving**. “İsim (Kardeş)” now counts (and the sibling inherits the known parents). Gender is inferred from “anne/baba” roles, spouses and names (Binti/Bin, common names). Contradictions are listed under **Veri uyarıları** in the admin panel instead of producing wrong uncles. |
+| Article input area: text, sources, images | Articles were hard-coded. | Admin panel → **Makaleler** tab: rich-text editor, category, summary, sources (one per line), cover image upload (resized in the browser to ≤1400 px JPEG), draft/published. Stored in Firestore `makaleler`; visible immediately; static SEO page `/makaleler/<slug>` is generated on the next deploy. Built-in articles can be edited too. |
+| Google sign-in broken | App Check is enforced on **Authentication** as well; the Google popup was opened before the App Check token (1–3 s via reCAPTCHA) was ready, so browsers blocked the popup or the handler rejected the request. | The Google button waits (“Google hazırlanıyor…”) until App Check is ready, falls back to redirect if the popup is blocked, and shows specific error messages. See §5 if it still fails. |
+
 ## 3. Project structure
 
 ```
 src/pages/            Astro pages (one per URL) — mostly shells that public/script.js fills in
-src/pages/makaleler/  Article pages, generated from src/data/articles.json
+src/pages/makaleler/  Article pages (built-in articles.json + published Firestore articles)
 src/layouts/          Shared <head>, navigation, footer
-src/data/             articles.json, faq.json  (edit these to change articles / FAQ)
-public/script.js      The app: archive, timeline, genealogy, search, login, account, ADMIN PANEL
-public/*.css          Styles
-build.js              Runs before Astro: reads Firestore → writes public/sahabe/*.html,
-                      public/site-data.json, sitemap.xml, robots.txt
+src/data/             articles.json, faq.json, makaleler.mjs (merges Firestore articles at build)
+public/script.js      The app: archive, record pages, timeline, genealogy, search, login,
+                      account, ADMIN PANEL (people, events, articles, data warnings)
+public/extra.css      Styles for articles, FAQ, record pages, kinship lists, article editor
+public/*.css          Base styles
+build.js              Runs before Astro: reads Firestore (or fallback) → writes public/sahabe/*.html,
+                      public/site-data.json, src/data/articles.generated.json, sitemap.xml, robots.txt
 firestore.rules       Database security rules (must be published to Firebase — see §5)
 site.config.json      The public site address
 ```
@@ -60,7 +76,7 @@ site.config.json      The public site address
    - `SITE_URL` — only when the custom domain is live (see §6).
 4. Deploy. Check the **Preview** URL first, then promote to Production.
 
-If Firestore cannot be read during the build, the build stops on purpose so a half-empty site is never published — Vercel keeps serving the previous version.
+If Firestore cannot be read during the build (App Check enforced and no service account), `build.js` uses the live site's `/site-data.json` instead and prints a warning; if that is also unavailable it builds without the biography pages. The build no longer fails because of data.
 
 ---
 
@@ -71,7 +87,7 @@ If Firestore cannot be read during the build, the build stops on purpose so a ha
 - Firebase Console → Firestore Database → **Rules** → paste `firestore.rules` → **Publish**
   (or `npx firebase-tools deploy --only firestore:rules`).
 
-What the rules do: everyone can read `zatlar` (people) and `olaylar` (events); only admins can create/edit/delete them. Each user can only see and edit their own `favoriler` and `notlar`. Everything else is closed.
+What the rules do: everyone can read `zatlar` (people) and `olaylar` (events); only admins can create/edit/delete them. Everyone can read **published** `makaleler`; admins read drafts and write. `silinenler` holds deletion markers (so visitors' cached data drops deleted records). Each user can only see and edit their own `favoriler` and `notlar`. Everything else is closed. **The Makaleler tab cannot save until these rules are published.**
 
 **Admins** = an email in **both** lists below **with a verified email address**:
 
@@ -83,6 +99,24 @@ Alternative without code changes: create a document `admins/<user UID>` with fie
 **Firebase Authentication → Settings → Authorized domains** must contain every domain the site runs on (vercel.app + custom domain), otherwise login fails.
 
 **App Check:** if Firestore shows “Missing or insufficient permissions” for everyone, the App Check key/domains are wrong. Check §1 step 2 and §6.
+
+**Google sign-in still failing?** Ask for the exact message under the button (it now names the cause). Then, in order:
+1. Firebase → Authentication → Sign-in method → Google must be *Enabled* (it was, when checked).
+2. Firebase → App Check → APIs → **Authentication**: if enforcement is on and users see an App Check error, switch Authentication to *Unenforced* (keep Firestore enforced). Email/password and Google both keep working; Firestore stays protected.
+3. Authorized domains must include the site's domain (vercel.app is already there; add the custom domain later).
+
+---
+
+## 5b. How data reaches the browser (performance)
+
+| Who | First paint | Live updates | Firestore reads |
+|---|---|---|---|
+| Visitor | `/site-data.json` (built at deploy, served by Vercel's CDN) or the browser cache | Only records with `guncellemeTarihi` newer than the build, plus `silinenler` | Usually 0–5 per page |
+| Logged-in member | same as visitor | same + own favourites/notes | small |
+| Admin | same | **all** records, live | full collections (cached on disk after the first load) |
+
+Static pages (FAQ, privacy, sources, contribute, changelog) don't load Firebase or reCAPTCHA at all.
+Every admin save sets `guncellemeTarihi`, so visitors see changes within seconds without a redeploy. Redeploying (or the next push) refreshes `/site-data.json` and the SEO pages.
 
 ---
 

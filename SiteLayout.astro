@@ -31,6 +31,7 @@ const {
     />
     <link rel="stylesheet" href="/style.css" />
     <link rel="stylesheet" href="/premium.css" />
+    <link rel="stylesheet" href="/extra.css" />
     <link rel="icon" href="/images/favicon.ico" sizes="any" />
     <link rel="icon" href="/images/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
@@ -67,6 +68,7 @@ const {
           <a href="/genealogy" data-section="genealogy">Soyağacı</a>
           <a href="/random" data-section="random">Rastgele Şahsiyet</a>
           <a href="/articles" data-section="articles">Makaleler</a>
+          <a href="/search" data-section="search" id="ara-nav-link" aria-label="Portalda ara">Ara</a>
           <a href="/login" data-section="login" id="login-nav-link">Giriş</a>
           <a href="/admin" data-section="admin" id="admin-nav-link" style="display:none">Panel</a>
         </div>
@@ -82,6 +84,11 @@ const {
         </div>
       </div>
     </nav>
+    <script is:inline>
+      document.querySelectorAll('.nav-links a[data-section]').forEach(function (a) {
+        if (a.dataset.section === document.body.dataset.page) { a.classList.add('active'); a.setAttribute('aria-current', 'page'); }
+      });
+    </script>
     <slot />
     <footer class="site-footer">
       <div class="footer-half footer-intro">
@@ -101,6 +108,7 @@ const {
           <a href="/random">Rastgele Şahsiyet</a>
           <a href="/articles">Makaleler</a>
           <a href="/faq">S.S.S.</a>
+          <a href="/search">Portalda Ara</a>
         </div>
         <div>
           <h3>Hakkında</h3>
@@ -108,6 +116,7 @@ const {
           <a href="/sources">Kaynakça</a>
           <a href="/contribute">Katkıda Bulun</a>
           <a href="/privacy">Gizlilik Politikası</a>
+          <a href="/changelog">Sürüm Notları</a>
         </div>
       </div>
     </footer>
